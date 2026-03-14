@@ -2,7 +2,6 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { LOCALES, type Locale } from '@/i18n/config';
-import { GlobeAltIcon } from '@heroicons/react/24/outline';
 import { useState, useRef, useEffect } from 'react';
 
 const LOCALE_NAMES: Record<Locale, string> = {
@@ -55,7 +54,7 @@ export default function LocaleSwitcher() {
         aria-label={t('language')}
         title={LOCALE_NAMES[locale]}
       >
-        <GlobeAltIcon className="w-4 h-4" />
+        <span className="text-base">🌐</span>
         <span className="hidden sm:inline">{locale.toUpperCase()}</span>
       </button>
 
