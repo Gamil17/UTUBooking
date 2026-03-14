@@ -3,6 +3,7 @@
 
 import { Router, Request, Response } from 'express';
 import { getGateway, validateAmountForGateway, calculateFee, GATEWAY_CONFIG } from '../PaymentRouter';
+import * as iyzicoService from '../gateways/iyzico.service';
 
 const router = Router();
 
@@ -214,8 +215,42 @@ async function processStripe(userId: string, bookingId: string, amount: number, 
 }
 
 async function processIyzico(userId: string, bookingId: string, amount: number, currency: string) {
-  // TODO: Implement Phase 5
-  return { transactionId: 'iyzico_xxx', status: 'pending' };
+  try {
+    // Get buyer email and phone from booking (TODO: fetch from booking service)
+    const email = await getBookingEmail(bookingId) || 'customer@example.com';
+    const phone = await getBookingPhone(bookingId) || '+90 555 000 0000';
+    const firstName = 'Customer'; // TODO: Get from booking
+    const lastName = 'Name';      // TODO: Get from booking
+    const ipAddress = '127.0.0.1'; // TODO: Get from request
+
+    // Call iyzico service
+    const result = await iyzicoService.createPayment({
+      userId,
+      bookingId,
+      amountInUSD: amount,
+      email,
+      phone,
+      firstName,
+      lastName,
+      ipAddress,
+      currency: 'USD',
+      cardToken: undefined, // TODO: Get from frontend in production
+    });
+
+    return {
+      transactionId: result.transactionId,
+      paymentId: result.paymentId,
+      status: result.status === 'success' ? 'completed' : 'failed',
+      errorMessage: result.errorMessage,
+    };
+  } catch (error) {
+    console.error('[iyzico] Payment processing error:', error);
+    return {
+      transactionId: bookingId,
+      status: 'failed',
+      errorMessage: error instanceof Error ? error.message : 'Payment failed',
+    };
+  }
 }
 
 async function processMidtrans(userId: string, bookingId: string, amount: number, currency: string) {
@@ -261,7 +296,19 @@ async function updateBookingStatus(bookingId: string, status: string) {
 
 function verifyWebhookSignature(gateway: string, body: any, signature: string): boolean {
   // Verify based on gateway-specific secret
-  return true; // stub
+  if (gateway === 'iyzico') {
+    const secretKey = process.env.IYZICO_SECRET_KEY;
+    if (!secretKey) {
+      console.warn('[iyzico] IYZICO_SECRET_KEY not configured');
+      return false;
+    }
+    return iyzicoService.verifyWebhookSignature(
+      JSON.stringify(body),
+      signature,
+      secretKey
+    );
+  }
+  return true; // stub for other gateways
 }
 
 function parseStcPayWebhook(body: any) {
@@ -273,7 +320,13 @@ function parseStripeWebhook(body: any) {
 }
 
 function parseIyzicoWebhook(body: any) {
-  return { bookingId: body.conversationId, userId: body.userId, status: 'completed' };
+  // Use iyzico service's webhook parser
+  const webhookData = iyzicoService.parseWebhook(body);
+  return {
+    bookingId: webhookData.bookingId,
+    userId: body.buyerEmail, // iyzico doesn't send userId, use email lookup TODO
+    status: webhookData.status === 'success' ? 'completed' : 'failed',
+  };
 }
 
 function parseMidtransWebhook(body: any) {
@@ -318,10 +371,19 @@ function getCurrencyForGateway(gateway: string): string {
   return currencies[gateway] || 'USD';
 }
 
-// Utility helper to get available gateways
 function getAvailableGateways(countryCode: string): string[] {
   const gateway = getGateway(countryCode);
   return [gateway, 'stripe'].filter((g, i, arr) => arr.indexOf(g) === i);
+}
+
+async function getBookingEmail(bookingId: string): Promise<string | null> {
+  // TODO: Call booking service to fetch email
+  return null;
+}
+
+async function getBookingPhone(bookingId: string): Promise<string | null> {
+  // TODO: Call booking service to fetch phone
+  return null;
 }
 
 export default router;
