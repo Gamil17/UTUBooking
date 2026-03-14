@@ -1,0 +1,77 @@
+{
+  "nav": {
+    "home": "Anasayfa",
+    "hotels": "Oteller",
+    "flights": "Uçuşlar",
+    "cars": "Arabalar",
+    "trips": "Gezilerim",
+    "loyalty": "Sadakat",
+    "signIn": "Giriş Yap",
+    "signOut": "Çıkış Yap"
+  },
+  "hero": {
+    "tagline": "Mekke ve Medine'ye Gidişinizin Kapısı",
+    "subtitle": "Doğrulanmış oteller · Gerçek zamanlı müsaitlik",
+    "searchBtn": "Ara"
+  },
+  "search": {
+    "destination": "Varış Noktası",
+    "destinationHint": "örn. Mekke, Medine, Cidde",
+    "checkIn": "Giriş Tarihi",
+    "checkOut": "Çıkış Tarihi",
+    "guests": "Misafirler",
+    "searchHotels": "Otelleri Ara",
+    "from": "Nereden",
+    "to": "Nereye",
+    "departDate": "Kalkış Tarihi",
+    "returnDate": "Dönüş Tarihi",
+    "passengers": "Yolcular",
+    "searchFlights": "Uçuşları Ara",
+    "pickupCity": "Teslim Alma Şehri",
+    "pickupDate": "Teslim Alma Tarihi",
+    "dropoffDate": "İade Tarihi",
+    "searchCars": "Arabaları Ara"
+  },
+  "results": {
+    "hotelsFound": "{count} otel bulundu",
+    "noResults": "Sonuç bulunamadı.",
+    "filters": "Filtreler",
+    "sortBy": "Sırala",
+    "sortPrice": "Fiyat",
+    "sortDistance": "Mesafe",
+    "freeCancelOnly": "Yalnızca ücretsiz iptal",
+    "perNight": "/ gece",
+    "distHaram": "Haram'dan {m} m uzakta",
+    "bookNow": "Şimdi Rezervasyon Yap"
+  },
+  "booking": {
+    "title": "Rezervasyonu Tamamla",
+    "guestDetails": "Misafir Bilgileri",
+    "firstName": "Adı",
+    "lastName": "Soyadı",
+    "email": "E-posta Adresi",
+    "phone": "Telefon Numarası",
+    "nationality": "Uyruk",
+    "payment": "Ödeme",
+    "confirm": "Onayla",
+    "payNow": "Şimdi Öde",
+    "success": "Rezervasyon Onaylandı!",
+    "ref": "Rezervasyon Referans Numarası",
+    "terms": "Şartlar ve Koşullar ile Gizlilik Politikasını kabul ediyorum."
+  },
+  "common": {
+    "loading": "Yükleniyor…",
+    "error": "Bir hata oluştu. Lütfen yeniden deneyin.",
+    "cancel": "İptal",
+    "back": "Geri",
+    "poweredBy": "UTUBooking tarafından sunulur",
+    "language": "Dil"
+  },
+  "notifications": {
+    "enableTitle": "Güncellemeleri Alın",
+    "enableBody": "Rezervasyon onayları, fiyat düşüşleri ve giriş hatırlatmaları alın.",
+    "enableBtn": "Bildirimleri Etkinleştir",
+    "deniedMsg": "Bildirimler engellendi. Lütfen tarayıcı ayarlarınızda etkinleştirin.",
+    "subscribedMsg": "Artık rezervasyon güncellemeleri alacaksınız."
+  }
+}

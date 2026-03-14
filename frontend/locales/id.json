@@ -1,0 +1,77 @@
+{
+  "nav": {
+    "home": "Beranda",
+    "hotels": "Hotel",
+    "flights": "Penerbangan",
+    "cars": "Mobil",
+    "trips": "Perjalanan Saya",
+    "loyalty": "Loyalitas",
+    "signIn": "Masuk",
+    "signOut": "Keluar"
+  },
+  "hero": {
+    "tagline": "Gerbang Anda ke Makkah & Madinah",
+    "subtitle": "Hotel terverifikasi · Ketersediaan real-time",
+    "searchBtn": "Cari"
+  },
+  "search": {
+    "destination": "Tujuan",
+    "destinationHint": "mis. Makkah, Madinah, Jeddah",
+    "checkIn": "Waktu Masuk",
+    "checkOut": "Waktu Keluar",
+    "guests": "Tamu",
+    "searchHotels": "Cari Hotel",
+    "from": "Dari",
+    "to": "Ke",
+    "departDate": "Tanggal Keberangkatan",
+    "returnDate": "Tanggal Kembali",
+    "passengers": "Penumpang",
+    "searchFlights": "Cari Penerbangan",
+    "pickupCity": "Kota Pengambilan",
+    "pickupDate": "Tanggal Pengambilan",
+    "dropoffDate": "Tanggal Pengembalian",
+    "searchCars": "Cari Mobil"
+  },
+  "results": {
+    "hotelsFound": "{count} hotel ditemukan",
+    "noResults": "Tidak ada hasil.",
+    "filters": "Filter",
+    "sortBy": "Urutkan Berdasarkan",
+    "sortPrice": "Harga",
+    "sortDistance": "Jarak",
+    "freeCancelOnly": "Pembatalan gratis saja",
+    "perNight": "/ malam",
+    "distHaram": "{m} m dari Masjidil Haram",
+    "bookNow": "Pesan Sekarang"
+  },
+  "booking": {
+    "title": "Selesaikan Pemesanan",
+    "guestDetails": "Detail Tamu",
+    "firstName": "Nama Depan",
+    "lastName": "Nama Belakang",
+    "email": "Alamat Email",
+    "phone": "Nomor Telepon",
+    "nationality": "Kewarganegaraan",
+    "payment": "Pembayaran",
+    "confirm": "Konfirmasi",
+    "payNow": "Bayar Sekarang",
+    "success": "Pemesanan Dikonfirmasi!",
+    "ref": "Referensi Pemesanan",
+    "terms": "Saya setuju dengan Syarat & Ketentuan dan Kebijakan Privasi."
+  },
+  "common": {
+    "loading": "Memuat…",
+    "error": "Terjadi kesalahan. Silakan coba lagi.",
+    "cancel": "Batal",
+    "back": "Kembali",
+    "poweredBy": "Diproduksi oleh UTUBooking",
+    "language": "Bahasa"
+  },
+  "notifications": {
+    "enableTitle": "Tetap Terupdate",
+    "enableBody": "Dapatkan konfirmasi pemesanan, penurunan harga, dan pengingat check-in.",
+    "enableBtn": "Aktifkan Notifikasi",
+    "deniedMsg": "Notifikasi diblokir. Harap aktifkan di pengaturan browser Anda.",
+    "subscribedMsg": "Anda sekarang akan menerima pembaruan pemesanan."
+  }
+}

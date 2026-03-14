@@ -1,0 +1,77 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "hotels": "Hôtels",
+    "flights": "Vols",
+    "cars": "Voitures",
+    "trips": "Mes Voyages",
+    "loyalty": "Programme",
+    "signIn": "Connexion",
+    "signOut": "Déconnexion"
+  },
+  "hero": {
+    "tagline": "Votre passerelle vers La Mecque & Médine",
+    "subtitle": "Hôtels vérifiés · Disponibilité en temps réel",
+    "searchBtn": "Rechercher"
+  },
+  "search": {
+    "destination": "Destination",
+    "destinationHint": "ex. La Mecque, Médine, Djeddah",
+    "checkIn": "Arrivée",
+    "checkOut": "Départ",
+    "guests": "Voyageurs",
+    "searchHotels": "Rechercher des hôtels",
+    "from": "Départ",
+    "to": "Arrivée",
+    "departDate": "Date de départ",
+    "returnDate": "Date de retour",
+    "passengers": "Passagers",
+    "searchFlights": "Rechercher des vols",
+    "pickupCity": "Ville de prise en charge",
+    "pickupDate": "Date de prise en charge",
+    "dropoffDate": "Date de restitution",
+    "searchCars": "Rechercher des voitures"
+  },
+  "results": {
+    "hotelsFound": "{count} hôtel(s) trouvé(s)",
+    "noResults": "Aucun résultat trouvé.",
+    "filters": "Filtres",
+    "sortBy": "Trier par",
+    "sortPrice": "Prix",
+    "sortDistance": "Distance",
+    "freeCancelOnly": "Annulation gratuite uniquement",
+    "perNight": "/ nuit",
+    "distHaram": "{m} m du Haram",
+    "bookNow": "Réserver"
+  },
+  "booking": {
+    "title": "Finaliser la réservation",
+    "guestDetails": "Informations du voyageur",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "Adresse e-mail",
+    "phone": "Numéro de téléphone",
+    "nationality": "Nationalité",
+    "payment": "Paiement",
+    "confirm": "Confirmer",
+    "payNow": "Payer maintenant",
+    "success": "Réservation confirmée !",
+    "ref": "Référence de réservation",
+    "terms": "J'accepte les Conditions générales et la Politique de confidentialité."
+  },
+  "common": {
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue. Veuillez réessayer.",
+    "cancel": "Annuler",
+    "back": "Retour",
+    "poweredBy": "Propulsé par UTUBooking",
+    "language": "Langue"
+  },
+  "notifications": {
+    "enableTitle": "Restez informé",
+    "enableBody": "Recevez des confirmations de réservation, alertes de prix et rappels d'arrivée.",
+    "enableBtn": "Activer les notifications",
+    "deniedMsg": "Les notifications sont bloquées. Veuillez les activer dans les paramètres du navigateur.",
+    "subscribedMsg": "Vous recevrez désormais les mises à jour de réservation."
+  }
+}

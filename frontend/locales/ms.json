@@ -1,0 +1,77 @@
+{
+  "nav": {
+    "home": "Halaman Utama",
+    "hotels": "Hotel",
+    "flights": "Penerbangan",
+    "cars": "Kereta",
+    "trips": "Perjalanan Saya",
+    "loyalty": "Kesetiaan",
+    "signIn": "Log Masuk",
+    "signOut": "Log Keluar"
+  },
+  "hero": {
+    "tagline": "Pintu Anda ke Makkah & Madinah",
+    "subtitle": "Hotel yang disahkan · Ketersediaan masa nyata",
+    "searchBtn": "Cari"
+  },
+  "search": {
+    "destination": "Destinasi",
+    "destinationHint": "cth. Makkah, Madinah, Jeddah",
+    "checkIn": "Tarikh Daftar Masuk",
+    "checkOut": "Tarikh Daftar Keluar",
+    "guests": "Tetamu",
+    "searchHotels": "Cari Hotel",
+    "from": "Dari",
+    "to": "Ke",
+    "departDate": "Tarikh Berlepas",
+    "returnDate": "Tarikh Kembali",
+    "passengers": "Penumpang",
+    "searchFlights": "Cari Penerbangan",
+    "pickupCity": "Bandar Pengambilan",
+    "pickupDate": "Tarikh Pengambilan",
+    "dropoffDate": "Tarikh Pemulangan",
+    "searchCars": "Cari Kereta"
+  },
+  "results": {
+    "hotelsFound": "{count} hotel dijumpai",
+    "noResults": "Tiada hasil ditemui.",
+    "filters": "Penapis",
+    "sortBy": "Isih Mengikut",
+    "sortPrice": "Harga",
+    "sortDistance": "Jarak",
+    "freeCancelOnly": "Pembatalan percuma sahaja",
+    "perNight": "/ malam",
+    "distHaram": "{m} m dari Masjidil Haram",
+    "bookNow": "Tempah Sekarang"
+  },
+  "booking": {
+    "title": "Lengkapkan Tempahan",
+    "guestDetails": "Butiran Tetamu",
+    "firstName": "Nama Pertama",
+    "lastName": "Nama Akhir",
+    "email": "Alamat E-mel",
+    "phone": "Nombor Telefon",
+    "nationality": "Kerakyatan",
+    "payment": "Pembayaran",
+    "confirm": "Sahkan",
+    "payNow": "Bayar Sekarang",
+    "success": "Tempahan Disahkan!",
+    "ref": "Rujukan Tempahan",
+    "terms": "Saya bersetuju dengan Syarat & Kondisi dan Dasar Privasi."
+  },
+  "common": {
+    "loading": "Memuatkan…",
+    "error": "Sesuatu berlaku salah. Sila cuba lagi.",
+    "cancel": "Batal",
+    "back": "Kembali",
+    "poweredBy": "Dikuasakan oleh UTUBooking",
+    "language": "Bahasa"
+  },
+  "notifications": {
+    "enableTitle": "Kekal Dikemas Kini",
+    "enableBody": "Dapatkan pengesahan tempahan, penurunan harga, dan pengingat daftar masuk.",
+    "enableBtn": "Dayakan Pemberitahuan",
+    "deniedMsg": "Pemberitahuan disekat. Sila dayakan dalam tetapan penyemak imbas anda.",
+    "subscribedMsg": "Anda akan menerima kemas kini tempahan sekarang."
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "nav": {
+    "home": "گھر",
+    "hotels": "ہوٹل",
+    "flights": "پروازیں",
+    "cars": "گاڑیاں",
+    "trips": "میری سفریں",
+    "loyalty": "وفاداری",
+    "signIn": "سائن ان کریں",
+    "signOut": "سائن آؤٹ کریں"
+  },
+  "hero": {
+    "tagline": "مکہ اور مدینہ کا آپ کا دروازہ",
+    "subtitle": "تصدیق شدہ ہوٹل · حقیقی وقت کی دستیابی",
+    "searchBtn": "تلاش"
+  },
+  "search": {
+    "destination": "منزل",
+    "destinationHint": "مثال کے طور پر مکہ، مدینہ، جدہ",
+    "checkIn": "چیک ان کی تاریخ",
+    "checkOut": "چیک آؤٹ کی تاریخ",
+    "guests": "اہمندین",
+    "searchHotels": "ہوٹل تلاش کریں",
+    "from": "سے",
+    "to": "تک",
+    "departDate": "روانگی کی تاریخ",
+    "returnDate": "واپسی کی تاریخ",
+    "passengers": "مسافر",
+    "searchFlights": "پروازیں تلاش کریں",
+    "pickupCity": "پک اپ شہر",
+    "pickupDate": "پک اپ کی تاریخ",
+    "dropoffDate": "ڈراپ آف کی تاریخ",
+    "searchCars": "گاڑیاں تلاش کریں"
+  },
+  "results": {
+    "hotelsFound": "{count} ہوٹل ملے",
+    "noResults": "کوئی نتائج نہیں ملے۔",
+    "filters": "فلٹرز",
+    "sortBy": "ترتیب دیں",
+    "sortPrice": "قیمت",
+    "sortDistance": "فاصلہ",
+    "freeCancelOnly": "صرف مفت کنسلیشن",
+    "perNight": "/ رات",
+    "distHaram": "حرم سے {m} میٹر",
+    "bookNow": "ابھی بک کریں"
+  },
+  "booking": {
+    "title": "بکنگ مکمل کریں",
+    "guestDetails": "مہمان کی تفصیلات",
+    "firstName": "پہلا نام",
+    "lastName": "آخری نام",
+    "email": "ای میل کا پتہ",
+    "phone": "فون نمبر",
+    "nationality": "شہری ملک",
+    "payment": "ادائیگی",
+    "confirm": "تصدیق",
+    "payNow": "ابھی ادا کریں",
+    "success": "بکنگ تصدیق شدہ!",
+    "ref": "بکنگ حوالہ",
+    "terms": "میں شرائط و ضوابط اور رازداری کی پالیسی سے متفق ہوں۔"
+  },
+  "common": {
+    "loading": "لوڈ ہو رہا ہے…",
+    "error": "کوئی خرابی پیش آگئی۔ براہ کرم دوبارہ کوشش کریں۔",
+    "cancel": "منسوخ کریں",
+    "back": "واپس",
+    "poweredBy": "UTUBooking کی طرف سے",
+    "language": "زبان"
+  },
+  "notifications": {
+    "enableTitle": "اپ ڈیٹ رہیں",
+    "enableBody": "بکنگ کی تصدیقات، قیمتوں میں کمی، اور چیک ان کی یادوں حاصل کریں۔",
+    "enableBtn": "اطلاعات فعال کریں",
+    "deniedMsg": "اطلاعات مسدود ہیں۔ براہ کرم اپنے براؤزر کی سیٹنگز میں فعال کریں۔",
+    "subscribedMsg": "آپ اب بکنگ کی تازہ معلومات حاصل کریں گے۔"
+  }
+}

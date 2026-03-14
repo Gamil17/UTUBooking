@@ -1,0 +1,77 @@
+{
+  "nav": {
+    "home": "Home",
+    "hotels": "Hotels",
+    "flights": "Flights",
+    "cars": "Cars",
+    "trips": "My Trips",
+    "loyalty": "Loyalty",
+    "signIn": "Sign In",
+    "signOut": "Sign Out"
+  },
+  "hero": {
+    "tagline": "Your Gateway to Makkah & Madinah",
+    "subtitle": "Verified hotels · Real-time availability",
+    "searchBtn": "Search"
+  },
+  "search": {
+    "destination": "Destination",
+    "destinationHint": "e.g. Makkah, Madinah, Jeddah",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "guests": "Guests",
+    "searchHotels": "Search Hotels",
+    "from": "From",
+    "to": "To",
+    "departDate": "Departure Date",
+    "returnDate": "Return Date",
+    "passengers": "Passengers",
+    "searchFlights": "Search Flights",
+    "pickupCity": "Pickup City",
+    "pickupDate": "Pickup Date",
+    "dropoffDate": "Drop-off Date",
+    "searchCars": "Search Cars"
+  },
+  "results": {
+    "hotelsFound": "{count} hotels found",
+    "noResults": "No results found.",
+    "filters": "Filters",
+    "sortBy": "Sort by",
+    "sortPrice": "Price",
+    "sortDistance": "Distance",
+    "freeCancelOnly": "Free cancellation only",
+    "perNight": "/ night",
+    "distHaram": "{m} m from Haram",
+    "bookNow": "Book Now"
+  },
+  "booking": {
+    "title": "Complete Booking",
+    "guestDetails": "Guest Details",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "nationality": "Nationality",
+    "payment": "Payment",
+    "confirm": "Confirm",
+    "payNow": "Pay Now",
+    "success": "Booking Confirmed!",
+    "ref": "Booking Reference",
+    "terms": "I agree to the Terms & Conditions and Privacy Policy."
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong. Please try again.",
+    "cancel": "Cancel",
+    "back": "Back",
+    "poweredBy": "Powered by UTUBooking",
+    "language": "Language"
+  },
+  "notifications": {
+    "enableTitle": "Stay Updated",
+    "enableBody": "Get booking confirmations, price drops, and check-in reminders.",
+    "enableBtn": "Enable Notifications",
+    "deniedMsg": "Notifications are blocked. Please enable them in your browser settings.",
+    "subscribedMsg": "You will now receive booking updates."
+  }
+}

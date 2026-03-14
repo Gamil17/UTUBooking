@@ -1,0 +1,77 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "hotels": "الفنادق",
+    "flights": "الرحلات",
+    "cars": "السيارات",
+    "trips": "رحلاتي",
+    "loyalty": "النقاط",
+    "signIn": "تسجيل الدخول",
+    "signOut": "تسجيل الخروج"
+  },
+  "hero": {
+    "tagline": "بوابتك إلى مكة المكرمة والمدينة المنورة",
+    "subtitle": "فنادق موثقة · توافر فوري",
+    "searchBtn": "بحث"
+  },
+  "search": {
+    "destination": "الوجهة",
+    "destinationHint": "مثال: مكة، المدينة، جدة",
+    "checkIn": "تسجيل الوصول",
+    "checkOut": "تسجيل المغادرة",
+    "guests": "عدد الضيوف",
+    "searchHotels": "البحث عن فنادق",
+    "from": "من",
+    "to": "إلى",
+    "departDate": "تاريخ المغادرة",
+    "returnDate": "تاريخ العودة",
+    "passengers": "الركاب",
+    "searchFlights": "البحث عن رحلات",
+    "pickupCity": "مدينة الاستلام",
+    "pickupDate": "تاريخ الاستلام",
+    "dropoffDate": "تاريخ الإرجاع",
+    "searchCars": "البحث عن سيارات"
+  },
+  "results": {
+    "hotelsFound": "{count} فندق متاح",
+    "noResults": "لا توجد نتائج.",
+    "filters": "تصفية",
+    "sortBy": "ترتيب حسب",
+    "sortPrice": "السعر",
+    "sortDistance": "المسافة",
+    "freeCancelOnly": "إلغاء مجاني فقط",
+    "perNight": "/ ليلة",
+    "distHaram": "{m} م من الحرم",
+    "bookNow": "احجز الآن"
+  },
+  "booking": {
+    "title": "إتمام الحجز",
+    "guestDetails": "بيانات الضيف",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "nationality": "الجنسية",
+    "payment": "الدفع",
+    "confirm": "تأكيد",
+    "payNow": "ادفع الآن",
+    "success": "تم تأكيد الحجز!",
+    "ref": "رقم الحجز",
+    "terms": "أوافق على الشروط والأحكام وسياسة الخصوصية."
+  },
+  "common": {
+    "loading": "جارٍ التحميل…",
+    "error": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+    "cancel": "إلغاء",
+    "back": "رجوع",
+    "poweredBy": "مشغّل بواسطة UTUBooking",
+    "language": "اللغة"
+  },
+  "notifications": {
+    "enableTitle": "ابقَ على اطلاع",
+    "enableBody": "احصل على تأكيدات الحجز وتنبيهات انخفاض الأسعار وتذكيرات الوصول.",
+    "enableBtn": "تفعيل الإشعارات",
+    "deniedMsg": "الإشعارات محجوبة. يرجى تفعيلها من إعدادات المتصفح.",
+    "subscribedMsg": "ستتلقى الآن تحديثات حجوزاتك."
+  }
+}

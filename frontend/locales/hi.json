@@ -1,0 +1,77 @@
+{
+  "nav": {
+    "home": "होम",
+    "hotels": "होटल",
+    "flights": "उड़ानें",
+    "cars": "कार",
+    "trips": "मेरी यात्राएं",
+    "loyalty": "आनुगत्य",
+    "signIn": "साइन इन करें",
+    "signOut": "साइन आउट करें"
+  },
+  "hero": {
+    "tagline": "मक्का और मदीना के लिए आपका गेटवे",
+    "subtitle": "सत्यापित होटल · रीयल-टाइम उपलब्धता",
+    "searchBtn": "खोजें"
+  },
+  "search": {
+    "destination": "गंतव्य",
+    "destinationHint": "जैसे मक्का, मदीना, जेद्दा",
+    "checkIn": "चेक-इन की तारीख",
+    "checkOut": "चेक-आउट की तारीख",
+    "guests": "मेहमान",
+    "searchHotels": "होटल खोजें",
+    "from": "से",
+    "to": "प्रति",
+    "departDate": "प्रस्थान की तारीख",
+    "returnDate": "वापसी की तारीख",
+    "passengers": "यात्रियों",
+    "searchFlights": "उड़ानें खोजें",
+    "pickupCity": "पिक-अप शहर",
+    "pickupDate": "पिक-अप की तारीख",
+    "dropoffDate": "ड्रॉप-ऑफ की तारीख",
+    "searchCars": "कारें खोजें"
+  },
+  "results": {
+    "hotelsFound": "{count} होटल मिले",
+    "noResults": "कोई परिणाम नहीं।",
+    "filters": "फिल्टर",
+    "sortBy": "द्वारा छांटें",
+    "sortPrice": "कीमत",
+    "sortDistance": "दूरी",
+    "freeCancelOnly": "केवल निःशुल्क रद्दीकरण",
+    "perNight": "/ रात",
+    "distHaram": "हराम से {m} मीटर",
+    "bookNow": "अभी बुक करें"
+  },
+  "booking": {
+    "title": "बुकिंग पूरी करें",
+    "guestDetails": "अतिथि विवरण",
+    "firstName": "पहला नाम",
+    "lastName": "अंतिम नाम",
+    "email": "ईमेल पता",
+    "phone": "फोन नंबर",
+    "nationality": "राष्ट्रीयता",
+    "payment": "भुगतान",
+    "confirm": "पुष्टि करें",
+    "payNow": "अभी भुगतान करें",
+    "success": "बुकिंग की पुष्टि हुई!",
+    "ref": "बुकिंग संदर्भ",
+    "terms": "मैं शर्तों और गोपनीयता नीति से सहमत हूँ।"
+  },
+  "common": {
+    "loading": "लोड हो रहा है…",
+    "error": "कोई त्रुटि हुई। कृपया पुनः प्रयास करें।",
+    "cancel": "रद्द करें",
+    "back": "वापिस",
+    "poweredBy": "UTUBooking द्वारा संचालित",
+    "language": "भाषा"
+  },
+  "notifications": {
+    "enableTitle": "अपडेट रहें",
+    "enableBody": "बुकिंग की पुष्टि, कीमत में कमी और चेक-इन रिमाइंडर प्राप्त करें।",
+    "enableBtn": "सूचनाएं सक्षम करें",
+    "deniedMsg": "सूचनाएं ब्लॉक की गई हैं। कृपया अपनी ब्राउजर सेटिंग्स में सक्षम करें।",
+    "subscribedMsg": "आप अब बुकिंग अपडेट प्राप्त करेंगे।"
+  }
+}

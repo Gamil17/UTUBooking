@@ -1,0 +1,77 @@
+{
+  "nav": {
+    "home": "صفحه اصلی",
+    "hotels": "هتل‌ها",
+    "flights": "پروازها",
+    "cars": "خودروها",
+    "trips": "سفرهای من",
+    "loyalty": "وفاداری",
+    "signIn": "ورود",
+    "signOut": "خروج"
+  },
+  "hero": {
+    "tagline": "دروازه شما به مکه و مدینه",
+    "subtitle": "هتل‌های تایید شده · دسترسی بلادرنگ",
+    "searchBtn": "جستجو"
+  },
+  "search": {
+    "destination": "مقصد",
+    "destinationHint": "مثلاً مکه، مدینه، جده",
+    "checkIn": "تاریخ ورود",
+    "checkOut": "تاریخ خروج",
+    "guests": "مهمانان",
+    "searchHotels": "جستجوی هتل‌ها",
+    "from": "از",
+    "to": "به",
+    "departDate": "تاریخ پرواز",
+    "returnDate": "تاریخ بازگشت",
+    "passengers": "مسافران",
+    "searchFlights": "جستجوی پروازها",
+    "pickupCity": "شهر دریافت",
+    "pickupDate": "تاریخ دریافت",
+    "dropoffDate": "تاریخ تحویل",
+    "searchCars": "جستجوی خودروها"
+  },
+  "results": {
+    "hotelsFound": "{count} هتل پیدا شد",
+    "noResults": "نتیجه‌ای یافت نشد.",
+    "filters": "فیلترها",
+    "sortBy": "مرتب سازی بر اساس",
+    "sortPrice": "قیمت",
+    "sortDistance": "فاصله",
+    "freeCancelOnly": "فقط لغو رایگان",
+    "perNight": "/ شب",
+    "distHaram": "{m} متر از حرم",
+    "bookNow": "رزرو کنید"
+  },
+  "booking": {
+    "title": "تکمیل رزرو",
+    "guestDetails": "جزئیات مهمان",
+    "firstName": "نام",
+    "lastName": "نام خانوادگی",
+    "email": "آدرس ایمیل",
+    "phone": "شماره تلفن",
+    "nationality": "تابعیت",
+    "payment": "پرداخت",
+    "confirm": "تائید",
+    "payNow": "پرداخت کنید",
+    "success": "رزرو تایید شد!",
+    "ref": "شماره مرجع رزرو",
+    "terms": "موافق‌ام با شرایط و مقررات و سیاست حفاظت از اطلاعات."
+  },
+  "common": {
+    "loading": "در حال بارگذاری…",
+    "error": "خطایی رخ داد. لطفاً دوباره سعی کنید.",
+    "cancel": "لغو",
+    "back": "بازگشت",
+    "poweredBy": "قدرت گرفته از UTUBooking",
+    "language": "زبان"
+  },
+  "notifications": {
+    "enableTitle": "به‌روز بمانید",
+    "enableBody": "تأییدها، کاهش قیمت‌ها و یادآوری‌های ورود را دریافت کنید.",
+    "enableBtn": "فعال‌سازی اطلاع‌رسانی",
+    "deniedMsg": "اطلاع‌رسانی‌ها مسدود هستند. لطفاً در تنظیمات مرورگر خود فعال کنید.",
+    "subscribedMsg": "اکنون به‌روزرسانی‌های رزرو را دریافت خواهید کرد."
+  }
+}
