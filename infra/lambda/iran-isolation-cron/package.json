@@ -1,0 +1,9 @@
+{
+  "name": "iran-isolation-cron",
+  "version": "1.0.0",
+  "description": "Lambda cron — Iran OFAC isolation verification (weekly, Mondays 06:00 UTC)",
+  "main": "handler.js",
+  "dependencies": {
+    "@aws-sdk/client-sns": "^3.0.0"
+  }
+}

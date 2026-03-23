@@ -1,0 +1,50 @@
+/* Hindi (Devanagari) CSS — LTR direction, different font only */
+
+/* ── Base ────────────────────────────────────────────────────────────────────
+   Devanagari has matras (vowel diacritics) that extend ABOVE the headline
+   bar (शिरोरेखा). Standard Latin line-height of 1.5 clips them.
+   Minimum safe line-height for Devanagari: 1.8
+   NOTE: Hindi is LTR — do NOT apply dir=rtl or text-align:right. */
+[lang='hi'] {
+  font-family: 'Noto Sans Devanagari', system-ui, sans-serif;
+  direction: ltr;            /* Hindi is LTR — NOT RTL */
+  line-height: 1.8 !important; /* Devanagari matras need extra vertical space */
+}
+
+/* ── Headings ────────────────────────────────────────────────────────────────
+   Tailwind leading-tight (1.25) / leading-snug (1.375) clips matras.
+   !important overrides Tailwind utility classes. */
+[lang='hi'] h1,
+[lang='hi'] h2,
+[lang='hi'] h3 {
+  font-family: 'Noto Sans Devanagari', system-ui, sans-serif;
+  line-height: 2 !important;
+  font-weight: 600;
+}
+
+/* ── Input fields ────────────────────────────────────────────────────────────
+   Keep direction: ltr even though the HTML element may have dir=ltr already;
+   explicit is safer against any inherited override. */
+[lang='hi'] input,
+[lang='hi'] textarea,
+[lang='hi'] select {
+  direction: ltr;
+  text-align: left;
+  font-family: 'Noto Sans Devanagari', system-ui, sans-serif;
+  line-height: 1.8;
+}
+
+/* ── Body text ───────────────────────────────────────────────────────────────
+   Paragraphs, spans, labels — all need breathing room for matras. */
+[lang='hi'] p,
+[lang='hi'] span,
+[lang='hi'] label,
+[lang='hi'] li {
+  line-height: 1.8 !important;
+}
+
+/* ── Number formatting note ──────────────────────────────────────────────────
+   India uses the South Asian numbering system: 12,34,567 (not 1,234,567).
+   CSS alone cannot reformat numbers — use formatPrice('hi') from
+   frontend/src/utils/formatting.ts which calls Intl.NumberFormat('hi-IN').
+   Do NOT hardcode SAR currency or en-SA locale for Hindi pages. */

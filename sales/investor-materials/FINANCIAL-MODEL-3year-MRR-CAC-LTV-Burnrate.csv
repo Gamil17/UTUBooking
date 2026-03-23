@@ -1,0 +1,168 @@
+DRAFT - FINANCE TEAM VALIDATION REQUIRED BEFORE INVESTOR DISTRIBUTION,,,,,,,,,
+Ref: UTU-SEED-2026-FM-001 | Version 1.0 | March 2026,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+================================================================================,,,,,,,,,
+SECTION 1 — Monthly MRR Build (Months 1–36),,,,,,,,,
+Note: Accor Group KSA anchor deal adds ~SAR 300K/month commission from Month 3,,,,,,,,,
+Growth rate: 15% MoM months 1-6 | 10% MoM months 7-18 | 7% MoM months 19-36,,,,,,,,,
+================================================================================,,,,,,,,,
+,,,,,,,,,
+Month,Date,Bookings_Count,Avg_Booking_Value_SAR,Commission_Rate_Pct,Gross_Revenue_SAR,Refunds_SAR,Net_Revenue_SAR,MRR_SAR,MoM_Growth_Pct
+1,Apr-2026,200,800,8.00%,12800,384,12416,12416,—
+2,May-2026,230,800,8.00%,14720,442,14278,14278,15.0%
+3,Jun-2026,265,810,8.00%,17145,514,16631,316631,2117.0%
+4,Jul-2026,305,810,8.00%,19766,593,19173,319173,0.8%
+5,Aug-2026,351,820,8.00%,22916,687,22229,322229,1.0%
+6,Sep-2026,403,820,8.00%,26357,791,25566,325566,1.0%
+7,Oct-2026,443,825,8.50%,31017,930,30087,330087,1.4%
+8,Nov-2026,487,825,8.50%,34133,1024,33109,333109,0.9%
+9,Dec-2026,536,830,8.50%,37538,1126,36412,336412,1.0%
+10,Jan-2027,590,830,8.50%,41369,1241,40128,340128,1.1%
+11,Feb-2027,649,835,8.50%,45518,1366,44152,344152,1.2%
+12,Mar-2027,714,835,8.50%,50074,1502,48572,348572,1.3%
+13,Apr-2027,785,840,8.50%,56049,1681,54368,354368,1.7%
+14,May-2027,864,840,8.50%,61690,1851,59840,359840,1.5%
+15,Jun-2027,950,845,8.50%,68173,2045,66128,366128,1.7%
+16,Jul-2027,1045,845,8.50%,74993,2250,72743,372743,1.8%
+17,Aug-2027,1150,850,8.50%,83028,2491,80537,380537,2.1%
+18,Sep-2027,1265,850,8.50%,91323,2740,88583,388583,2.1%
+19,Oct-2027,1353,855,9.00%,104092,3123,100969,400969,3.2%
+20,Nov-2027,1448,855,9.00%,111424,3343,108081,408081,1.8%
+21,Dec-2027,1549,860,9.00%,119982,3599,116383,416383,2.0%
+22,Jan-2028,1657,860,9.00%,128373,3851,124522,424522,2.0%
+23,Feb-2028,1773,865,9.00%,138120,4144,133977,433977,2.2%
+24,Mar-2028,1897,865,9.00%,147797,4434,143363,443363,2.2%
+25,Apr-2028,2030,870,9.00%,158841,4765,154076,454076,2.4%
+26,May-2028,2172,870,9.00%,169985,5100,164885,464885,2.4%
+27,Jun-2028,2324,875,9.00%,183022,5491,177531,477531,2.7%
+28,Jul-2028,2487,875,9.00%,195924,5878,190046,490046,2.6%
+29,Aug-2028,2661,880,9.50%,222419,6673,215746,515746,5.2%
+30,Sep-2028,2847,880,9.50%,237994,7140,230854,530854,2.9%
+31,Oct-2028,3047,885,9.50%,256199,7686,248513,548513,3.3%
+32,Nov-2028,3260,885,9.50%,274175,8225,265950,565950,3.2%
+33,Dec-2028,3488,890,9.50%,295255,8858,286397,586397,3.6%
+34,Jan-2029,3732,890,9.50%,315982,9479,306503,606503,3.4%
+35,Feb-2029,3993,895,9.50%,339603,10188,329415,629415,3.8%
+36,Mar-2029,4273,895,9.50%,363310,10899,352411,652411,3.6%
+,,,,,,,,,
+NOTES:,,,,,,,,
+- Month 3 onwards: Accor Group KSA adds fixed SAR 300K/month commission (included in MRR_SAR),,,,,,,,,
+- Commission rate blended: organic + Accor white-label SDK licensing fees,,,,,,,,,
+- Refunds modeled at 3% of Gross_Revenue_SAR,,,,,,,,,
+- MRR_SAR for Month 3+ includes Accor anchor; organic-only MRR in Net_Revenue_SAR column,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+================================================================================,,,,,,,,,
+SECTION 2 — CAC & LTV Analysis (Annual — 3 Years),,,,,,,,,
+================================================================================,,,,,,,,,
+,,,,,,,,,
+Year,New_Customers,Marketing_Spend_SAR,CAC_SAR,Avg_Annual_Bookings_Per_Customer,Avg_Booking_Value_SAR,Commission_Rate,Annual_Revenue_Per_Customer_SAR,Gross_Margin_Pct,LTV_3yr_SAR,LTV_CAC_Ratio,Payback_Months
+1 (FY2027),8000,180000,22.50,3.2,825,8.50%,224,72%,483,21.5x,1.2
+2 (FY2028),25000,420000,16.80,4.1,855,9.00%,314,74%,695,41.4x,0.6
+3 (FY2029),60000,850000,14.17,5.0,885,9.50%,420,76%,957,67.6x,0.4
+,,,,,,,,,
+METHODOLOGY NOTES:,,,,,,,,
+- CAC = Marketing_Spend / New_Customers (blended paid + organic),,,,,,,,,
+- LTV_3yr = Annual_Revenue_Per_Customer × Gross_Margin × 3 years × (1 - assumed 15% annual churn),,,,,,,,,
+- Churn Rate assumed: Year 1: 25% | Year 2: 18% | Year 3: 12% (improving with loyalty program),,,,,,,,,
+- Gross Margin improves due to AWS reserved instances + supplier rate renegotiation,,,,,,,,,
+- Payback_Months = CAC / (Monthly Revenue Per Customer × Gross Margin),,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+================================================================================,,,,,,,,,
+SECTION 3 — Monthly Burn Rate & Runway (Months 1–36),,,,,,,,,
+Note: Seed raise SAR 3M (USD ~800K) received Month 1,,,,,,,,,
+================================================================================,,,,,,,,,
+,,,,,,,,,
+Month,Date,Headcount,Salaries_SAR,AWS_Hosting_SAR,Marketing_SAR,Office_Other_SAR,Total_Burn_SAR,Revenue_SAR,Net_Burn_SAR,Cumulative_Burn_SAR,Cash_Balance_SAR
+1,Apr-2026,8,96000,8000,15000,12000,131000,12416,-118584,131000,2869000
+2,May-2026,8,96000,8500,15000,12000,131500,14278,-117222,262500,2751500
+3,Jun-2026,10,120000,9000,18000,14000,161000,316631,155631,423500,2907131
+4,Jul-2026,10,120000,9500,20000,14000,163500,319173,155673,587000,3062804
+5,Aug-2026,11,132000,10000,22000,15000,179000,322229,143229,766000,3206033
+6,Sep-2026,11,132000,10500,22000,15000,179500,325566,146066,945500,3352099
+7,Oct-2026,12,144000,11000,25000,16000,196000,330087,134087,1141500,3486186
+8,Nov-2026,12,144000,11500,25000,16000,196500,333109,136609,1338000,3622795
+9,Dec-2026,13,156000,12000,28000,17000,213000,336412,123412,1551000,3746207
+10,Jan-2027,13,156000,12500,28000,17000,213500,340128,126628,1764500,3872835
+11,Feb-2027,14,168000,13000,30000,18000,229000,344152,115152,1993500,3987987
+12,Mar-2027,14,168000,13500,30000,18000,229500,348572,119072,2223000,4107059
+13,Apr-2027,15,180000,14000,32000,19000,245000,354368,109368,2468000,4216427
+14,May-2027,15,180000,14500,32000,19000,245500,359840,114340,2713500,4330767
+15,Jun-2027,16,192000,15000,35000,20000,262000,366128,104128,2975500,4434895
+16,Jul-2027,16,192000,15500,35000,20000,262500,372743,110243,3238000,4545138
+17,Aug-2027,17,204000,16000,38000,21000,279000,380537,101537,3517000,4646675
+18,Sep-2027,17,204000,16500,38000,21000,279500,388583,109083,3796500,4755758
+19,Oct-2027,18,216000,17000,40000,22000,295000,400969,105969,4091500,4861727
+20,Nov-2027,18,216000,17500,40000,22000,295500,408081,112581,4387000,4974308
+21,Dec-2027,19,228000,18000,42000,23000,311000,416383,105383,4698000,5079691
+22,Jan-2028,19,228000,18500,42000,23000,311500,424522,113022,5009500,5192713
+23,Feb-2028,20,240000,19000,45000,24000,328000,433977,105977,5337500,5298690
+24,Mar-2028,20,240000,19500,45000,24000,328500,443363,114863,5666000,5413553
+25,Apr-2028,21,252000,20000,48000,25000,345000,454076,109076,6011000,5522629
+26,May-2028,21,252000,20500,48000,25000,345500,464885,119385,6356500,5642014
+27,Jun-2028,22,264000,21000,50000,26000,361000,477531,116531,6717500,5758545
+28,Jul-2028,22,264000,21500,50000,26000,361500,490046,128546,7079000,5887091
+29,Aug-2028,22,264000,22000,52000,26000,364000,515746,151746,7443000,6038837
+30,Sep-2028,22,264000,22500,52000,26000,364500,530854,166354,7807500,6205191
+31,Oct-2028,22,264000,23000,55000,27000,369000,548513,179513,8176500,6384704
+32,Nov-2028,22,264000,23500,55000,27000,369500,565950,196450,8546000,6581154
+33,Dec-2028,22,264000,24000,58000,27000,373000,586397,213397,8919000,6794551
+34,Jan-2029,22,264000,24500,58000,28000,374500,606503,232003,9293500,7026554
+35,Feb-2029,22,264000,25000,60000,28000,377000,629415,252415,9670500,7278969
+36,Mar-2029,22,264000,25500,60000,28000,377500,652411,274911,10048000,7553880
+,,,,,,,,,
+NOTES:,,,,,,,,
+- Salaries: Blended ~SAR 12K/head/month (engineers SAR 15K | ops SAR 9K | sales SAR 11K),,,,,,,,,
+- Break-even (Net_Burn_SAR > 0 sustained) achieved at Month 20 (Nov 2027),,,,,,,,,
+- Cash_Balance includes Accor advance payment and compound revenue reinvestment,,,,,,,,,
+- AWS costs include RDS + EC2 + CloudFront CDN + S3 storage for media,,,,,,,,,
+- Office_Other includes legal retainer SAR 3K/mo + insurance + misc,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+================================================================================,,,,,,,,,
+SECTION 4 — Unit Economics Summary,,,,,,,,,
+================================================================================,,,,,,,,,
+,,,,,,,,,
+Metric,Year 1,Year 2,Year 3,Notes
+Gross Margin %,72%,74%,76%,Improving via volume discounts + infra optimisation
+Net Margin %,-38%,+4%,+22%,Path to profitability Month 20
+ARPU (Annual Revenue Per User) SAR,224,314,420,Commission revenue per active customer
+Churn Rate (Annual),25%,18%,12%,Improving with loyalty program + Hajj repeat customers
+NPS Target Score,45,58,70,Benchmark: Wego ~48 | Booking.com ~62
+Blended CAC SAR,22.50,16.80,14.17,Declining due to organic/referral channel maturity
+Customer Retention Rate,75%,82%,88%,Inverse of churn
+Repeat Booking Rate,42%,55%,65%,Key driver of LTV improvement
+Average Booking Value SAR,825,855,885,Gradually improving via upsell (hotel upgrades + car)
+Commission Blended Rate,8.50%,9.00%,9.50%,Improving as Accor + white-label contracts scale
+,,,,,,,,,
+,,,,,,,,,
+================================================================================,,,,,,,,,
+SECTION 5 — Sensitivity Analysis (Annual Commission Revenue SAR),,,,,,,,,
+Base scenario assumes Year 3 run-rate bookings volume,,,,,,,,,
+================================================================================,,,,,,,,,
+,,,,,,,,,
+YEAR 1 SENSITIVITY — Total Annual Booking Volume: SAR 32M,,,,,,,,
+,Commission Rate 7%,Commission Rate 8.5%,Commission Rate 10%,,,,,,
+Conservative (70% occupancy / low volume),1568000,1904000,2240000,,,,,,
+Base Case (85% occupancy / mid volume),1904000,2312000,2720000,,,,,,
+Optimistic (95% occupancy / high volume),2128000,2584000,3040000,,,,,,
+,,,,,,,,,
+YEAR 2 SENSITIVITY — Total Annual Booking Volume: SAR 96M,,,,,,,,
+,Commission Rate 7%,Commission Rate 8.5%,Commission Rate 10%,,,,,,
+Conservative (70% occupancy / low volume),4704000,5712000,6720000,,,,,,
+Base Case (85% occupancy / mid volume),5712000,6936000,8160000,,,,,,
+Optimistic (95% occupancy / high volume),6384000,7752000,9120000,,,,,,
+,,,,,,,,,
+YEAR 3 SENSITIVITY — Total Annual Booking Volume: SAR 230M,,,,,,,,
+,Commission Rate 7%,Commission Rate 8.5%,Commission Rate 10%,,,,,,
+Conservative (70% occupancy / low volume),11270000,13685000,16100000,,,,,,
+Base Case (85% occupancy / mid volume),13685000,16618000,19550000,,,,,,
+Optimistic (95% occupancy / high volume),15295000,18568500,21850000,,,,,,
+,,,,,,,,,
+NOTES:,,,,,,,,
+- Accor Group KSA (920 rooms): SAR 3.6M/yr at base case (included in Base Case row),,,,,,,,,
+- Occupancy scenarios reflect seasonal Hajj/Umrah peaks (peak: Dhul Hijjah | Ramadan),,,,,,,,,
+- White-label SDK licensing revenue (SAR 500K-1.2M/yr by Year 3) excluded from this matrix,,,,,,,,,
+- All figures in SAR. USD equivalent: divide by 3.75,,,,,,,,,

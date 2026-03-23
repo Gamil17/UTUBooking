@@ -1,0 +1,153 @@
+{
+  "title": "UTUBooking — Database (PostgreSQL)",
+  "uid": "utu-database",
+  "tags": ["utubooking", "postgresql"],
+  "timezone": "Asia/Riyadh",
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Active Connections (Primary vs Replicas)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "pg_stat_activity_count{instance=~\".*primary.*\"}",
+          "legendFormat": "Primary"
+        },
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "pg_stat_activity_count{instance=~\".*replica.*\"}",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 90, "color": "yellow" },
+              { "value": 110, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Replication Lag (seconds)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "pg_replication_lag",
+          "legendFormat": "{{instance}} lag"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 10, "color": "yellow" },
+              { "value": 30, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Queries per Second",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "rate(pg_stat_database_xact_commit{datname=\"utu_booking\"}[1m]) + rate(pg_stat_database_xact_rollback{datname=\"utu_booking\"}[1m])",
+          "legendFormat": "TPS (commit+rollback)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops" }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Slow Queries Rate (>1s)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "rate(pg_stat_statements_total_time_seconds{datname=\"utu_booking\"}[5m]) / rate(pg_stat_statements_calls{datname=\"utu_booking\"}[5m]) > 1",
+          "legendFormat": "{{queryid}} avg duration"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      }
+    },
+    {
+      "id": 5,
+      "title": "DB Cache Hit Ratio",
+      "type": "gauge",
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "pg_stat_database_blks_hit{datname=\"utu_booking\"} / (pg_stat_database_blks_hit{datname=\"utu_booking\"} + pg_stat_database_blks_read{datname=\"utu_booking\"}) * 100"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "red" },
+              { "value": 90, "color": "yellow" },
+              { "value": 99, "color": "green" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Connection State Breakdown (Primary)",
+      "type": "piechart",
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "pg_stat_activity_count{instance=~\".*primary.*\"}",
+          "legendFormat": "{{state}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Table Bloat — Bookings Table",
+      "type": "stat",
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "pg_stat_user_tables_n_dead_tup{relname=\"bookings\"} / pg_stat_user_tables_n_live_tup{relname=\"bookings\"} * 100"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "displayName": "Dead Tuple %"
+        }
+      }
+    }
+  ]
+}

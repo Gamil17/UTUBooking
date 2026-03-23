@@ -1,0 +1,129 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    region: me-south-1
+    env:    production
+
+rule_files:
+  - alerts/*.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+scrape_configs:
+
+  # ── Nginx gateway ───────────────────────────────────────────────────────────
+  - job_name: utu-gateway
+    static_configs:
+      - targets: ["nginx-exporter:9113"]
+    relabel_configs:
+      - target_label: service
+        replacement:  gateway
+
+  # ── Auth service ────────────────────────────────────────────────────────────
+  - job_name: utu-auth
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["auth-service:3001"]
+    relabel_configs:
+      - target_label: service
+        replacement:  auth
+
+  # ── Hotel service ───────────────────────────────────────────────────────────
+  - job_name: utu-hotel
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["hotel-service:3003"]
+    relabel_configs:
+      - target_label: service
+        replacement:  hotel
+
+  # ── Flight service ──────────────────────────────────────────────────────────
+  - job_name: utu-flight
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["flight-service:3004"]
+    relabel_configs:
+      - target_label: service
+        replacement:  flight
+
+  # ── Car service ─────────────────────────────────────────────────────────────
+  - job_name: utu-car
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["car-service:3005"]
+    relabel_configs:
+      - target_label: service
+        replacement:  car
+
+  # ── Booking service ─────────────────────────────────────────────────────────
+  - job_name: utu-booking
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["booking-service:3006"]
+    relabel_configs:
+      - target_label: service
+        replacement:  booking
+
+  # ── Payment service ─────────────────────────────────────────────────────────
+  - job_name: utu-payment
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["payment-service:3007"]
+    relabel_configs:
+      - target_label: service
+        replacement:  payment
+
+  # ── Loyalty service ─────────────────────────────────────────────────────────
+  - job_name: utu-loyalty
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["loyalty-service:3008"]
+    relabel_configs:
+      - target_label: service
+        replacement:  loyalty
+
+  # ── PostgreSQL exporter ─────────────────────────────────────────────────────
+  - job_name: postgres
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+
+  # ── Redis exporter ──────────────────────────────────────────────────────────
+  - job_name: redis
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+
+  # ── Read replica PostgreSQL exporters ───────────────────────────────────────
+  - job_name: postgres-replica-1
+    static_configs:
+      - targets: ["postgres-exporter-replica-1:9187"]
+    relabel_configs:
+      - target_label: instance
+        replacement: primary-replica-1
+
+  - job_name: postgres-replica-2
+    static_configs:
+      - targets: ["postgres-exporter-replica-2:9187"]
+    relabel_configs:
+      - target_label: instance
+        replacement: primary-replica-2
+
+  # ── Prometheus Pushgateway (backup metrics) ──────────────────────────────────
+  - job_name: pushgateway
+    honor_labels: true
+    static_configs:
+      - targets: ["pushgateway:9091"]
+
+  # ── Grafana ──────────────────────────────────────────────────────────────────
+  - job_name: grafana
+    metrics_path: /grafana/metrics
+    static_configs:
+      - targets: ["grafana:3000"]
+
+  # ── Prometheus self-monitoring ──────────────────────────────────────────────
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

@@ -1,0 +1,322 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking Phase 4 — Route53 Global Traffic Routing (updated)
+  Latency routing (primary) + Geoproximity (North Africa → EU-West)
+  Regions: Bahrain (me-south-1), Riyadh (me-central-1), EU-West (eu-west-1)
+  SLA target: 99.95% — health checks every 10s during Hajj peak
+
+Parameters:
+  HostedZoneId:
+    Type: String
+    Description: Route53 Hosted Zone ID for utubooking.com
+
+  BahrainALBDNS:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/bahrain/alb-dns
+
+  BahrainALBHostedZone:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/bahrain/alb-hosted-zone
+
+  RiyadhALBDNS:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/riyadh/alb-dns
+
+  RiyadhALBHostedZone:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/riyadh/alb-hosted-zone
+
+  EUWestALBDNS:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/eu/alb-dns
+
+  EUWestALBHostedZone:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/eu/alb-hosted-zone
+
+  HajjMode:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: >
+      Set to true during Hajj season to reduce health check intervals to 10s.
+      Triggered by EventBridge rule on May 19 annually.
+
+Conditions:
+  IsHajjMode: !Equals [!Ref HajjMode, "true"]
+
+Resources:
+
+  # ── Health Checks ──────────────────────────────────────────────────────────
+
+  HealthCheckBahrain:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        FullyQualifiedDomainName: !Ref BahrainALBDNS
+        ResourcePath: /health
+        Port: 443
+        RequestInterval: !If [IsHajjMode, 10, 30]
+        FailureThreshold: 3
+        EnableSNI: true
+        Regions: [me-south-1, eu-west-1, ap-southeast-1]
+        MeasureLatency: true
+      HealthCheckTags:
+        - {Key: Region, Value: me-south-1}
+        - {Key: Name, Value: utu-bahrain-health}
+
+  HealthCheckRiyadh:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        FullyQualifiedDomainName: !Ref RiyadhALBDNS
+        ResourcePath: /health
+        Port: 443
+        RequestInterval: !If [IsHajjMode, 10, 30]
+        FailureThreshold: 3
+        EnableSNI: true
+        Regions: [me-central-1, eu-west-1, ap-southeast-1]
+        MeasureLatency: true
+      HealthCheckTags:
+        - {Key: Region, Value: me-central-1}
+        - {Key: Name, Value: utu-riyadh-health}
+
+  HealthCheckEUWest:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        FullyQualifiedDomainName: !Ref EUWestALBDNS
+        ResourcePath: /health
+        Port: 443
+        RequestInterval: !If [IsHajjMode, 10, 30]
+        FailureThreshold: 3
+        EnableSNI: true
+        Regions: [eu-west-1, eu-central-1, us-east-1]
+        MeasureLatency: true
+      HealthCheckTags:
+        - {Key: Region, Value: eu-west-1}
+        - {Key: Name, Value: utu-eu-west-health}
+
+  # Calculated: at least 1 of 2 primary regions must be healthy
+  HealthCheckBothPrimaries:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: CALCULATED
+        ChildHealthChecks:
+          - !Ref HealthCheckBahrain
+          - !Ref HealthCheckRiyadh
+        HealthThreshold: 1
+      HealthCheckTags:
+        - {Key: Name, Value: utu-both-primaries}
+
+  # ── api.utubooking.com — Latency Routing ──────────────────────────────────
+
+  DNSApiBahrain:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: bahrain-latency
+      Region: me-south-1
+      HealthCheckId: !Ref HealthCheckBahrain
+      AliasTarget:
+        DNSName: !Ref BahrainALBDNS
+        HostedZoneId: !Ref BahrainALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiRiyadh:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: riyadh-latency
+      Region: me-central-1
+      HealthCheckId: !Ref HealthCheckRiyadh
+      AliasTarget:
+        DNSName: !Ref RiyadhALBDNS
+        HostedZoneId: !Ref RiyadhALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiEUWest:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: eu-west-latency
+      Region: eu-west-1
+      HealthCheckId: !Ref HealthCheckEUWest
+      AliasTarget:
+        DNSName: !Ref EUWestALBDNS
+        HostedZoneId: !Ref EUWestALBHostedZone
+        EvaluateTargetHealth: true
+
+  # ── Phase 4: Geoproximity Routing ─────────────────────────────────────────
+  # Overlay on top of latency routing — geoproximity takes precedence when
+  # a bias pushes a region's effective radius to cover the user's location.
+  # GCC users → Bahrain, KSA users → Riyadh, N.Africa users → EU-West
+
+  DNSApiGeoBahrain:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: bahrain-geo
+      GeoProximityLocation:
+        AWSRegion: me-south-1
+        Bias: 10
+      HealthCheckId: !Ref HealthCheckBahrain
+      AliasTarget:
+        DNSName: !Ref BahrainALBDNS
+        HostedZoneId: !Ref BahrainALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiGeoRiyadh:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: riyadh-geo
+      GeoProximityLocation:
+        AWSRegion: me-central-1
+        Bias: 20    # Strongest — KSA always prefers Riyadh
+      HealthCheckId: !Ref HealthCheckRiyadh
+      AliasTarget:
+        DNSName: !Ref RiyadhALBDNS
+        HostedZoneId: !Ref RiyadhALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiGeoEUWest:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: eu-west-geo
+      GeoProximityLocation:
+        AWSRegion: eu-west-1
+        Bias: 15    # N.Africa (MAR, DZA, TUN, LBY, EGY) covered by EU-West radius
+      HealthCheckId: !Ref HealthCheckEUWest
+      AliasTarget:
+        DNSName: !Ref EUWestALBDNS
+        HostedZoneId: !Ref EUWestALBHostedZone
+        EvaluateTargetHealth: true
+
+  # ── Pinned subdomains ─────────────────────────────────────────────────────
+
+  DNSApiKSA:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api-ksa.utubooking.com.
+      Type: A
+      AliasTarget:
+        DNSName: !Ref RiyadhALBDNS
+        HostedZoneId: !Ref RiyadhALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiEU:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api-eu.utubooking.com.
+      Type: A
+      AliasTarget:
+        DNSName: !Ref EUWestALBDNS
+        HostedZoneId: !Ref EUWestALBHostedZone
+        EvaluateTargetHealth: true
+
+  # ── CloudWatch Alarms ─────────────────────────────────────────────────────
+
+  AlarmBahrainUnhealthy:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-bahrain-unhealthy
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref HealthCheckBahrain
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Sub arn:aws:sns:us-east-1:${AWS::AccountId}:utu-global-alerts
+      TreatMissingData: breaching
+
+  AlarmRiyadhUnhealthy:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-riyadh-unhealthy
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref HealthCheckRiyadh
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Sub arn:aws:sns:us-east-1:${AWS::AccountId}:utu-global-alerts
+      TreatMissingData: breaching
+
+  AlarmEUWestUnhealthy:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-eu-west-unhealthy
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref HealthCheckEUWest
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Sub arn:aws:sns:us-east-1:${AWS::AccountId}:utu-global-alerts
+      TreatMissingData: breaching
+
+  AlarmAllPrimariesDown:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-ALL-regions-down-P1
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref HealthCheckBothPrimaries
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Sub arn:aws:sns:us-east-1:${AWS::AccountId}:utu-p1-pagerduty
+      TreatMissingData: breaching
+
+Outputs:
+  HealthCheckBahrainId:
+    Value: !Ref HealthCheckBahrain
+    Export: {Name: utu-health-check-bahrain}
+
+  HealthCheckRiyadhId:
+    Value: !Ref HealthCheckRiyadh
+    Export: {Name: utu-health-check-riyadh}
+
+  HealthCheckEUWestId:
+    Value: !Ref HealthCheckEUWest
+    Export: {Name: utu-health-check-eu-west}

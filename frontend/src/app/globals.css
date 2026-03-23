@@ -49,8 +49,10 @@ body {
   text-align: right;
 }
 
-/* Arabic font stack activates when dir=rtl is on the html element */
-[dir="rtl"] {
+/* Arabic font stack activates when dir=rtl is on the html element.
+   Exclude ur/fa — those locales manage their own fonts above and must
+   NOT be overridden with the Arabic Naskh face. */
+[dir="rtl"]:not([lang="ur"]):not([lang="fa"]) {
   font-family: var(--font-arabic);
   letter-spacing: 0;
 }

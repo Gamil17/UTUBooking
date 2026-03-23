@@ -1,0 +1,80 @@
+global:
+  resolve_timeout: 5m
+  # PagerDuty API v2 URL (default — no change needed)
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+route:
+  # Group alerts by service + alert name to reduce noise
+  group_by: [alertname, service]
+  group_wait:      30s   # Wait 30s to batch related alerts
+  group_interval:  5m    # Min 5m between group notifications
+  repeat_interval: 4h    # Re-notify every 4h if still firing
+  receiver: pagerduty-critical
+
+  routes:
+    # Warning-severity alerts go to Slack only (no 3am pages for warnings)
+    - match:
+        severity: warning
+      receiver: slack-warnings
+      continue: true   # also send to pagerduty-warning for audit trail
+
+    - match:
+        severity: warning
+      receiver: pagerduty-warning
+      continue: false
+
+    # Critical alerts always page the on-call engineer
+    - match:
+        severity: critical
+      receiver: pagerduty-critical
+      continue: false
+
+receivers:
+  - name: slack-warnings
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#ops-alerts'
+        title: '⚠️ [{{ .CommonLabels.service }}] {{ .CommonAnnotations.summary }}'
+        text: |
+          {{ .CommonAnnotations.description }}
+          *Severity:* {{ .CommonLabels.severity }}
+          *Region:* me-south-1
+        send_resolved: true
+
+  - name: pagerduty-critical
+    pagerduty_configs:
+      - routing_key: '${PAGERDUTY_CRITICAL_KEY}'
+        description: '{{ .CommonAnnotations.summary }}'
+        severity: critical
+        details:
+          service:     '{{ .CommonLabels.service }}'
+          environment: production
+          region:      me-south-1
+          description: '{{ .CommonAnnotations.description }}'
+          runbook:     'https://github.com/amec-solutions/utubooking/blob/main/infra/dr/restore-runbook.md'
+
+  - name: pagerduty-warning
+    pagerduty_configs:
+      - routing_key: '${PAGERDUTY_WARNING_KEY}'
+        description: '{{ .CommonAnnotations.summary }}'
+        severity: warning
+        details:
+          service:     '{{ .CommonLabels.service }}'
+          environment: production
+          region:      me-south-1
+          description: '{{ .CommonAnnotations.description }}'
+
+inhibit_rules:
+  # Suppress warning alerts when a matching critical alert is already firing
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: [alertname, service]
+
+  # Suppress all alerts when ServiceDown is firing for that service
+  - source_match:
+      alertname: ServiceDown
+    target_match_re:
+      alertname: .+
+    equal: [service]

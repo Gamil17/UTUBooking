@@ -1,0 +1,81 @@
+# UTUBooking — OWASP ZAP Full Active Scan Configuration
+# WARNING: Active scan sends attack payloads — run against STAGING only.
+# Never run against production. Scheduled weekly via security-scan.yml workflow.
+#
+# Usage:
+#   docker run --rm -v $(pwd)/security/zap:/zap/wrk/:rw \
+#     ghcr.io/zaproxy/zaproxy:stable \
+#     zap-full-scan.py \
+#     -t https://staging-api.utubooking.com \
+#     -c /zap/wrk/zap-full-scan.yml \
+#     -r /zap/wrk/reports/full-$(date +%Y%m%d).html \
+#     -J /zap/wrk/reports/full-$(date +%Y%m%d).json \
+#     -d   # debug output
+
+# Rate-limit active scan to avoid triggering staging alerts
+env:
+  parameters:
+    threadPerHost: 2          # Low thread count — staging is shared
+    maxScanDurationInMins: 60
+
+# Spider configuration
+spider:
+  maxDuration: 10             # 10 minutes max spider
+  acceptCookies: true
+  sendRefererHeader: true
+
+# Authentication context for authenticated scan
+context:
+  name: UTUBooking API
+  urls:
+    - https://staging-api.utubooking.com
+  authentication:
+    method: json
+    parameters:
+      loginUrl: https://staging-api.utubooking.com/api/v1/auth/login
+      loginRequestData: '{"email":"{%username%}","password":"{%password%}"}'
+    verification:
+      method: response
+      loggedInRegex: '"accessToken"'
+      loggedOutRegex: '"UNAUTHORIZED"'
+
+# Active scan policy
+activeScan:
+  policy: Default Policy
+  rules:
+    # SQL injection — HIGH priority
+    - id: 40018
+      threshold: HIGH
+      strength: HIGH
+    # Command injection
+    - id: 90020
+      threshold: HIGH
+      strength: MEDIUM
+    # XSS reflected
+    - id: 40012
+      threshold: HIGH
+      strength: HIGH
+    # Path traversal
+    - id: 6
+      threshold: HIGH
+      strength: MEDIUM
+    # Remote file inclusion
+    - id: 7
+      threshold: HIGH
+      strength: LOW
+
+rules:
+  - id: 10038
+    threshold: FAIL
+  - id: 10035
+    threshold: FAIL
+  - id: 40014
+    threshold: FAIL
+  - id: 40018
+    threshold: FAIL
+  - id: 10054
+    threshold: WARN
+  - id: 10098
+    threshold: IGNORE
+  - id: 10017
+    threshold: IGNORE

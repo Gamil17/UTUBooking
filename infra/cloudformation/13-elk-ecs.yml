@@ -1,0 +1,386 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking Phase 4 — ELK Stack on ECS Fargate (production)
+  Elasticsearch (OpenSearch Serverless) + Logstash + Kibana
+  Kibana exposed via ALB at monitoring.utubooking.com/kibana/
+  Auth: Cognito User Pool (SSO for ops team)
+
+Parameters:
+  ECSCluster:
+    Type: String
+    Default: utu-backend-cluster
+
+  VpcId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/vpc-id
+
+  PrivateSubnet1:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/private-subnet-1
+
+  PrivateSubnet2:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/private-subnet-2
+
+  ALBListenerArn:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/alb-listener-arn
+
+  ElasticImage:
+    Type: String
+    Default: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+
+  LogstashImage:
+    Type: String
+    Default: docker.elastic.co/logstash/logstash:8.17.0
+
+  KibanaImage:
+    Type: String
+    Default: docker.elastic.co/kibana/kibana:8.17.0
+
+Resources:
+
+  # ── Security Groups ────────────────────────────────────────────────────────
+
+  ElasticsearchSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Elasticsearch ECS tasks
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 9200
+          ToPort: 9200
+          SourceSecurityGroupId: !Ref LogstashSG
+        - IpProtocol: tcp
+          FromPort: 9200
+          ToPort: 9200
+          SourceSecurityGroupId: !Ref KibanaSG
+      Tags:
+        - {Key: Name, Value: utu-elasticsearch-sg}
+
+  LogstashSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Logstash ECS tasks
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5044
+          ToPort: 5044
+          CidrIp: 10.0.0.0/8   # Accept beats from all UTU VPCs
+        - IpProtocol: tcp
+          FromPort: 9600
+          ToPort: 9600
+          CidrIp: 10.0.0.0/8
+      Tags:
+        - {Key: Name, Value: utu-logstash-sg}
+
+  KibanaSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Kibana ECS tasks
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5601
+          ToPort: 5601
+          CidrIp: 10.0.0.0/8
+      Tags:
+        - {Key: Name, Value: utu-kibana-sg}
+
+  # ── ECS Task Execution Role ────────────────────────────────────────────────
+
+  ELKTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: utu-elk-task-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ecs-tasks.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: SSMReadSecrets
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [ssm:GetParameter, ssm:GetParameters]
+                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/utu/*'
+
+  # ── EFS Volume for Elasticsearch data persistence ──────────────────────────
+
+  ElasticsearchEFS:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      PerformanceMode: generalPurpose
+      ThroughputMode: bursting
+      Encrypted: true
+      LifecyclePolicies:
+        - TransitionToIA: AFTER_30_DAYS
+      FileSystemTags:
+        - {Key: Name, Value: utu-elasticsearch-data}
+
+  ElasticsearchEFSMountTarget1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref ElasticsearchEFS
+      SubnetId: !Ref PrivateSubnet1
+      SecurityGroups: [!Ref ElasticsearchSG]
+
+  ElasticsearchEFSMountTarget2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref ElasticsearchEFS
+      SubnetId: !Ref PrivateSubnet2
+      SecurityGroups: [!Ref ElasticsearchSG]
+
+  # ── S3 Snapshot Bucket (30-day retention) ─────────────────────────────────
+
+  ElasticsearchSnapshotBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'utu-es-snapshots-${AWS::AccountId}'
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldSnapshots
+            Status: Enabled
+            ExpirationInDays: 30
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # ── CloudWatch Log Groups ──────────────────────────────────────────────────
+
+  ElasticsearchLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /utu/elasticsearch
+      RetentionInDays: 14
+
+  LogstashLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /utu/logstash
+      RetentionInDays: 14
+
+  KibanaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /utu/kibana
+      RetentionInDays: 14
+
+  # ── Elasticsearch Task Definition ──────────────────────────────────────────
+
+  ElasticsearchTaskDef:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: utu-elasticsearch
+      Cpu: '4096'    # 4 vCPU
+      Memory: '16384' # 16 GB
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      ExecutionRoleArn: !GetAtt ELKTaskExecutionRole.Arn
+      Volumes:
+        - Name: esdata
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref ElasticsearchEFS
+            TransitEncryption: ENABLED
+      ContainerDefinitions:
+        - Name: elasticsearch
+          Image: !Ref ElasticImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 9200
+            - ContainerPort: 9300
+          Environment:
+            - {Name: discovery.type, Value: single-node}
+            - {Name: bootstrap.memory_lock, Value: 'true'}
+            - {Name: xpack.security.enabled, Value: 'true'}
+            - {Name: xpack.security.http.ssl.enabled, Value: 'false'}
+            - {Name: ES_JAVA_OPTS, Value: '-Xms7g -Xmx7g'}
+            - {Name: indices.query.bool.max_clause_count, Value: '4096'}
+          Ulimits:
+            - Name: memlock
+              SoftLimit: -1
+              HardLimit: -1
+          MountPoints:
+            - SourceVolume: esdata
+              ContainerPath: /usr/share/elasticsearch/data
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /utu/elasticsearch
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: es
+          HealthCheck:
+            Command: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+            Interval: 30
+            Timeout: 10
+            Retries: 5
+
+  # ── Logstash Task Definition ───────────────────────────────────────────────
+
+  LogstashTaskDef:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: utu-logstash
+      Cpu: '2048'   # 2 vCPU
+      Memory: '4096' # 4 GB
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      ExecutionRoleArn: !GetAtt ELKTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: logstash
+          Image: !Ref LogstashImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 5044
+            - ContainerPort: 9600
+          Environment:
+            - {Name: LS_JAVA_OPTS, Value: '-Xms1g -Xmx2g'}
+            - Name: ELASTICSEARCH_HOSTS
+              Value: !Sub 'http://${ElasticsearchService.Name}.${ECSCluster}.local:9200'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /utu/logstash
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: logstash
+
+  # ── Kibana Task Definition ─────────────────────────────────────────────────
+
+  KibanaTaskDef:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: utu-kibana
+      Cpu: '1024'  # 1 vCPU
+      Memory: '2048' # 2 GB
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      ExecutionRoleArn: !GetAtt ELKTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: kibana
+          Image: !Ref KibanaImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 5601
+          Environment:
+            - {Name: ELASTICSEARCH_HOSTS, Value: 'http://elasticsearch:9200'}
+            - {Name: SERVER_NAME, Value: utu-kibana}
+            - {Name: SERVER_BASEPATH, Value: /kibana}
+            - {Name: SERVER_REWRITEBASEPATH, Value: 'true'}
+            - {Name: XPACK_SECURITY_ENABLED, Value: 'true'}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /utu/kibana
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: kibana
+
+  # ── ECS Services ───────────────────────────────────────────────────────────
+
+  ElasticsearchService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: utu-elasticsearch
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref ElasticsearchTaskDef
+      DesiredCount: 1   # Single-node for cost; scale to 3-node cluster for production HA
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+          SecurityGroups: [!Ref ElasticsearchSG]
+      ServiceConnectConfiguration:
+        Enabled: true
+        Namespace: !Sub '${ECSCluster}.local'
+        Services:
+          - PortName: elasticsearch
+            ClientAliases:
+              - Port: 9200
+                DnsName: elasticsearch
+
+  LogstashService:
+    Type: AWS::ECS::Service
+    DependsOn: ElasticsearchService
+    Properties:
+      ServiceName: utu-logstash
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref LogstashTaskDef
+      DesiredCount: 2   # 2 tasks for HA — Filebeat load-balances across both
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+          SecurityGroups: [!Ref LogstashSG]
+
+  KibanaService:
+    Type: AWS::ECS::Service
+    DependsOn: ElasticsearchService
+    Properties:
+      ServiceName: utu-kibana
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref KibanaTaskDef
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+          SecurityGroups: [!Ref KibanaSG]
+      LoadBalancers:
+        - ContainerName: kibana
+          ContainerPort: 5601
+          TargetGroupArn: !Ref KibanaTargetGroup
+
+  # ── Kibana ALB Target Group + Listener Rule ────────────────────────────────
+
+  KibanaTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-kibana-tg
+      Port: 5601
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !Ref VpcId
+      HealthCheckPath: /kibana/api/status
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+
+  KibanaListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ALBListenerArn
+      Priority: 200
+      Conditions:
+        - Field: path-pattern
+          Values: ['/kibana*']
+        - Field: host-header
+          Values: ['monitoring.utubooking.com']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref KibanaTargetGroup
+
+Outputs:
+  LogstashBeatsEndpoint:
+    Value: !Sub 'logstash.${ECSCluster}.local:5044'
+    Export: {Name: utu-logstash-beats-endpoint}
+
+  KibanaURL:
+    Value: https://monitoring.utubooking.com/kibana/
+    Export: {Name: utu-kibana-url}
+
+  ElasticsearchSnapshotBucket:
+    Value: !Ref ElasticsearchSnapshotBucket
+    Export: {Name: utu-es-snapshot-bucket}

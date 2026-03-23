@@ -26,24 +26,29 @@ const { Pool } = require('pg');
 
 const SHARD_ENV_MAP = {
   // Saudi Arabia
-  SAU: { writeEnv: 'DB_URL_KSA', readEnv: 'READ_DB_URL_KSA' },
+  SAU: { writeEnv: 'DB_URL_KSA',      readEnv: 'READ_DB_URL_KSA' },
   // UAE
-  ARE: { writeEnv: 'DB_URL_UAE', readEnv: 'READ_DB_URL_UAE' },
+  ARE: { writeEnv: 'DB_URL_UAE',      readEnv: 'READ_DB_URL_UAE' },
   // Kuwait
-  KWT: { writeEnv: 'DB_URL_KWT', readEnv: 'READ_DB_URL_KWT' },
+  KWT: { writeEnv: 'DB_URL_KWT',      readEnv: 'READ_DB_URL_KWT' },
   // Jordan
-  JOR: { writeEnv: 'DB_URL_JOR', readEnv: 'READ_DB_URL_JOR' },
+  JOR: { writeEnv: 'DB_URL_JOR',      readEnv: 'READ_DB_URL_JOR' },
   // Morocco
-  MAR: { writeEnv: 'DB_URL_MAR', readEnv: 'READ_DB_URL_MAR' },
+  MAR: { writeEnv: 'DB_URL_MAR',      readEnv: 'READ_DB_URL_MAR' },
   // Tunisia
-  TUN: { writeEnv: 'DB_URL_TUN', readEnv: 'READ_DB_URL_TUN' },
-  // Turkey — EU region for KVKK data residency (Phase 5)
+  TUN: { writeEnv: 'DB_URL_TUN',      readEnv: 'READ_DB_URL_TUN' },
+  // Turkey — EU region (eu-west-1 Frankfurt) for KVKK data residency (Phase 5)
   TUR: { writeEnv: 'DB_URL_ISTANBUL', readEnv: 'READ_DB_URL_ISTANBUL' },
+  // India — AWS Mumbai (ap-south-1) for DPDP Act 2023 data localisation (Phase 6)
+  IND: { writeEnv: 'DB_URL_MUMBAI',   readEnv: 'READ_DB_URL_MUMBAI' },
+  // Pakistan — shares Mumbai node (South Asia shard); PECA data residency (Phase 6)
+  PAK: { writeEnv: 'DB_URL_MUMBAI',   readEnv: 'READ_DB_URL_MUMBAI' },
 };
 
 // Aliases: ISO alpha-2 → alpha-3 (accept either format from JWT claims)
 const COUNTRY_ALIASES = {
   SA: 'SAU', AE: 'ARE', KW: 'KWT', JO: 'JOR', MA: 'MAR', TN: 'TUN', TR: 'TUR',
+  IN: 'IND', PK: 'PAK', BD: 'IND',  // Bangladesh → Mumbai (nearest shard)
   // legacy short codes used in Phase 1-3 user records
   KSA: 'SAU', UAE: 'ARE', KWT: 'KWT', JOR: 'JOR',
 };

@@ -1,0 +1,85 @@
+name: Security Scan — OWASP ZAP
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'nginx/**'
+      - '.github/workflows/security-scan.yml'
+  schedule:
+    # Weekly full scan: Sunday 02:00 AST (Sunday 23:00 UTC Saturday)
+    - cron: '0 23 * * 6'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Scan type'
+        required: false
+        default: 'baseline'
+        type: choice
+        options:
+          - baseline
+          - full
+
+jobs:
+  zap-baseline-scan:
+    name: ZAP Baseline Scan (PR)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.scan_type == 'baseline')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: ${{ secrets.ZAP_TARGET_URL || 'https://api.utubooking.com' }}
+          rules_file_name: security/zap/zap-baseline.yml
+          cmd_options: '-a'  # include ajax spider
+          fail_action: true   # fail PR if HIGH/CRITICAL findings
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-baseline-report
+          path: report_html.html
+          retention-days: 30
+
+  zap-full-scan:
+    name: ZAP Full Active Scan (Weekly / Staging only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.scan_type == 'full')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: ZAP Full Scan (staging only — NEVER production)
+        uses: zaproxy/action-full-scan@v0.10.0
+        with:
+          target: 'https://staging-api.utubooking.com'
+          rules_file_name: security/zap/zap-full-scan.yml
+          cmd_options: '-a -j'  # ajax spider + JSON report
+          fail_action: true
+
+      - name: Upload ZAP full scan report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-full-scan-report-${{ github.run_number }}
+          path: |
+            report_html.html
+            report_json.json
+          retention-days: 90
+
+      - name: Notify on findings
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: '#security'
+          slack-message: |
+            :warning: ZAP Full Scan found HIGH/CRITICAL issues in UTUBooking.
+            Run: ${{ github.run_id }}
+            Report: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

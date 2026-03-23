@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking — ElastiCache Redis Cluster Mode (3 shards × 2 replicas = 9 nodes).
+  Node type: cache.r7g.large (6.38 GiB each). me-south-1 Bahrain (2 AZs).
+  TLS + auth token enabled (PCI DSS). Replaces single-node ElastiCache.
+
+Parameters:
+  AuthToken:
+    Type: String
+    NoEcho: true
+    Description: Redis AUTH token (min 16 chars). Store in AWS Secrets Manager.
+  Environment:
+    Type: String
+    Default: production
+
+Resources:
+
+  # ── Subnet Group (both Bahrain AZs) ──────────────────────────────────────────
+  CacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      CacheSubnetGroupName: utu-redis-cluster-subnets
+      Description: Private subnets for UTUBooking Redis cluster
+      SubnetIds:
+        - !ImportValue utu-private-subnet-1
+        - !ImportValue utu-private-subnet-2
+
+  # ── Security Group ─────────────────────────────────────────────────────────────
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ElastiCache Redis — allow 6379 from ECS tasks only
+      VpcId: !ImportValue utu-vpc-id
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !ImportValue utu-ecs-sg-id
+      Tags:
+        - Key: Name
+          Value: utu-redis-sg
+
+  # ── Parameter Group (cluster mode enabled) ────────────────────────────────────
+  RedisParameterGroup:
+    Type: AWS::ElastiCache::ParameterGroup
+    Properties:
+      CacheParameterGroupFamily: redis7
+      Description: UTUBooking Redis cluster mode parameters
+      Properties:
+        cluster-enabled: 'yes'
+        maxmemory-policy: allkeys-lru
+        # Tune for Hajj peak: larger client output buffers
+        client-output-buffer-limit: 'normal 0 0 0 slave 268435456 67108864 60 pubsub 33554432 8388608 60'
+        tcp-keepalive: '60'
+        timeout: '300'
+
+  # ── Replication Group (3 shards, 2 replicas per shard) ───────────────────────
+  RedisCluster:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupId: utu-redis-cluster
+      ReplicationGroupDescription: UTUBooking Redis cluster — 3 shards, 2 replicas each
+      # Cluster mode
+      NumNodeGroups: 3
+      ReplicasPerNodeGroup: 2
+      # Instance type: r7g.large = 6.38 GiB memory, Graviton 3
+      CacheNodeType: cache.r7g.large
+      Engine: redis
+      EngineVersion: '7.2'
+      CacheParameterGroupName: !Ref RedisParameterGroup
+      CacheSubnetGroupName: !Ref CacheSubnetGroup
+      SecurityGroupIds:
+        - !Ref RedisSecurityGroup
+      # Security
+      TransitEncryptionEnabled: true
+      AtRestEncryptionEnabled: true
+      AuthToken: !Ref AuthToken
+      # Multi-AZ
+      MultiAZEnabled: true
+      AutomaticFailoverEnabled: true
+      # Maintenance window: Thursday 02:00-03:00 AST (off-peak, 23:00-00:00 UTC Wed)
+      PreferredMaintenanceWindow: 'wed:23:00-thu:00:00'
+      SnapshotRetentionLimit: 7
+      SnapshotWindow: '20:00-21:00'   # 23:00 AST daily snapshot
+      # AZ spread across both Bahrain AZs
+      PreferredCacheClusterAZs:
+        - me-south-1a
+        - me-south-1b
+        - me-south-1a
+        - me-south-1b
+        - me-south-1a
+        - me-south-1b
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: utubooking
+
+# ── Outputs ────────────────────────────────────────────────────────────────────
+Outputs:
+  RedisClusterConfigEndpoint:
+    Description: Cluster configuration endpoint (use for ioredis.Cluster constructor)
+    Value: !GetAtt RedisCluster.ConfigurationEndPoint.Address
+    Export:
+      Name: utu-redis-cluster-endpoint
+  RedisClusterConfigPort:
+    Value: !GetAtt RedisCluster.ConfigurationEndPoint.Port
+    Export:
+      Name: utu-redis-cluster-port

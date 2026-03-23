@@ -1,0 +1,506 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking Phase 4 — EU-West (eu-west-1 / Ireland) Secondary Region
+  Serves North Africa traffic (MAR, DZA, TUN, LBY, EGY).
+  Mirrors stack 10 (me-central-1) pattern: search services only.
+  Payment + Wallet remain in Bahrain primary (me-south-1).
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+
+  # Cross-region SSM values pulled from Bahrain primary account
+  BahrainRDSHostname:
+    Type: String
+    Description: Bahrain primary RDS endpoint for cross-region read replica source
+    Default: "utu-db-primary.xxxx.me-south-1.rds.amazonaws.com"
+
+  DBMasterPassword:
+    Type: String
+    NoEcho: true
+
+  ECRRepository:
+    Type: String
+    Default: "123456789.dkr.ecr.me-south-1.amazonaws.com/utu-booking"
+
+  ImageTag:
+    Type: String
+    Default: latest
+
+  CertificateArn:
+    Type: String
+    Description: ACM certificate for api-eu.utubooking.com (must be in eu-west-1)
+
+Mappings:
+  AZs:
+    eu-west-1:
+      AZ1: eu-west-1a
+      AZ2: eu-west-1b
+
+Resources:
+
+  # ── VPC ───────────────────────────────────────────────────────────────────
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.3.0.0/16    # 10.1=Bahrain, 10.2=Riyadh, 10.3=EU-West
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: utu-eu-west-1-vpc
+        - Key: Region
+          Value: eu-west-1
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.3.1.0/24
+      AvailabilityZone: eu-west-1a
+      MapPublicIpOnLaunch: true
+      Tags: [{Key: Name, Value: utu-eu-public-1}]
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.3.2.0/24
+      AvailabilityZone: eu-west-1b
+      MapPublicIpOnLaunch: true
+      Tags: [{Key: Name, Value: utu-eu-public-2}]
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.3.10.0/24
+      AvailabilityZone: eu-west-1a
+      Tags: [{Key: Name, Value: utu-eu-private-1}]
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.3.11.0/24
+      AvailabilityZone: eu-west-1b
+      Tags: [{Key: Name, Value: utu-eu-private-2}]
+
+  # NAT Gateway for private subnets
+  NatEIP:
+    Type: AWS::EC2::EIP
+    Properties: {Domain: vpc}
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref VPC}
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref VPC}
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  # ── ALB ───────────────────────────────────────────────────────────────────
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EU ALB security group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0}
+        - {IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0}
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: utu-eu-alb
+      Scheme: internet-facing
+      Type: application
+      Subnets: [!Ref PublicSubnet1, !Ref PublicSubnet2]
+      SecurityGroups: [!Ref ALBSecurityGroup]
+      LoadBalancerAttributes:
+        - {Key: idle_timeout.timeout_seconds, Value: "60"}
+        - {Key: routing.http2.enabled, Value: "true"}
+      Tags: [{Key: Region, Value: eu-west-1}]
+
+  ALBListenerHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: "404"
+            ContentType: application/json
+            MessageBody: '{"error":"Not found"}'
+
+  ALBListenerHTTP:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig: {Protocol: HTTPS, Port: "443", StatusCode: HTTP_301}
+
+  # ── ECS Cluster ───────────────────────────────────────────────────────────
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: utu-eu-west-1
+      ClusterSettings:
+        - {Name: containerInsights, Value: enabled}
+      CapacityProviders: [FARGATE, FARGATE_SPOT]
+      DefaultCapacityProviderStrategy:
+        - {CapacityProvider: FARGATE, Weight: 1, Base: 1}
+        - {CapacityProvider: FARGATE_SPOT, Weight: 3}  # 75% spot for cost
+
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EU ECS tasks
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 3000, ToPort: 3099, SourceSecurityGroupId: !Ref ALBSecurityGroup}
+
+  # ── ElastiCache Redis (search result cache) ──────────────────────────────
+  RedisSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: EU Redis subnets
+      SubnetIds: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EU Redis access
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 6379, ToPort: 6379, SourceSecurityGroupId: !Ref ECSSecurityGroup}
+
+  RedisCluster:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupDescription: UTUBooking EU Redis
+      ReplicationGroupId: utu-eu-redis
+      NumNodeGroups: 3
+      ReplicasPerNodeGroup: 2          # 3 shards × 2 replicas = 9 nodes
+      CacheNodeType: cache.r7g.large
+      Engine: redis
+      EngineVersion: "7.1"
+      AtRestEncryptionEnabled: true
+      TransitEncryptionEnabled: true
+      AutomaticFailoverEnabled: true
+      MultiAZEnabled: true
+      CacheSubnetGroupName: !Ref RedisSubnetGroup
+      SecurityGroupIds: [!Ref RedisSecurityGroup]
+      SnapshotRetentionLimit: 7
+      Tags: [{Key: Region, Value: eu-west-1}]
+
+  # ── RDS Read Replica (cross-region from Bahrain) ─────────────────────────
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: EU RDS subnets
+      SubnetIds: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EU RDS read replica
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 5432, ToPort: 5432, SourceSecurityGroupId: !Ref ECSSecurityGroup}
+
+  RDSReadReplica:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-eu-replica-${Environment}
+      DBInstanceClass: db.r7g.xlarge
+      SourceDBInstanceIdentifier: !Sub >-
+        arn:aws:rds:me-south-1:${AWS::AccountId}:db:utu-db-primary-${Environment}
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      VPCSecurityGroups: [!GetAtt RDSSecurityGroup.GroupId]
+      StorageEncrypted: true
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      Tags: [{Key: Region, Value: eu-west-1}, {Key: Role, Value: ReadReplica}]
+
+  # ── ECS Services (search-only: hotel, flight, car, auth) ─────────────────
+  # TaskExecutionRole shared by all EU services
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: utu-eu-ecs-execution-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ecs-tasks.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  # LogGroup for all EU services
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/utu-eu
+      RetentionInDays: 30
+
+  # ── Hotel Service ──────────────────────────────────────────────────────────
+  HotelTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-eu-hotel
+      Port: 3003
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 15
+
+  HotelListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ALBListenerHTTPS
+      Priority: 10
+      Conditions: [{Field: path-pattern, Values: [/api/v1/hotels/*]}]
+      Actions: [{Type: forward, TargetGroupArn: !Ref HotelTargetGroup}]
+
+  HotelTaskDef:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: utu-eu-hotel
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      Cpu: "512"
+      Memory: "1024"
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: hotel
+          Image: !Sub ${ECRRepository}/hotel-service:${ImageTag}
+          PortMappings: [{ContainerPort: 3003}]
+          Environment:
+            - {Name: NODE_ENV, Value: production}
+            - {Name: REGION, Value: eu-west-1}
+            - {Name: REDIS_CLUSTER_URLS, Value: !Sub "${RedisCluster.PrimaryEndPoint.Address}:6379"}
+            - {Name: READ_DATABASE_URL, Value: !Sub "postgresql://utu_user:$(DB_PASS)@${RDSReadReplica.Endpoint.Address}:5432/utu_booking"}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: eu-west-1
+              awslogs-stream-prefix: hotel
+
+  HotelService:
+    Type: AWS::ECS::Service
+    DependsOn: HotelListenerRule
+    Properties:
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref HotelTaskDef
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+          SecurityGroups: [!Ref ECSSecurityGroup]
+      LoadBalancers:
+        - ContainerName: hotel
+          ContainerPort: 3003
+          TargetGroupArn: !Ref HotelTargetGroup
+
+  HotelScaling:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 10
+      MinCapacity: 1
+      ResourceId: !Sub service/${ECSCluster}/utu-eu-hotel
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  HotelScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-eu-hotel-cpu
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref HotelScaling
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: 60.0
+        ScaleOutCooldown: 60
+        ScaleInCooldown: 300
+
+  # ── Auth Service ───────────────────────────────────────────────────────────
+  AuthTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-eu-auth
+      Port: 3001
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: ip
+      HealthCheckPath: /health
+
+  AuthListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ALBListenerHTTPS
+      Priority: 5
+      Conditions: [{Field: path-pattern, Values: [/api/v1/auth/*]}]
+      Actions: [{Type: forward, TargetGroupArn: !Ref AuthTargetGroup}]
+
+  AuthTaskDef:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: utu-eu-auth
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      Cpu: "256"
+      Memory: "512"
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: auth
+          Image: !Sub ${ECRRepository}/auth-service:${ImageTag}
+          PortMappings: [{ContainerPort: 3001}]
+          Environment:
+            - {Name: NODE_ENV, Value: production}
+            - {Name: REGION, Value: eu-west-1}
+            - {Name: REDIS_CLUSTER_URLS, Value: !Sub "${RedisCluster.PrimaryEndPoint.Address}:6379"}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: eu-west-1
+              awslogs-stream-prefix: auth
+
+  AuthService:
+    Type: AWS::ECS::Service
+    DependsOn: AuthListenerRule
+    Properties:
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref AuthTaskDef
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+          SecurityGroups: [!Ref ECSSecurityGroup]
+      LoadBalancers:
+        - ContainerName: auth
+          ContainerPort: 3001
+          TargetGroupArn: !Ref AuthTargetGroup
+
+  # ── Health Check Endpoint ──────────────────────────────────────────────────
+  HealthTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-eu-health
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: ip
+      Matcher: {HttpCode: "200"}
+
+  HealthListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ALBListenerHTTPS
+      Priority: 1
+      Conditions: [{Field: path-pattern, Values: [/health]}]
+      Actions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: "200"
+            ContentType: application/json
+            MessageBody: '{"status":"ok","region":"eu-west-1"}'
+
+  # ── CloudWatch Alarms ─────────────────────────────────────────────────────
+  AlarmALB5xx:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-eu-alb-5xx-rate
+      MetricName: HTTPCode_ELB_5XX_Count
+      Namespace: AWS/ApplicationELB
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 3
+      Threshold: 50
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !GetAtt ALB.LoadBalancerFullName
+      AlarmActions:
+        - !Sub arn:aws:sns:eu-west-1:${AWS::AccountId}:utu-eu-alerts
+      TreatMissingData: notBreaching
+
+  AlarmRDSReplLag:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-eu-rds-replication-lag
+      MetricName: ReplicaLag
+      Namespace: AWS/RDS
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 3
+      Threshold: 30
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref RDSReadReplica
+
+Outputs:
+  ALBDNS:
+    Value: !GetAtt ALB.DNSName
+    Export: {Name: utu-eu-alb-dns}
+
+  ALBHostedZone:
+    Value: !GetAtt ALB.CanonicalHostedZoneID
+    Export: {Name: utu-eu-alb-hosted-zone}
+
+  ClusterArn:
+    Value: !GetAtt ECSCluster.Arn
+    Export: {Name: utu-eu-cluster-arn}
+
+  RedisEndpoint:
+    Value: !GetAtt RedisCluster.PrimaryEndPoint.Address
+    Export: {Name: utu-eu-redis-endpoint}
+
+  RDSReadEndpoint:
+    Value: !GetAtt RDSReadReplica.Endpoint.Address
+    Export: {Name: utu-eu-rds-read-endpoint}

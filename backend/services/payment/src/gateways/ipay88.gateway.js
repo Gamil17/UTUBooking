@@ -32,6 +32,24 @@ const crypto = require('crypto');
 const PAYMENT_URL_PROD    = 'https://payment.ipay88.com.my/epayment/entry.asp';
 const PAYMENT_URL_SANDBOX = 'https://sandbox.ipay88.com.my/epayment/entry.asp';
 
+// Malaysian-specific payment method IDs (PaymentId)
+const IPAY88_PAYMENT_METHODS = {
+  FPX_MAYBANK: '2',   // Maybank2u — most popular
+  FPX_CIMB:    '523', // CIMB Clicks
+  FPX_PUBLIC:  '10',  // Public Bank
+  CREDIT_CARD: '1',   // Visa/MC/Amex
+  DUITNOW_QR:  '523', // DuitNow QR — instant mobile payment
+  TNG_EWALLET: '538', // Touch 'n Go eWallet
+  GRABPAY:     '523', // GrabPay MY
+  BOOST:       '538', // Boost eWallet
+};
+
+// MYR pricing format: RM 1,234.56 (NOT MYR or M$)
+function formatMyr(amount, locale = 'en') {
+  const formatted = Number(amount).toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return locale === 'ms' ? `RM ${formatted}` : formatted;
+}
+
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
 /**
@@ -152,4 +170,10 @@ function mapStatus(ipay88Status) {
   return map[String(ipay88Status)] || 'pending';
 }
 
-module.exports = { initiatePayment, verifyResponseSignature, mapStatus };
+module.exports = {
+  initiatePayment,
+  verifyResponseSignature,
+  mapStatus,
+  IPAY88_PAYMENT_METHODS,
+  formatMyr,
+};

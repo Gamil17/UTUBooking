@@ -1,0 +1,66 @@
+name: DR Drill — Backup Verification
+
+on:
+  schedule:
+    # Weekly: Tuesday 03:00 AST (Tuesday 00:00 UTC)
+    - cron: '0 0 * * 2'
+  workflow_dispatch:
+    inputs:
+      backup_filename:
+        description: 'Specific backup filename (leave empty for latest)'
+        required: false
+        default: ''
+
+env:
+  AWS_REGION: me-south-1
+
+jobs:
+  verify-backup:
+    name: Restore latest S3 backup and verify row counts
+    runs-on: ubuntu-latest
+    timeout-minutes: 60   # ~45 min expected: RDS create + restore + verify
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Run backup verification
+        run: bash infra/dr/backup-verification.sh
+        env:
+          AWS_BACKUP_BUCKET:     ${{ secrets.AWS_BACKUP_BUCKET }}
+          AWS_REGION:            ${{ env.AWS_REGION }}
+          DATABASE_URL:          ${{ secrets.DATABASE_URL }}
+          TEMP_DB_PASSWORD:      ${{ secrets.TEMP_DB_PASSWORD }}
+          DB_SUBNET_GROUP:       ${{ vars.DB_SUBNET_GROUP }}
+          DB_SECURITY_GROUP:     ${{ vars.DB_SECURITY_GROUP }}
+          TEMP_DB_INSTANCE_ID:   utu-db-dr-test-${{ github.run_number }}
+
+      - name: Report success
+        if: success()
+        run: |
+          echo "✅ DR drill passed — backup verified successfully"
+          echo "Run: ${{ github.run_id }}"
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: '#ops-alerts'
+          slack-message: |
+            :rotating_light: *DR Drill FAILED* — UTUBooking backup verification failed.
+            The latest S3 backup may be corrupted or unusable.
+            Investigate immediately: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

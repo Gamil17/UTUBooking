@@ -1,0 +1,21 @@
+{
+  "name": "pricing-service",
+  "version": "1.0.0",
+  "description": "UTUBooking AI Revenue Optimization — dynamic pricing recommendations and demand forecasting",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev":   "nodemon src/index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
+    "axios":             "^1.6.0",
+    "express":           "^4.18.2",
+    "ioredis":           "^5.3.2",
+    "jsonwebtoken":      "^9.0.2",
+    "pg":                "^8.11.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

@@ -1,0 +1,59 @@
+apiVersion: 1
+
+# UTUBooking Phase 4 — Grafana Elasticsearch datasource
+# Connects to ELK stack for application log visualization
+# Requires: Grafana v10+ with elasticsearch plugin (bundled)
+
+datasources:
+  - name: Elasticsearch
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    isDefault: false
+    jsonData:
+      index: "logs-*"
+      timeField: "@timestamp"
+      interval: Daily
+      esVersion: "8.17.0"
+      logMessageField: log_message
+      logLevelField: log_level
+      dataLinks:
+        - field: trace_id
+          url: "http://localhost:16686/trace/${__value.raw}"   # Jaeger trace link (future)
+          title: "View Trace"
+      # Derived fields for correlation
+      derivedFields:
+        - name: trace_id
+          matcherRegex: '"traceId":"([^"]+)"'
+          url: "http://localhost:16686/trace/$${__value.raw}"
+          datasourceUid: ''
+    # No auth (internal network only)
+    editable: true
+
+  - name: Elasticsearch-Nginx
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    isDefault: false
+    jsonData:
+      index: "logs-nginx-*"
+      timeField: "@timestamp"
+      interval: Daily
+      esVersion: "8.17.0"
+      logMessageField: message
+      logLevelField: status_group
+    editable: true
+
+  - name: Elasticsearch-Errors
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    isDefault: false
+    jsonData:
+      index: "logs-errors-*"
+      timeField: "@timestamp"
+      interval: Daily
+      esVersion: "8.17.0"
+      logMessageField: log_message
+      logLevelField: log_level
+    editable: true

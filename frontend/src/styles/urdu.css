@@ -1,0 +1,81 @@
+/* Urdu-specific CSS overrides — loaded only when locale = ur */
+
+/* ── Base typography ─────────────────────────────────────────────────────────
+   Nastaliq needs: larger font-size, ~2× line-height, zero letter-spacing.
+   !important on line-height overrides Tailwind leading-* utilities
+   (e.g. leading-snug = 1.375, leading-tight = 1.25) which would clip
+   Nastaliq descenders. */
+[lang='ur'],
+[dir='rtl'][data-locale='ur'] {
+  font-family: 'Noto Nastaliq Urdu', serif;
+  font-size: 1.1rem;         /* Nastaliq renders smaller — compensate */
+  line-height: 2.2 !important; /* Nastaliq needs MORE line height than Arabic */
+  letter-spacing: 0;         /* No letter spacing for Nastaliq */
+}
+
+/* ── Headings ─────────────────────────────────────────────────────────────────
+   Tailwind's leading-tight / leading-snug on h3 cards will clip descenders
+   without !important here. */
+[lang='ur'] h1,
+[lang='ur'] h2,
+[lang='ur'] h3 {
+  font-family: 'Noto Nastaliq Urdu', serif;
+  font-weight: 700;
+  line-height: 2.5 !important;
+  /* Extra bottom padding prevents overflow-hidden containers from clipping
+     long Nastaliq descenders on hotel card names and booking titles. */
+  padding-bottom: 0.25rem;
+}
+
+/* ── Input fields — Urdu keyboard input ─────────────────────────────────────
+   direction + text-align must be explicit; do not rely solely on inheritance
+   since some Tailwind resets can clear it. */
+[lang='ur'] input,
+[lang='ur'] textarea,
+[lang='ur'] select {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Noto Nastaliq Urdu', serif;
+}
+
+/* Native <input type="date"> — browsers localise month names from the lang
+   attribute on <html>. No JS override needed. However the calendar popup
+   may still render in the OS default script; this is a known browser
+   limitation — flagged for design review (see audit notes below). */
+
+/* ── Overflow protection ──────────────────────────────────────────────────────
+   Hotel card names, booking summaries, and any truncated text must not
+   clip Nastaliq characters. overflow-hidden on a container is fine for
+   images but text elements need breathing room. */
+[lang='ur'] p,
+[lang='ur'] span,
+[lang='ur'] label,
+[lang='ur'] li {
+  line-height: 2 !important;
+  overflow-wrap: break-word;
+}
+
+/* Prevent text-overflow: ellipsis from cutting mid-character in Nastaliq */
+[lang='ur'] [class*='truncate'],
+[lang='ur'] [class*='line-clamp'] {
+  overflow: visible;
+  text-overflow: clip;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  display: block;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   AUDIT NOTES — items requiring design review:
+   1. Date picker (input[type=date]): month names localise via browser + lang
+      attribute. Calendar popup UI is OS-controlled; no Nastaliq font applied.
+      Recommendation: replace native picker with a custom React date picker
+      (e.g. react-day-picker) that accepts locale + font props for Urdu.
+   2. PDF confirmations: no PDF generator detected in this codebase.
+      If added in future, use a Nastaliq-compatible renderer (e.g. pdfmake
+      with Noto Nastaliq Urdu embedded as a custom font).
+   3. Hotel card overflow-hidden: the card container clips content to keep
+      rounded corners. The padding-bottom: 0.25rem on headings above mitigates
+      most clipping, but very long hotel names in Nastaliq may still wrap
+      unexpectedly. Design review recommended for hotel card layout at ur locale.
+───────────────────────────────────────────────────────────────────────────── */

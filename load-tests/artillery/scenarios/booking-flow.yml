@@ -1,0 +1,76 @@
+config:
+  target: '{{ $processEnvironment.LOAD_TEST_API_URL || "https://api.utubooking.com" }}'
+  http:
+    timeout: 30
+  processor: '../processors/auth.js'
+  phases:
+    - name: warm-up
+      duration: 60
+      arrivalRate: 3
+
+scenarios:
+  - name: Full booking funnel — auth + search + book
+    weight: 15
+    flow:
+      # Step 1: Login
+      - post:
+          url: /api/v1/auth/login
+          json:
+            email: '{{ $processEnvironment.LOAD_TEST_USER_EMAIL }}'
+            password: '{{ $processEnvironment.LOAD_TEST_USER_PASSWORD }}'
+          capture:
+            - json: '$.accessToken'
+              as: accessToken
+          expect:
+            - statusCode: 200
+            - hasProperty: accessToken
+
+      # Step 2: Search hotels
+      - get:
+          url: /api/v1/hotels/search
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          qs:
+            location: 'Makkah'
+            checkIn: '{{ checkIn }}'
+            checkOut: '{{ checkOut }}'
+            guests: 2
+          beforeRequest: setHotelSearchParams
+          capture:
+            - json: '$.results[0].id'
+              as: offerId
+          expect:
+            - statusCode: 200
+
+      # Step 3: Think time (user reviewing hotel detail)
+      - think: 10
+
+      # Step 4: Create booking
+      - post:
+          url: /api/v1/bookings
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json:
+            offerId: '{{ offerId }}'
+            productType: hotel
+            checkIn: '{{ checkIn }}'
+            checkOut: '{{ checkOut }}'
+            guests: 2
+            currency: SAR
+          capture:
+            - json: '$.id'
+              as: bookingId
+            - json: '$.referenceNo'
+              as: referenceNo
+          expect:
+            - statusCode: 201
+            - hasProperty: referenceNo
+
+      # Step 5: Verify booking
+      - get:
+          url: '/api/v1/bookings/{{ bookingId }}'
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          expect:
+            - statusCode: 200
+            - hasProperty: status

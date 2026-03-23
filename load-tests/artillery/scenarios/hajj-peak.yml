@@ -1,0 +1,146 @@
+# UTUBooking — Hajj Peak Load Test
+# Simulates 100K concurrent users during Hajj booking rush.
+#
+# Traffic profile:
+#   - 70% hotel search (dominant Hajj pattern: near-Haram filtering)
+#   - 15% full booking flow (auth → search → book)
+#   - 10% flight search
+#   - 5%  car rental search
+#
+# Phase shape: ramp 100→1000 arrivals/sec over 10 min,
+#   sustain 1000 arrivals/sec for 30 min (steady state ~100K concurrent users),
+#   then cool down.
+#
+# Run: artillery run load-tests/artillery/scenarios/hajj-peak.yml \
+#        --output load-tests/artillery/reports/hajj-$(date +%Y%m%d).json
+# Report: artillery report <output.json>
+
+config:
+  target: '{{ $processEnvironment.LOAD_TEST_API_URL || "https://api.utubooking.com" }}'
+  http:
+    timeout: 30
+    pool: 200
+  tls:
+    rejectUnauthorized: true
+  processor: '../processors/data.js'
+  defaults:
+    headers:
+      Accept: 'application/json'
+      Content-Type: 'application/json'
+      Accept-Language: 'ar,en;q=0.9'   # Hajj users predominantly Arabic
+
+  # ── Phases ─────────────────────────────────────────────────────────────────
+  phases:
+    - name: warm-up
+      duration: 120
+      arrivalRate: 100
+      rampTo: 100
+
+    - name: ramp-to-peak
+      duration: 600       # 10 minutes
+      arrivalRate: 100
+      rampTo: 1000        # 1000 new users/sec → ~100K concurrent at 100s avg session
+
+    - name: sustained-peak
+      duration: 1800      # 30 minutes — simulate full Hajj booking rush window
+      arrivalRate: 1000
+
+    - name: cool-down
+      duration: 300       # 5 minutes
+      arrivalRate: 1000
+      rampTo: 50
+
+  # ── SLO Gates ───────────────────────────────────────────────────────────────
+  ensure:
+    p95: 500        # Hotel search P95 < 500ms
+    p99: 1000       # Any endpoint P99 < 1000ms
+    maxErrorRate: 0.1  # < 0.1% errors (10x tighter than production SLO)
+
+scenarios:
+
+  # ── Hotel search (70%) — dominant Hajj traffic ─────────────────────────────
+  - name: Hotel search near Haram
+    weight: 70
+    flow:
+      - get:
+          url: /api/v1/hotels/search
+          qs:
+            location: Makkah
+            checkIn: '{{ checkIn }}'
+            checkOut: '{{ checkOut }}'
+            guests: '{{ guests }}'
+            priceMax: '{{ priceMax }}'
+          beforeRequest: setHotelSearchParams
+          expect:
+            - statusCode: 200
+
+  # ── Full booking flow (15%) ───────────────────────────────────────────────
+  - name: Auth and book hotel
+    weight: 15
+    flow:
+      - post:
+          url: /api/v1/auth/login
+          json:
+            email: '{{ $processEnvironment.LOAD_TEST_USER_EMAIL }}'
+            password: '{{ $processEnvironment.LOAD_TEST_USER_PASSWORD }}'
+          capture:
+            - json: '$.accessToken'
+              as: accessToken
+          expect:
+            - statusCode: 200
+      - get:
+          url: /api/v1/hotels/search
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          qs:
+            location: Makkah
+            checkIn: '{{ checkIn }}'
+            checkOut: '{{ checkOut }}'
+            guests: 2
+          beforeRequest: setHotelSearchParams
+          capture:
+            - json: '$.results[0].id'
+              as: offerId
+      - think: 5
+      - post:
+          url: /api/v1/bookings
+          headers:
+            Authorization: 'Bearer {{ accessToken }}'
+          json:
+            offerId: '{{ offerId }}'
+            productType: hotel
+            checkIn: '{{ checkIn }}'
+            checkOut: '{{ checkOut }}'
+            guests: 2
+            currency: SAR
+          expect:
+            - statusCode: 201
+
+  # ── Flight search (10%) ───────────────────────────────────────────────────
+  - name: Flight search to Makkah
+    weight: 10
+    flow:
+      - get:
+          url: /api/v1/flights/search
+          qs:
+            origin: '{{ origin }}'
+            destination: MKK
+            date: '{{ flightDate }}'
+            adults: '{{ adults }}'
+          beforeRequest: setFlightSearchParams
+          expect:
+            - statusCode: 200
+
+  # ── Car rental search (5%) ────────────────────────────────────────────────
+  - name: Car rental search
+    weight: 5
+    flow:
+      - get:
+          url: /api/v1/cars/search
+          qs:
+            location: Makkah
+            pickupDate: '{{ checkIn }}'
+            dropoffDate: '{{ checkOut }}'
+          beforeRequest: setHotelSearchParams
+          expect:
+            - statusCode: 200

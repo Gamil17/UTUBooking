@@ -1,0 +1,583 @@
+{
+  "title": "UTUBooking — Multi-Region Health (Phase 7)",
+  "uid": "utu-multiregion",
+  "tags": ["utubooking", "multiregion", "phase7", "infrastructure"],
+  "timezone": "UTC",
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "description": "Per-region DB latency, error rate, active users, and data routing status across all 10 active markets (Phase 7)",
+
+  "panels": [
+
+    {
+      "id": 1,
+      "title": "Bahrain (me-south-1) — Gulf Region",
+      "description": "SA + AE + KW + JO — SAMA guidelines",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/Route53",
+          "metricName": "HealthCheckStatus",
+          "dimensions": { "HealthCheckId": "${HEALTH_CHECK_BAHRAIN_ID}" },
+          "statistic": "Minimum",
+          "period": 60
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "HEALTHY", "color": "green" } } },
+            { "type": "value", "options": { "0": { "text": "DOWN",    "color": "red"   } } }
+          ],
+          "thresholds": { "steps": [
+            { "value": 0, "color": "red"   },
+            { "value": 1, "color": "green" }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+
+    {
+      "id": 2,
+      "title": "Frankfurt (eu-central-1) — EU Region",
+      "description": "MA + TN (GDPR-adjacent) + TR (KVKK)",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/Route53",
+          "metricName": "HealthCheckStatus",
+          "dimensions": { "HealthCheckId": "${HEALTH_CHECK_EU_ID}" },
+          "statistic": "Minimum",
+          "period": 60
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "HEALTHY", "color": "green" } } },
+            { "type": "value", "options": { "0": { "text": "DOWN",    "color": "red"   } } }
+          ],
+          "thresholds": { "steps": [
+            { "value": 0, "color": "red"   },
+            { "value": 1, "color": "green" }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+
+    {
+      "id": 3,
+      "title": "Singapore (ap-southeast-1) — SEA Region",
+      "description": "ID (PDP) + MY (PDPA) — pending provisioning",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/Route53",
+          "metricName": "HealthCheckStatus",
+          "dimensions": { "HealthCheckId": "${HEALTH_CHECK_SEA_ID}" },
+          "statistic": "Minimum",
+          "period": 60
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "HEALTHY", "color": "green" } } },
+            { "type": "value", "options": { "0": { "text": "DOWN",    "color": "red"   } } }
+          ],
+          "thresholds": { "steps": [
+            { "value": 0, "color": "red"   },
+            { "value": 1, "color": "green" }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+
+    {
+      "id": 4,
+      "title": "Mumbai (ap-south-1) — South Asia Region",
+      "description": "IN (DPDP 2023) + PK (PECA)",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/Route53",
+          "metricName": "HealthCheckStatus",
+          "dimensions": { "HealthCheckId": "${HEALTH_CHECK_MUMBAI_ID}" },
+          "statistic": "Minimum",
+          "period": 60
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "HEALTHY", "color": "green" } } },
+            { "type": "value", "options": { "0": { "text": "DOWN",    "color": "red"   } } }
+          ],
+          "thresholds": { "steps": [
+            { "value": 0, "color": "red"   },
+            { "value": 1, "color": "green" }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+
+    {
+      "id": 10,
+      "title": "DB Write Latency by Region (P95)",
+      "description": "RDS write latency per shard group — threshold 50ms",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "WriteLatency",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-gulf" },
+          "statistic": "p95",
+          "period": 60,
+          "legendFormat": "Bahrain (Gulf)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "WriteLatency",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-turkey" },
+          "statistic": "p95",
+          "period": 60,
+          "legendFormat": "Frankfurt (Turkey)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "WriteLatency",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-eu" },
+          "statistic": "p95",
+          "period": 60,
+          "legendFormat": "Frankfurt (EU — MA/TN)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "WriteLatency",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-sa" },
+          "statistic": "p95",
+          "period": 60,
+          "legendFormat": "Mumbai (SA — IN/PK)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "WriteLatency",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-sea" },
+          "statistic": "p95",
+          "period": 60,
+          "legendFormat": "Singapore (SEA — ID/MY)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2 },
+          "thresholds": { "steps": [
+            { "value": 0,    "color": "green"  },
+            { "value": 0.05, "color": "yellow" },
+            { "value": 0.1,  "color": "red"    }
+          ]}
+        }
+      }
+    },
+
+    {
+      "id": 11,
+      "title": "DB Read Latency by Region (P95)",
+      "description": "RDS read replica latency — threshold 20ms",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "ReadLatency",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-gulf" },
+          "statistic": "p95",
+          "period": 60,
+          "legendFormat": "Bahrain (Gulf)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "ReadLatency",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-turkey" },
+          "statistic": "p95",
+          "period": 60,
+          "legendFormat": "Frankfurt (Turkey)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "ReadLatency",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-eu" },
+          "statistic": "p95",
+          "period": 60,
+          "legendFormat": "Frankfurt (EU)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "ReadLatency",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-sa" },
+          "statistic": "p95",
+          "period": 60,
+          "legendFormat": "Mumbai (SA)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "ReadLatency",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-sea" },
+          "statistic": "p95",
+          "period": 60,
+          "legendFormat": "Singapore (SEA)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2 }
+        }
+      }
+    },
+
+    {
+      "id": 20,
+      "title": "5xx Error Rate by Region",
+      "description": "Per-region ALB HTTP 5xx rate — alert threshold 1%",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "sum(rate(http_requests_total{status=~\"5..\", region=\"me-south-1\"}[5m])) / sum(rate(http_requests_total{region=\"me-south-1\"}[5m]))",
+          "legendFormat": "Bahrain (me-south-1)"
+        },
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "sum(rate(http_requests_total{status=~\"5..\", region=\"eu-central-1\"}[5m])) / sum(rate(http_requests_total{region=\"eu-central-1\"}[5m]))",
+          "legendFormat": "Frankfurt (eu-central-1)"
+        },
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "sum(rate(http_requests_total{status=~\"5..\", region=\"ap-southeast-1\"}[5m])) / sum(rate(http_requests_total{region=\"ap-southeast-1\"}[5m]))",
+          "legendFormat": "Singapore (ap-southeast-1)"
+        },
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "sum(rate(http_requests_total{status=~\"5..\", region=\"ap-south-1\"}[5m])) / sum(rate(http_requests_total{region=\"ap-south-1\"}[5m]))",
+          "legendFormat": "Mumbai (ap-south-1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "lineWidth": 2 },
+          "thresholds": { "steps": [
+            { "value": 0,    "color": "green"  },
+            { "value": 0.005,"color": "yellow" },
+            { "value": 0.01, "color": "red"    }
+          ]}
+        }
+      }
+    },
+
+    {
+      "id": 21,
+      "title": "Active Users by Region (30-min window)",
+      "description": "Unique active sessions per region — indicates live traffic distribution",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "sum(rate(http_requests_total{region=\"me-south-1\"}[30m])) by (region)",
+          "legendFormat": "Bahrain"
+        },
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "sum(rate(http_requests_total{region=\"eu-central-1\"}[30m])) by (region)",
+          "legendFormat": "Frankfurt"
+        },
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "sum(rate(http_requests_total{region=\"ap-southeast-1\"}[30m])) by (region)",
+          "legendFormat": "Singapore"
+        },
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "sum(rate(http_requests_total{region=\"ap-south-1\"}[30m])) by (region)",
+          "legendFormat": "Mumbai"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2 }
+        }
+      }
+    },
+
+    {
+      "id": 30,
+      "title": "RDS Active Connections by DB Instance",
+      "description": "Database connection count per regional instance — max pool = 20 per service",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "DatabaseConnections",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-gulf" },
+          "statistic": "Average",
+          "period": 60,
+          "legendFormat": "Gulf (Bahrain)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "DatabaseConnections",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-turkey" },
+          "statistic": "Average",
+          "period": 60,
+          "legendFormat": "Turkey (Frankfurt)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "DatabaseConnections",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-eu" },
+          "statistic": "Average",
+          "period": 60,
+          "legendFormat": "EU/MA/TN (Frankfurt)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "DatabaseConnections",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-sa" },
+          "statistic": "Average",
+          "period": 60,
+          "legendFormat": "SA/Mumbai (IN+PK)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "DatabaseConnections",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-sea" },
+          "statistic": "Average",
+          "period": 60,
+          "legendFormat": "SEA/Singapore (ID+MY)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": { "lineWidth": 2 },
+          "thresholds": { "steps": [
+            { "value": 0,   "color": "green"  },
+            { "value": 150, "color": "yellow" },
+            { "value": 200, "color": "red"    }
+          ]}
+        }
+      }
+    },
+
+    {
+      "id": 31,
+      "title": "RDS Replica Lag by Region",
+      "description": "Read replica replication lag — alert threshold 30s",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "ReplicaLag",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-gulf-replica" },
+          "statistic": "Maximum",
+          "period": 60,
+          "legendFormat": "Gulf (Bahrain)"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "ReplicaLag",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-sa-replica" },
+          "statistic": "Maximum",
+          "period": 60,
+          "legendFormat": "SA/Mumbai"
+        },
+        {
+          "datasource": { "uid": "cloudwatch" },
+          "namespace": "AWS/RDS",
+          "metricName": "ReplicaLag",
+          "dimensions": { "DBInstanceIdentifier": "utubooking-turkey-replica" },
+          "statistic": "Maximum",
+          "period": 60,
+          "legendFormat": "Turkey (Frankfurt)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2 },
+          "thresholds": { "steps": [
+            { "value": 0,  "color": "green"  },
+            { "value": 10, "color": "yellow" },
+            { "value": 30, "color": "red"    }
+          ]}
+        }
+      }
+    },
+
+    {
+      "id": 40,
+      "title": "Data Routing Audit — Last Run Status",
+      "description": "Polls /api/admin/infrastructure/routing-audit every 15 min. Healthy = all bookings in correct regional DB.",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 28, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "utu_routing_audit_misrouted_total",
+          "legendFormat": "Misrouted records"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "CLEAN",  "color": "green" } } }
+          ],
+          "thresholds": { "steps": [
+            { "value": 0, "color": "green" },
+            { "value": 1, "color": "red"   }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+
+    {
+      "id": 41,
+      "title": "Redis Cache Hit Rate",
+      "description": "Global Redis cache hit rate — target > 90%",
+      "type": "gauge",
+      "gridPos": { "x": 8, "y": 28, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total)",
+          "legendFormat": "Hit Rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0, "max": 1,
+          "thresholds": { "steps": [
+            { "value": 0,   "color": "red"    },
+            { "value": 0.7, "color": "yellow" },
+            { "value": 0.9, "color": "green"  }
+          ]}
+        }
+      }
+    },
+
+    {
+      "id": 42,
+      "title": "Active Markets — Booking Volume (24h)",
+      "description": "Bookings created in the last 24h per market — shows revenue-generating regions",
+      "type": "bargauge",
+      "gridPos": { "x": 16, "y": 28, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "uid": "prometheus" },
+          "expr": "sum(increase(bookings_created_total[24h])) by (country_code)",
+          "legendFormat": "{{ country_code }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "steps": [
+            { "value": 0,   "color": "blue"  },
+            { "value": 100, "color": "green" }
+          ]}
+        }
+      },
+      "options": { "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    }
+
+  ],
+
+  "templating": {
+    "list": [
+      {
+        "name": "HEALTH_CHECK_BAHRAIN_ID",
+        "type": "constant",
+        "label": "Bahrain Health Check ID",
+        "current": { "value": "" },
+        "hide": 2
+      },
+      {
+        "name": "HEALTH_CHECK_EU_ID",
+        "type": "constant",
+        "label": "EU Health Check ID",
+        "current": { "value": "" },
+        "hide": 2
+      },
+      {
+        "name": "HEALTH_CHECK_SEA_ID",
+        "type": "constant",
+        "label": "SEA Health Check ID",
+        "current": { "value": "" },
+        "hide": 2
+      },
+      {
+        "name": "HEALTH_CHECK_MUMBAI_ID",
+        "type": "constant",
+        "label": "Mumbai Health Check ID",
+        "current": { "value": "" },
+        "hide": 2
+      }
+    ]
+  },
+
+  "annotations": {
+    "list": [
+      {
+        "name": "Deployments",
+        "datasource": { "uid": "prometheus" },
+        "expr": "changes(kube_deployment_status_observed_generation{namespace=\"utubooking\"}[2m]) > 0",
+        "step": "60s",
+        "titleFormat": "Deploy: {{ deployment }}"
+      }
+    ]
+  }
+}

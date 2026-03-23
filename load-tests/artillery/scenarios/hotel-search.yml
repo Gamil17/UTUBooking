@@ -1,0 +1,37 @@
+config:
+  target: '{{ $processEnvironment.LOAD_TEST_API_URL || "https://api.utubooking.com" }}'
+  http:
+    timeout: 30
+  phases:
+    - name: warm-up
+      duration: 60
+      arrivalRate: 10
+  processor: '../processors/data.js'
+
+scenarios:
+  - name: Hotel search — Makkah near Haram
+    weight: 70
+    flow:
+      - get:
+          url: /api/v1/hotels/search
+          qs:
+            location: 'Makkah'
+            checkIn: '{{ checkIn }}'
+            checkOut: '{{ checkOut }}'
+            guests: '{{ guests }}'
+            priceMax: '{{ priceMax }}'
+          beforeRequest: setHotelSearchParams
+          capture:
+            - json: '$.results[0].id'
+              as: hotelId
+          expect:
+            - statusCode: 200
+            - hasProperty: results
+
+      # 20% of searches also fetch hotel detail
+      - think: 3
+      - get:
+          url: '/api/v1/hotels/{{ hotelId }}'
+          ifTrue: hotelId
+          expect:
+            - statusCode: 200

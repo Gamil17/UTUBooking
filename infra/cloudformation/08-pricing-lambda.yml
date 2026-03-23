@@ -1,0 +1,159 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  UTUBooking — AI Pricing Cron Lambda
+  Runs every 6 hours via EventBridge. Calls pricing-service /internal/cron
+  which generates AI recommendations + demand forecasts for Makkah/Madinah hotels.
+
+Parameters:
+  PricingServiceUrl:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utubooking/pricing/service-url
+    Description: Internal VPC URL of pricing-service (e.g. http://pricing-service.utu.internal)
+
+  InternalApiSecret:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utubooking/internal-api-secret
+    Description: Shared secret for internal service-to-service calls
+
+  VpcId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utubooking/vpc-id
+
+  SubnetIds:
+    Type: AWS::SSM::Parameter::Value<List<String>>
+    Default: /utubooking/private-subnet-ids
+    Description: Private subnets — Lambda must be in same VPC as ECS services
+
+  LambdaS3Bucket:
+    Type: String
+    Description: S3 bucket where the Lambda deployment zip is uploaded
+
+  LambdaS3Key:
+    Type: String
+    Default: lambda/pricing-cron.zip
+    Description: S3 key for the pricing-cron Lambda zip
+
+Resources:
+
+  # ── IAM Role ────────────────────────────────────────────────────────────────
+
+  PricingCronLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: utubooking-pricing-cron-lambda-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: PricingCronPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/utubooking-pricing-cron:*"
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/utubooking/*"
+
+  # ── Security Group ───────────────────────────────────────────────────────────
+
+  PricingCronLambdaSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: utubooking-pricing-cron-lambda-sg
+      GroupDescription: Lambda pricing cron — outbound to pricing-service on port 3011
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 3011
+          ToPort: 3011
+          CidrIp: 10.0.0.0/8   # VPC CIDR — pricing-service internal only
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0    # HTTPS for SSM + CloudWatch
+
+  # ── Lambda Function ──────────────────────────────────────────────────────────
+
+  PricingCronLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: utubooking-pricing-cron
+      Description: >
+        Calls pricing-service every 6 hours to generate AI pricing recommendations
+        and demand forecasts for Makkah/Madinah hotels.
+      Runtime: nodejs22.x
+      Handler: handler.handler
+      Role: !GetAtt PricingCronLambdaRole.Arn
+      MemorySize: 512
+      Timeout: 180   # 3 minutes — handles large hotel lists during Hajj peak
+      Code:
+        S3Bucket: !Ref LambdaS3Bucket
+        S3Key:    !Ref LambdaS3Key
+      Environment:
+        Variables:
+          PRICING_SERVICE_URL:  !Ref PricingServiceUrl
+          INTERNAL_API_SECRET:  !Ref InternalApiSecret
+          NODE_ENV:             production
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref PricingCronLambdaSG
+        SubnetIds: !Ref SubnetIds
+      Tags:
+        - Key: Project
+          Value: UTUBooking
+        - Key: Component
+          Value: pricing-cron
+
+  # ── CloudWatch Log Group ─────────────────────────────────────────────────────
+
+  PricingCronLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/utubooking-pricing-cron
+      RetentionInDays: 30
+
+  # ── EventBridge Scheduled Rule (every 6 hours) ───────────────────────────────
+
+  PricingCronSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: utubooking-pricing-cron-6h
+      Description: Trigger AI pricing recommendations and demand forecasting every 6 hours
+      ScheduleExpression: rate(6 hours)
+      State: ENABLED
+      Targets:
+        - Id: PricingCronLambdaTarget
+          Arn: !GetAtt PricingCronLambda.Arn
+
+  # Allow EventBridge to invoke the Lambda
+  PricingCronLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt PricingCronLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt PricingCronSchedule.Arn
+
+Outputs:
+  LambdaFunctionArn:
+    Description: ARN of the pricing cron Lambda
+    Value: !GetAtt PricingCronLambda.Arn
+    Export:
+      Name: UTUBookingPricingCronLambdaArn
+
+  EventBridgeRuleArn:
+    Description: ARN of the 6-hour EventBridge rule
+    Value: !GetAtt PricingCronSchedule.Arn

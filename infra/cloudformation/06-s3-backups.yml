@@ -1,0 +1,203 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking — S3 backup bucket for PostgreSQL daily dumps.
+  SSE-KMS encryption. Lifecycle: Glacier after 7 days, delete after 30 days.
+  Cross-region replication to eu-west-1 (Ireland) — Bahrain has no second region.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+
+Resources:
+
+  # ── KMS Key for backup encryption ────────────────────────────────────────────
+  BackupKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: UTUBooking DB backup encryption key
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Allow account root
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow ECS backup task
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:role/utu-ecs-backup-task-role'
+            Action:
+              - kms:GenerateDataKey
+              - kms:Decrypt
+              - kms:DescribeKey
+            Resource: '*'
+
+  BackupKMSAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/utu-db-backup
+      TargetKeyId: !Ref BackupKMSKey
+
+  # ── Replication IAM Role ──────────────────────────────────────────────────────
+  ReplicationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: utu-s3-backup-replication-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: BackupReplication
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetReplicationConfiguration
+                  - s3:ListBucket
+                Resource: !Sub 'arn:aws:s3:::utu-db-backups-${AWS::AccountId}'
+              - Effect: Allow
+                Action:
+                  - s3:GetObjectVersionForReplication
+                  - s3:GetObjectVersionAcl
+                  - s3:GetObjectVersionTagging
+                Resource: !Sub 'arn:aws:s3:::utu-db-backups-${AWS::AccountId}/*'
+              - Effect: Allow
+                Action:
+                  - s3:ReplicateObject
+                  - s3:ReplicateDelete
+                  - s3:ReplicateTags
+                Resource: !Sub 'arn:aws:s3:::utu-db-backups-${AWS::AccountId}-replica/*'
+
+  # ── Destination bucket in eu-west-1 (created separately — cross-region) ──────
+  # NOTE: Create this bucket manually in eu-west-1 before deploying this stack:
+  #   aws s3api create-bucket --bucket utu-db-backups-<AccountId>-replica \
+  #     --create-bucket-configuration LocationConstraint=eu-west-1 --region eu-west-1
+  #   aws s3api put-bucket-versioning --bucket utu-db-backups-<AccountId>-replica \
+  #     --versioning-configuration Status=Enabled --region eu-west-1
+
+  # ── Primary Backup Bucket (me-south-1) ────────────────────────────────────────
+  BackupBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'utu-db-backups-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref BackupKMSKey
+            BucketKeyEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: daily-backups-lifecycle
+            Status: Enabled
+            Prefix: daily/
+            Transitions:
+              - TransitionInDays: 7
+                StorageClass: GLACIER
+            ExpirationInDays: 30
+          - Id: delete-incomplete-multipart
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+      ReplicationConfiguration:
+        Role: !GetAtt ReplicationRole.Arn
+        Rules:
+          - Id: replicate-to-ireland
+            Status: Enabled
+            Prefix: daily/
+            Destination:
+              Bucket: !Sub 'arn:aws:s3:::utu-db-backups-${AWS::AccountId}-replica'
+              StorageClass: STANDARD_IA
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: database-backups
+
+  # ── Bucket Policy: restrict PutObject to backup task role ────────────────────
+  BackupBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BackupBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyNonTLS
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !Sub 'arn:aws:s3:::utu-db-backups-${AWS::AccountId}'
+              - !Sub 'arn:aws:s3:::utu-db-backups-${AWS::AccountId}/*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+          - Sid: AllowBackupTaskPut
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:role/utu-ecs-backup-task-role'
+            Action:
+              - s3:PutObject
+              - s3:PutObjectAcl
+            Resource: !Sub 'arn:aws:s3:::utu-db-backups-${AWS::AccountId}/daily/*'
+          - Sid: AllowOpsRoleGet
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:role/utu-ops-role'
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+              - s3:ListBucket
+            Resource:
+              - !Sub 'arn:aws:s3:::utu-db-backups-${AWS::AccountId}'
+              - !Sub 'arn:aws:s3:::utu-db-backups-${AWS::AccountId}/*'
+
+  # ── Prometheus Pushgateway for backup metrics ─────────────────────────────────
+  # EventBridge rule: trigger Lambda on S3 PutObject to push backup metric
+  BackupMetricLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: utu-backup-metric-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+# ── Outputs ────────────────────────────────────────────────────────────────────
+Outputs:
+  BackupBucketName:
+    Value: !Ref BackupBucket
+    Export:
+      Name: utu-backup-bucket
+  BackupBucketArn:
+    Value: !GetAtt BackupBucket.Arn
+    Export:
+      Name: utu-backup-bucket-arn
+  BackupKMSKeyArn:
+    Value: !GetAtt BackupKMSKey.Arn
+    Export:
+      Name: utu-backup-kms-key

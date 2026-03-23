@@ -1,0 +1,217 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking — CloudFront CDN distribution.
+  Origin 1: AWS Amplify (utubooking.com) — SSR pages, static assets.
+  Origin 2: ALB (api.utubooking.com) — API pass-through, never cached.
+  PriceClass_All: GCC + EU + Asia PoPs for Arab diaspora worldwide.
+
+Parameters:
+  AmplifyDomain:
+    Type: String
+    Description: Amplify app custom domain (e.g. main.d1abc.amplifyapp.com)
+  ALBDomain:
+    Type: String
+    Description: ALB DNS name from stack 01-vpc-alb
+    Default: !ImportValue utu-alb-dns
+  AcmCertArnUsEast1:
+    Type: String
+    Description: >
+      ACM certificate ARN in us-east-1 (CloudFront requires us-east-1 certs).
+      Must cover utubooking.com and api.utubooking.com.
+  Environment:
+    Type: String
+    Default: production
+
+Resources:
+
+  # ── Cache Policies ────────────────────────────────────────────────────────────
+  # Static assets: cache 1 year, immutable (content-hashed filenames)
+  StaticAssetsCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: utu-static-assets
+        DefaultTTL: 86400
+        MaxTTL: 31536000
+        MinTTL: 86400
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: true
+          EnableAcceptEncodingBrotli: true
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+
+  # SSR pages: do not cache at CDN (Next.js dynamic pages)
+  NoCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: utu-no-cache
+        DefaultTTL: 0
+        MaxTTL: 0
+        MinTTL: 0
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: false
+          EnableAcceptEncodingBrotli: false
+          CookiesConfig:
+            CookieBehavior: all
+          HeadersConfig:
+            HeaderBehavior: whitelist
+            Headers:
+              - Authorization
+              - Host
+          QueryStringsConfig:
+            QueryStringBehavior: all
+
+  # ── Response Headers Policy (security headers at edge) ───────────────────────
+  SecurityHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: utu-security-headers
+        SecurityHeadersConfig:
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: true
+            Preload: true
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: DENY
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: strict-origin-when-cross-origin
+            Override: true
+          XSSProtection:
+            ModeBlock: true
+            Protection: true
+            Override: true
+        CorsConfig:
+          AccessControlAllowCredentials: false
+          AccessControlAllowHeaders:
+            Items: ['Authorization', 'Content-Type', 'Accept', 'X-Request-ID']
+          AccessControlAllowMethods:
+            Items: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+          AccessControlAllowOrigins:
+            Items: ['https://utubooking.com', 'https://www.utubooking.com']
+          AccessControlMaxAgeSec: 86400
+          OriginOverride: false
+
+  # ── CloudFront Distribution ───────────────────────────────────────────────────
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: UTUBooking — frontend + API CDN
+        Enabled: true
+        HttpVersion: http2and3
+        PriceClass: PriceClass_All      # GCC + EU + Asia for Arab diaspora
+        Compress: true                  # gzip/brotli — critical for Arabic JSON
+        DefaultRootObject: ''
+
+        # ── Aliases ──────────────────────────────────────────────────────────────
+        Aliases:
+          - utubooking.com
+          - www.utubooking.com
+          - api.utubooking.com
+
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertArnUsEast1
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+
+        # ── Origins ───────────────────────────────────────────────────────────────
+        Origins:
+          # Amplify: Next.js frontend (SSR + static)
+          - Id: amplify-origin
+            DomainName: !Ref AmplifyDomain
+            CustomOriginConfig:
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: [TLSv1.2]
+            OriginCustomHeaders:
+              - HeaderName: X-Origin-Verify
+                HeaderValue: !Sub '${AWS::StackName}-cloudfront'
+
+          # ALB: API gateway (never cached)
+          - Id: alb-api-origin
+            DomainName: !ImportValue utu-alb-dns
+            CustomOriginConfig:
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: [TLSv1.2]
+
+        # ── Cache Behaviors ───────────────────────────────────────────────────────
+        CacheBehaviors:
+          # API endpoints: never cache, pass all headers/cookies
+          - PathPattern: '/api/*'
+            TargetOriginId: alb-api-origin
+            ViewerProtocolPolicy: redirect-to-https
+            CachePolicyId: !Ref NoCachePolicy
+            ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+            Compress: false
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
+            CachedMethods: [GET, HEAD]
+
+          # Static Next.js assets: cache 1 year (content-hashed)
+          - PathPattern: '/_next/static/*'
+            TargetOriginId: amplify-origin
+            ViewerProtocolPolicy: redirect-to-https
+            CachePolicyId: !Ref StaticAssetsCachePolicy
+            ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+            Compress: true
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+
+          # Public assets (images, fonts, icons)
+          - PathPattern: '/public/*'
+            TargetOriginId: amplify-origin
+            ViewerProtocolPolicy: redirect-to-https
+            CachePolicyId: !Ref StaticAssetsCachePolicy
+            ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+            Compress: true
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+
+        # Default: SSR pages — no cache
+        DefaultCacheBehavior:
+          TargetOriginId: amplify-origin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: !Ref NoCachePolicy
+          ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+          Compress: true
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD]
+
+        # ── Custom error pages (bilingual maintenance) ────────────────────────────
+        CustomErrorResponses:
+          - ErrorCode: 503
+            ResponseCode: 503
+            ResponsePagePath: /maintenance.html
+            ErrorCachingMinTTL: 30
+
+        Logging:
+          Bucket: !Sub 'utu-cf-logs-${AWS::AccountId}.s3.amazonaws.com'
+          IncludeCookies: false
+          Prefix: cloudfront/
+
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: utubooking
+
+# ── Outputs ────────────────────────────────────────────────────────────────────
+Outputs:
+  DistributionId:
+    Value: !Ref Distribution
+    Export:
+      Name: utu-cloudfront-id
+  DistributionDomain:
+    Value: !GetAtt Distribution.DomainName
+    Export:
+      Name: utu-cloudfront-domain

@@ -1,0 +1,203 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking Phase 7 — Iran Technical Isolation Verification Cron
+  Weekly Lambda (Mondays 06:00 UTC) — OFAC compliance monitoring.
+
+  ⚠️  GATE: Only deploy after written OFAC legal clearance is confirmed.
+  See legal/iran/feasibility-brief.md before deploying this stack.
+
+  Triggers the Iran isolation check Lambda every Monday at 06:00 UTC.
+  On FAIL: sends immediate P1 alert to SNS (PagerDuty + Slack + email).
+  Report is also emailed directly to CEO and Legal Agent via SES.
+
+Parameters:
+  AdminServiceUrl:
+    Type: String
+    Description: Internal URL of the admin service (e.g. http://admin-service.utu.internal:3012)
+
+  AdminSecret:
+    Type: String
+    NoEcho: true
+    Description: Bearer token for admin service authorization (from SSM)
+
+  AlertSnsTopicArn:
+    Type: String
+    Description: SNS topic ARN for P1 alerts (utu-global-alerts — same as other P1 alarms)
+
+  LambdaSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Private subnet IDs for Lambda VPC config (must reach admin service)
+
+  LambdaSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security group that allows Lambda to reach admin service on port 3012
+
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [production, staging]
+
+Conditions:
+  IsProduction: !Equals [!Ref Environment, production]
+
+Resources:
+
+  # ── Lambda execution role ──────────────────────────────────────────────────
+
+  IranIsolationCronRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub utu-iran-isolation-cron-role-${Environment}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: IranIsolationCronPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # CloudWatch Logs
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/utu-iran-isolation-cron*
+
+              # SNS — publish P1 alerts
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref AlertSnsTopicArn
+
+              # SSM — read secrets (ADMIN_SECRET)
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/utu/*
+
+  # ── Lambda function ────────────────────────────────────────────────────────
+
+  IranIsolationCronFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub utu-iran-isolation-cron-${Environment}
+      Description: >
+        Weekly Iran OFAC isolation verification — checks all non-Iran shards for
+        Iranian data leakage. FAIL result triggers immediate P1 SNS alert.
+      Runtime: nodejs20.x
+      Handler: handler.handler
+      Role: !GetAtt IranIsolationCronRole.Arn
+      Timeout: 180      # 3 min — DB queries across 8 shards can be slow
+      MemorySize: 256
+      VpcConfig:
+        SubnetIds:        !Ref LambdaSubnetIds
+        SecurityGroupIds: [!Ref LambdaSecurityGroupId]
+      Environment:
+        Variables:
+          ADMIN_SERVICE_URL: !Ref AdminServiceUrl
+          ADMIN_SECRET:      !Ref AdminSecret
+          ALERT_SNS_TOPIC_ARN: !Ref AlertSnsTopicArn
+          NODE_ENV:          !Ref Environment
+      Tags:
+        - Key: Project
+          Value: UTUBooking
+        - Key: Component
+          Value: iran-isolation-cron
+        - Key: ComplianceScope
+          Value: OFAC
+
+  # ── CloudWatch Log Group ───────────────────────────────────────────────────
+
+  IranCronLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/utu-iran-isolation-cron-${Environment}
+      RetentionInDays: 365   # Retain 1 year — OFAC audit trail requirement
+
+  # ── EventBridge rule — every Monday 06:00 UTC ─────────────────────────────
+
+  IranIsolationWeeklyRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub utu-iran-isolation-weekly-${Environment}
+      Description: >
+        Triggers Iran OFAC isolation check every Monday at 06:00 UTC.
+        Report emailed to CEO and Legal Agent. FAIL = immediate P1 SNS alert.
+      # cron(minutes hours day-of-month month day-of-week year)
+      # Monday = 2 in EventBridge (Sunday=1, Monday=2, ...)
+      ScheduleExpression: cron(0 6 ? * 2 *)
+      State: !If [IsProduction, ENABLED, DISABLED]
+      Targets:
+        - Id: IranIsolationCronTarget
+          Arn: !GetAtt IranIsolationCronFunction.Arn
+
+  # Lambda invoke permission for EventBridge
+  IranCronInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt IranIsolationCronFunction.Arn
+      Action:        lambda:InvokeFunction
+      Principal:     events.amazonaws.com
+      SourceArn:     !GetAtt IranIsolationWeeklyRule.Arn
+
+  # ── CloudWatch alarm — Lambda errors ──────────────────────────────────────
+
+  IranCronErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName:          !Sub utu-iran-isolation-cron-error-${Environment}
+      AlarmDescription:   "Iran isolation cron Lambda threw an error — check CloudWatch Logs"
+      Namespace:          AWS/Lambda
+      MetricName:         Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref IranIsolationCronFunction
+      Statistic:          Sum
+      Period:             3600   # 1 hour
+      EvaluationPeriods:  1
+      Threshold:          1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData:   notBreaching
+      AlarmActions:
+        - !Ref AlertSnsTopicArn
+
+  # ── CloudWatch alarm — Lambda not invoked (missed run) ─────────────────────
+  # Alerts if the Lambda hasn't run in the past 8 days (missed a Monday).
+
+  IranCronMissedRunAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName:          !Sub utu-iran-isolation-cron-missed-${Environment}
+      AlarmDescription:   "Iran isolation cron has not run in 8+ days — compliance check may have been skipped"
+      Namespace:          AWS/Lambda
+      MetricName:         Invocations
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref IranIsolationCronFunction
+      Statistic:          Sum
+      Period:             691200   # 8 days in seconds
+      EvaluationPeriods:  1
+      Threshold:          1
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData:   breaching   # missing data = missed run = alarm
+      AlarmActions:
+        - !Ref AlertSnsTopicArn
+
+Outputs:
+  LambdaFunctionArn:
+    Description: Iran isolation check Lambda ARN
+    Value: !GetAtt IranIsolationCronFunction.Arn
+    Export:
+      Name: !Sub utu-iran-isolation-cron-arn-${Environment}
+
+  EventBridgeRuleArn:
+    Description: EventBridge weekly schedule rule ARN
+    Value: !GetAtt IranIsolationWeeklyRule.Arn
+
+  LogGroupName:
+    Description: CloudWatch Log Group for OFAC audit trail (retained 1 year)
+    Value: !Ref IranCronLogGroup

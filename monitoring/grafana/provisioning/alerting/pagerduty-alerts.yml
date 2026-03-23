@@ -1,0 +1,411 @@
+apiVersion: 1
+
+# UTUBooking Phase 4 — Grafana Unified Alerting: PagerDuty contact points + alert rules
+# Requires: PAGERDUTY_INTEGRATION_KEY env var set in Grafana container
+# PagerDuty integration: Events API v2 (routing key = integration key)
+
+contactPoints:
+  - orgId: 1
+    name: pagerduty-p1
+    receivers:
+      - uid: pagerduty-p1-receiver
+        type: pagerduty
+        settings:
+          integrationKey: "${PAGERDUTY_INTEGRATION_KEY}"
+          severity: critical
+          class: "UTUBooking-P1"
+          component: "API"
+          group: "production"
+          summary: "{{ .CommonAnnotations.summary }}"
+          details: |
+            Alert: {{ .CommonLabels.alertname }}
+            Service: {{ .CommonLabels.service }}
+            Env: production
+            Runbook: https://wiki.utubooking.com/runbooks/{{ .CommonLabels.alertname }}
+
+  - orgId: 1
+    name: pagerduty-p2
+    receivers:
+      - uid: pagerduty-p2-receiver
+        type: pagerduty
+        settings:
+          integrationKey: "${PAGERDUTY_INTEGRATION_KEY}"
+          severity: warning
+          class: "UTUBooking-P2"
+
+  - orgId: 1
+    name: slack-ops
+    receivers:
+      - uid: slack-ops-receiver
+        type: slack
+        settings:
+          url: "${SLACK_WEBHOOK_URL}"
+          channel: "#ops-alerts"
+          title: "UTUBooking Alert: {{ .CommonLabels.alertname }}"
+          text: |
+            *Severity*: {{ .CommonLabels.severity }}
+            *Service*: {{ .CommonLabels.service }}
+            *Summary*: {{ .CommonAnnotations.summary }}
+
+policies:
+  - orgId: 1
+    receiver: slack-ops
+    group_by: [alertname, service]
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+    routes:
+      - receiver: pagerduty-p1
+        matchers:
+          - severity = critical
+        group_wait: 0s       # Immediate for P1
+        repeat_interval: 30m
+
+# ── Alert Rules ───────────────────────────────────────────────────────────────
+
+groups:
+  - orgId: 1
+    name: UTUBooking-SLA
+    folder: UTUBooking
+    interval: 1m
+    rules:
+
+      # P99 API latency > 1s sustained for 5 minutes
+      - uid: p99-latency-breach
+        title: "P99 Latency > 1s"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))
+              instant: false
+              range: true
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: gt, params: [1.0]}
+                  query: {params: [A]}
+        for: 5m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "P99 API latency is {{ $values.A.Value | humanizeDuration }} (threshold: 1s)"
+          runbook: "https://wiki.utubooking.com/runbooks/p99-latency"
+
+      # Error rate > 1% for 2 minutes
+      - uid: error-rate-breach
+        title: "Error Rate > 1%"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: |
+                sum(rate(http_requests_total{status=~"5.."}[2m])) /
+                sum(rate(http_requests_total[2m]))
+              instant: false
+              range: true
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: gt, params: [0.01]}
+                  query: {params: [A]}
+        for: 2m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "5xx error rate is {{ $values.A.Value | humanizePercentage }} (threshold: 1%)"
+          runbook: "https://wiki.utubooking.com/runbooks/error-rate"
+
+      # ECS running task count below minimum for critical services
+      - uid: ecs-tasks-below-min
+        title: "ECS Tasks Below Minimum"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: cloudwatch
+            model:
+              namespace: AWS/ECS
+              metricName: RunningTaskCount
+              dimensions:
+                ClusterName: utu-backend-cluster
+                ServiceName: utu-booking-service
+              statistic: Minimum
+              period: 60
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: lt, params: [2]}
+                  query: {params: [A]}
+        for: 1m
+        labels:
+          severity: critical
+          service: booking
+        annotations:
+          summary: "Booking service running tasks: {{ $values.A.Value }} (min: 2)"
+
+      # Redis eviction spike > 500/s sustained for 3 minutes
+      - uid: redis-eviction-spike
+        title: "Redis Eviction Spike"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: rate(redis_evicted_keys_total[1m])
+              instant: false
+              range: true
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: gt, params: [500]}
+                  query: {params: [A]}
+        for: 3m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis evicting {{ $values.A.Value | humanize }} keys/s (threshold: 500/s)"
+          runbook: "https://wiki.utubooking.com/runbooks/redis-eviction"
+
+      # Both primary regions (Bahrain + Riyadh) unhealthy — promotes from Route53 alarm
+      - uid: both-regions-down
+        title: "ALL Primary Regions Down - P1"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: cloudwatch
+            model:
+              namespace: AWS/Route53
+              metricName: HealthCheckStatus
+              dimensions:
+                HealthCheckId: "${HEALTH_CHECK_BOTH_PRIMARIES_ID}"
+              statistic: Minimum
+              period: 60
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: lt, params: [1]}
+                  query: {params: [A]}
+        for: 0s  # Immediate — no grace period
+        labels:
+          severity: critical
+          service: global
+        annotations:
+          summary: "CRITICAL: Both Bahrain and Riyadh regions are unhealthy. Full outage in progress."
+          runbook: "https://wiki.utubooking.com/runbooks/full-outage"
+
+      # RDS replica lag > 30s
+      - uid: rds-replica-lag
+        title: "RDS Replica Lag > 30s"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: cloudwatch
+            model:
+              namespace: AWS/RDS
+              metricName: ReplicaLag
+              statistic: Maximum
+              period: 60
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: gt, params: [30]}
+                  query: {params: [A]}
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "RDS replica lag is {{ $values.A.Value | humanizeDuration }} (threshold: 30s)"
+          runbook: "https://wiki.utubooking.com/runbooks/replica-lag"
+
+      # ── Phase 7 — Per-region unreachable alerts (P1, 2-minute grace) ─────────
+
+      # Any single AWS region unreachable for > 2 minutes → P1
+      # Covers Bahrain, Frankfurt, Singapore, and Mumbai independently.
+      # Uses Route53 health check per-region (separate from both-primaries-down above).
+      - uid: region-bahrain-down-p1
+        title: "[P1] Bahrain (me-south-1) Unreachable"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: cloudwatch
+            model:
+              namespace: AWS/Route53
+              metricName: HealthCheckStatus
+              dimensions:
+                HealthCheckId: "${HEALTH_CHECK_BAHRAIN_ID}"
+              statistic: Minimum
+              period: 60
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: lt, params: [1]}
+                  query: {params: [A]}
+        for: 2m
+        labels:
+          severity: critical
+          region: me-south-1
+          service: infrastructure
+        annotations:
+          summary: "P1: Bahrain (me-south-1) has been unreachable for > 2 minutes. Gulf markets (SA/AE/KW/JO) affected."
+          runbook: "https://wiki.utubooking.com/runbooks/region-unreachable"
+
+      - uid: region-frankfurt-down-p1
+        title: "[P1] Frankfurt (eu-central-1) Unreachable"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: cloudwatch
+            model:
+              namespace: AWS/Route53
+              metricName: HealthCheckStatus
+              dimensions:
+                HealthCheckId: "${HEALTH_CHECK_EU_ID}"
+              statistic: Minimum
+              period: 60
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: lt, params: [1]}
+                  query: {params: [A]}
+        for: 2m
+        labels:
+          severity: critical
+          region: eu-central-1
+          service: infrastructure
+        annotations:
+          summary: "P1: Frankfurt (eu-central-1) has been unreachable for > 2 minutes. MA/TN/TR markets affected. KVKK + GDPR data residency risk."
+          runbook: "https://wiki.utubooking.com/runbooks/region-unreachable"
+
+      - uid: region-singapore-down-p1
+        title: "[P1] Singapore (ap-southeast-1) Unreachable"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: cloudwatch
+            model:
+              namespace: AWS/Route53
+              metricName: HealthCheckStatus
+              dimensions:
+                HealthCheckId: "${HEALTH_CHECK_SEA_ID}"
+              statistic: Minimum
+              period: 60
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: lt, params: [1]}
+                  query: {params: [A]}
+        for: 2m
+        labels:
+          severity: critical
+          region: ap-southeast-1
+          service: infrastructure
+        annotations:
+          summary: "P1: Singapore (ap-southeast-1) has been unreachable for > 2 minutes. ID/MY markets affected. PDP + PDPA compliance risk."
+          runbook: "https://wiki.utubooking.com/runbooks/region-unreachable"
+
+      - uid: region-mumbai-down-p1
+        title: "[P1] Mumbai (ap-south-1) Unreachable"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: cloudwatch
+            model:
+              namespace: AWS/Route53
+              metricName: HealthCheckStatus
+              dimensions:
+                HealthCheckId: "${HEALTH_CHECK_MUMBAI_ID}"
+              statistic: Minimum
+              period: 60
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: lt, params: [1]}
+                  query: {params: [A]}
+        for: 2m
+        labels:
+          severity: critical
+          region: ap-south-1
+          service: infrastructure
+        annotations:
+          summary: "P1: Mumbai (ap-south-1) has been unreachable for > 2 minutes. IN/PK markets affected. DPDP 2023 + PECA compliance risk."
+          runbook: "https://wiki.utubooking.com/runbooks/region-unreachable"
+
+      # Data routing misroute detected — P2 (not urgent but a compliance risk)
+      - uid: data-routing-misroute-p2
+        title: "[P2] Data Routing Misroute Detected"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: utu_routing_audit_misrouted_total
+              instant: false
+              range: true
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: gt, params: [0]}
+                  query: {params: [A]}
+        for: 0s   # Alert immediately — data residency violation must not persist
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "{{ $values.A.Value }} booking(s) found in wrong regional DB shard. Data residency compliance at risk. Run GET /api/admin/infrastructure/routing-audit for details."
+          runbook: "https://wiki.utubooking.com/runbooks/data-routing-misroute"
+
+      # SLA monthly budget burn — 99.95% = 21.9 min/month downtime
+      - uid: sla-budget-burn
+        title: "SLA Budget Burn Rate High"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: cloudwatch
+            model:
+              namespace: AWS/CloudWatch
+              metricName: AlarmStateTime
+              dimensions:
+                AlarmName: utu-sla-breach
+              statistic: Sum
+              period: 3600
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator: {type: gt, params: [900]}   # 15 min in alarm this hour
+                  query: {params: [A]}
+        for: 0s
+        labels:
+          severity: warning
+          service: sla
+        annotations:
+          summary: "SLA budget burn rate is high. {{ $values.A.Value }}s of downtime recorded this hour."

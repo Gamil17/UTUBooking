@@ -1,0 +1,46 @@
+{
+  "name": "UTUBooking — Hajj & Umrah Hotels",
+  "short_name": "UTUBooking",
+  "description": "Book verified hotels in Makkah and Madinah for Hajj and Umrah. Real-time availability. SAR pricing.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#10B981",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["travel", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-180x180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Search Hotels",
+      "short_name": "Hotels",
+      "url": "/?tab=hotels",
+      "icons": [{ "src": "/icons/hotel-shortcut.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Trips",
+      "short_name": "My Trips",
+      "url": "/trips",
+      "icons": [{ "src": "/icons/trips-shortcut.png", "sizes": "96x96" }]
+    }
+  ]
+}

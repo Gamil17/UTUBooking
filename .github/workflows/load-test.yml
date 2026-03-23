@@ -1,0 +1,72 @@
+name: Load Test — Hajj Peak (100K Users)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target API URL (default: staging)'
+        required: false
+        default: 'https://staging-api.utubooking.com'
+      scenario:
+        description: 'Scenario to run'
+        required: false
+        default: 'hajj-peak'
+        type: choice
+        options:
+          - hajj-peak
+          - hotel-search
+          - booking-flow
+          - flight-search
+
+jobs:
+  artillery-load-test:
+    name: Artillery ${{ inputs.scenario }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90   # Hajj peak test: 120s warm + 600s ramp + 1800s peak + 300s cooldown = 46min + buffer
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Artillery
+        run: npm install -g artillery@latest
+
+      - name: Run Artillery scenario
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          REPORT_FILE="load-tests/artillery/reports/${{ inputs.scenario }}-${TIMESTAMP}.json"
+          mkdir -p load-tests/artillery/reports
+
+          artillery run \
+            load-tests/artillery/scenarios/${{ inputs.scenario }}.yml \
+            --output "${REPORT_FILE}"
+
+          # Generate HTML report
+          artillery report "${REPORT_FILE}" \
+            --output "load-tests/artillery/reports/${{ inputs.scenario }}-${TIMESTAMP}.html"
+
+          echo "REPORT_FILE=${REPORT_FILE}" >> $GITHUB_ENV
+          echo "REPORT_TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
+        env:
+          LOAD_TEST_API_URL: ${{ inputs.target_url }}
+          LOAD_TEST_USER_EMAIL: ${{ secrets.LOAD_TEST_USER_EMAIL }}
+          LOAD_TEST_USER_PASSWORD: ${{ secrets.LOAD_TEST_USER_PASSWORD }}
+
+      - name: Upload Artillery report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: artillery-report-${{ inputs.scenario }}-${{ env.REPORT_TIMESTAMP }}
+          path: load-tests/artillery/reports/
+          retention-days: 30
+
+      - name: Print summary
+        if: always()
+        run: |
+          echo "Load test complete. Report uploaded as artifact."
+          echo "Scenario: ${{ inputs.scenario }}"
+          echo "Target: ${{ inputs.target_url }}"

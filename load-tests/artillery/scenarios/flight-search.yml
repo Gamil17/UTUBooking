@@ -1,0 +1,24 @@
+config:
+  target: '{{ $processEnvironment.LOAD_TEST_API_URL || "https://api.utubooking.com" }}'
+  http:
+    timeout: 30
+  phases:
+    - name: warm-up
+      duration: 60
+      arrivalRate: 5
+
+scenarios:
+  - name: Flight search — JED/RUH to MKK
+    weight: 10
+    flow:
+      - get:
+          url: /api/v1/flights/search
+          qs:
+            origin: '{{ origin }}'
+            destination: MKK
+            date: '{{ flightDate }}'
+            adults: '{{ adults }}'
+          beforeRequest: setFlightSearchParams
+          expect:
+            - statusCode: 200
+            - hasProperty: results

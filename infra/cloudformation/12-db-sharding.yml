@@ -1,0 +1,512 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking Phase 4 — Database Sharding by Market
+  6 RDS PostgreSQL 16 shards (KSA, UAE, KWT, JOR, MAR, TUN)
+  Each shard: 1 primary + 2 read replicas = 18 nodes total
+  Shard key: countryCode on bookings, payments, wallet_tx
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues: [prod, staging]
+
+  VpcId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/vpc/id
+
+  PrivateSubnet1:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/vpc/private-subnet-1
+
+  PrivateSubnet2:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/vpc/private-subnet-2
+
+  DBMasterPassword:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/db/master-password
+    NoEcho: true
+
+  DBMasterUsername:
+    Type: String
+    Default: utu_user
+
+  # Shard-specific env vars for services
+  PricingServiceSecretArn:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/secrets/pricing-service-arn
+
+Mappings:
+  Shards:
+    KSA: { CountryCode: ksa, DisplayName: "Saudi Arabia" }
+    UAE: { CountryCode: uae, DisplayName: "United Arab Emirates" }
+    KWT: { CountryCode: kwt, DisplayName: "Kuwait" }
+    JOR: { CountryCode: jor, DisplayName: "Jordan" }
+    MAR: { CountryCode: mar, DisplayName: "Morocco" }
+    TUN: { CountryCode: tun, DisplayName: "Tunisia" }
+
+Resources:
+
+  # ── Shared Parameter Group (pg16, same as stack 04) ──────────────────────
+  ShardParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Family: postgres16
+      Description: UTUBooking shard parameter group
+      Parameters:
+        shared_preload_libraries: pg_stat_statements
+        pg_stat_statements.track: all
+        log_min_duration_statement: "1000"   # 1s slow query log
+        log_connections: "on"
+        log_disconnections: "on"
+        max_connections: "200"
+        work_mem: "16MB"
+        maintenance_work_mem: "256MB"
+        effective_cache_size: "6GB"
+        random_page_cost: "1.1"             # SSD-optimised
+      Tags:
+        - Key: Project
+          Value: UTUBooking
+        - Key: Phase
+          Value: "4"
+
+  # ── Security Group (shared across all shard primaries + replicas) ─────────
+  ShardSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: UTUBooking DB shard access
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 10.0.0.0/8       # VPC CIDR — services only
+      Tags:
+        - Key: Name
+          Value: utu-db-shard-sg
+
+  # ── DB Subnet Group ───────────────────────────────────────────────────────
+  ShardSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: UTUBooking shard subnet group
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags:
+        - Key: Project
+          Value: UTUBooking
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # SHARD: KSA (Saudi Arabia) — largest shard, r7g.xlarge
+  # ══════════════════════════════════════════════════════════════════════════
+  DBShardKSA:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-ksa-${Environment}
+      DBInstanceClass: db.r7g.xlarge    # KSA is highest volume
+      Engine: postgres
+      EngineVersion: "16"
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBName: utu_booking_ksa
+      DBParameterGroupName: !Ref ShardParameterGroup
+      DBSubnetGroupName: !Ref ShardSubnetGroup
+      VPCSecurityGroups: [!GetAtt ShardSecurityGroup.GroupId]
+      AllocatedStorage: "500"
+      StorageType: gp3
+      StorageEncrypted: true
+      MultiAZ: true
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: "20:00-21:00"
+      PreferredMaintenanceWindow: "sun:03:00-sun:04:00"
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      MonitoringInterval: 60
+      MonitoringRoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/rds-monitoring-role
+      Tags:
+        - Key: Shard
+          Value: KSA
+        - Key: Phase
+          Value: "4"
+
+  DBShardKSAReplica1:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-ksa-read1-${Environment}
+      DBInstanceClass: db.r7g.large
+      SourceDBInstanceIdentifier: !Ref DBShardKSA
+      Tags:
+        - Key: Shard
+          Value: KSA
+        - Key: Role
+          Value: ReadReplica
+
+  DBShardKSAReplica2:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-ksa-read2-${Environment}
+      DBInstanceClass: db.r7g.large
+      SourceDBInstanceIdentifier: !Ref DBShardKSA
+      Tags:
+        - Key: Shard
+          Value: KSA
+        - Key: Role
+          Value: ReadReplica
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # SHARD: UAE
+  # ══════════════════════════════════════════════════════════════════════════
+  DBShardUAE:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-uae-${Environment}
+      DBInstanceClass: db.r7g.large
+      Engine: postgres
+      EngineVersion: "16"
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBName: utu_booking_uae
+      DBParameterGroupName: !Ref ShardParameterGroup
+      DBSubnetGroupName: !Ref ShardSubnetGroup
+      VPCSecurityGroups: [!GetAtt ShardSecurityGroup.GroupId]
+      AllocatedStorage: "200"
+      StorageType: gp3
+      StorageEncrypted: true
+      MultiAZ: true
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: "20:30-21:30"
+      Tags:
+        - Key: Shard
+          Value: UAE
+
+  DBShardUAEReplica1:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-uae-read1-${Environment}
+      DBInstanceClass: db.r7g.medium
+      SourceDBInstanceIdentifier: !Ref DBShardUAE
+      Tags: [{Key: Shard, Value: UAE}, {Key: Role, Value: ReadReplica}]
+
+  DBShardUAEReplica2:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-uae-read2-${Environment}
+      DBInstanceClass: db.r7g.medium
+      SourceDBInstanceIdentifier: !Ref DBShardUAE
+      Tags: [{Key: Shard, Value: UAE}, {Key: Role, Value: ReadReplica}]
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # SHARD: KWT (Kuwait)
+  # ══════════════════════════════════════════════════════════════════════════
+  DBShardKWT:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-kwt-${Environment}
+      DBInstanceClass: db.r7g.large
+      Engine: postgres
+      EngineVersion: "16"
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBName: utu_booking_kwt
+      DBParameterGroupName: !Ref ShardParameterGroup
+      DBSubnetGroupName: !Ref ShardSubnetGroup
+      VPCSecurityGroups: [!GetAtt ShardSecurityGroup.GroupId]
+      AllocatedStorage: "100"
+      StorageType: gp3
+      StorageEncrypted: true
+      MultiAZ: true
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: "21:00-22:00"
+      Tags: [{Key: Shard, Value: KWT}]
+
+  DBShardKWTReplica1:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-kwt-read1-${Environment}
+      DBInstanceClass: db.r7g.medium
+      SourceDBInstanceIdentifier: !Ref DBShardKWT
+      Tags: [{Key: Shard, Value: KWT}, {Key: Role, Value: ReadReplica}]
+
+  DBShardKWTReplica2:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-kwt-read2-${Environment}
+      DBInstanceClass: db.r7g.medium
+      SourceDBInstanceIdentifier: !Ref DBShardKWT
+      Tags: [{Key: Shard, Value: KWT}, {Key: Role, Value: ReadReplica}]
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # SHARD: JOR (Jordan)
+  # ══════════════════════════════════════════════════════════════════════════
+  DBShardJOR:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-jor-${Environment}
+      DBInstanceClass: db.r7g.large
+      Engine: postgres
+      EngineVersion: "16"
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBName: utu_booking_jor
+      DBParameterGroupName: !Ref ShardParameterGroup
+      DBSubnetGroupName: !Ref ShardSubnetGroup
+      VPCSecurityGroups: [!GetAtt ShardSecurityGroup.GroupId]
+      AllocatedStorage: "100"
+      StorageType: gp3
+      StorageEncrypted: true
+      MultiAZ: true
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: "21:30-22:30"
+      Tags: [{Key: Shard, Value: JOR}]
+
+  DBShardJORReplica1:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-jor-read1-${Environment}
+      DBInstanceClass: db.r7g.medium
+      SourceDBInstanceIdentifier: !Ref DBShardJOR
+      Tags: [{Key: Shard, Value: JOR}, {Key: Role, Value: ReadReplica}]
+
+  DBShardJORReplica2:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-jor-read2-${Environment}
+      DBInstanceClass: db.r7g.medium
+      SourceDBInstanceIdentifier: !Ref DBShardJOR
+      Tags: [{Key: Shard, Value: JOR}, {Key: Role, Value: ReadReplica}]
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # SHARD: MAR (Morocco)
+  # ══════════════════════════════════════════════════════════════════════════
+  DBShardMAR:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-mar-${Environment}
+      DBInstanceClass: db.r7g.large
+      Engine: postgres
+      EngineVersion: "16"
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBName: utu_booking_mar
+      DBParameterGroupName: !Ref ShardParameterGroup
+      DBSubnetGroupName: !Ref ShardSubnetGroup
+      VPCSecurityGroups: [!GetAtt ShardSecurityGroup.GroupId]
+      AllocatedStorage: "100"
+      StorageType: gp3
+      StorageEncrypted: true
+      MultiAZ: true
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: "22:00-23:00"
+      Tags: [{Key: Shard, Value: MAR}]
+
+  DBShardMARReplica1:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-mar-read1-${Environment}
+      DBInstanceClass: db.r7g.medium
+      SourceDBInstanceIdentifier: !Ref DBShardMAR
+      Tags: [{Key: Shard, Value: MAR}, {Key: Role, Value: ReadReplica}]
+
+  DBShardMARReplica2:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-mar-read2-${Environment}
+      DBInstanceClass: db.r7g.medium
+      SourceDBInstanceIdentifier: !Ref DBShardMAR
+      Tags: [{Key: Shard, Value: MAR}, {Key: Role, Value: ReadReplica}]
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # SHARD: TUN (Tunisia)
+  # ══════════════════════════════════════════════════════════════════════════
+  DBShardTUN:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-tun-${Environment}
+      DBInstanceClass: db.r7g.large
+      Engine: postgres
+      EngineVersion: "16"
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBName: utu_booking_tun
+      DBParameterGroupName: !Ref ShardParameterGroup
+      DBSubnetGroupName: !Ref ShardSubnetGroup
+      VPCSecurityGroups: [!GetAtt ShardSecurityGroup.GroupId]
+      AllocatedStorage: "100"
+      StorageType: gp3
+      StorageEncrypted: true
+      MultiAZ: true
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: "22:30-23:30"
+      Tags: [{Key: Shard, Value: TUN}]
+
+  DBShardTUNReplica1:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-tun-read1-${Environment}
+      DBInstanceClass: db.r7g.medium
+      SourceDBInstanceIdentifier: !Ref DBShardTUN
+      Tags: [{Key: Shard, Value: TUN}, {Key: Role, Value: ReadReplica}]
+
+  DBShardTUNReplica2:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-tun-read2-${Environment}
+      DBInstanceClass: db.r7g.medium
+      SourceDBInstanceIdentifier: !Ref DBShardTUN
+      Tags: [{Key: Shard, Value: TUN}, {Key: Role, Value: ReadReplica}]
+
+  # ── SSM Parameters (connection strings for shard-router.js) ──────────────
+  SSMShardKSAUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/ksa/url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardKSA.Endpoint.Address}:5432/utu_booking_ksa
+
+  SSMShardKSAReadUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/ksa/read-url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardKSAReplica1.Endpoint.Address}:5432/utu_booking_ksa
+
+  SSMShardUAEUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/uae/url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardUAE.Endpoint.Address}:5432/utu_booking_uae
+
+  SSMShardUAEReadUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/uae/read-url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardUAEReplica1.Endpoint.Address}:5432/utu_booking_uae
+
+  SSMShardKWTUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/kwt/url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardKWT.Endpoint.Address}:5432/utu_booking_kwt
+
+  SSMShardKWTReadUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/kwt/read-url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardKWTReplica1.Endpoint.Address}:5432/utu_booking_kwt
+
+  SSMShardJORUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/jor/url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardJOR.Endpoint.Address}:5432/utu_booking_jor
+
+  SSMShardJORReadUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/jor/read-url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardJORReplica1.Endpoint.Address}:5432/utu_booking_jor
+
+  SSMShardMARUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/mar/url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardMAR.Endpoint.Address}:5432/utu_booking_mar
+
+  SSMShardMARReadUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/mar/read-url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardMARReplica1.Endpoint.Address}:5432/utu_booking_mar
+
+  SSMShardTUNUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/tun/url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardTUN.Endpoint.Address}:5432/utu_booking_tun
+
+  SSMShardTUNReadUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /utu/db/tun/read-url
+      Type: String
+      Value: !Sub postgresql://${DBMasterUsername}:{{resolve:ssm:/utu/db/master-password}}@${DBShardTUNReplica1.Endpoint.Address}:5432/utu_booking_tun
+
+  # ── CloudWatch Alarms (replication lag per shard) ─────────────────────────
+  AlarmKSAReplLag:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-shard-ksa-replication-lag
+      MetricName: ReplicaLag
+      Namespace: AWS/RDS
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 3
+      Threshold: 30
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DBShardKSAReplica1
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:utu-alerts
+      TreatMissingData: notBreaching
+
+  AlarmUAEReplLag:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-shard-uae-replication-lag
+      MetricName: ReplicaLag
+      Namespace: AWS/RDS
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 3
+      Threshold: 30
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DBShardUAEReplica1
+
+Outputs:
+  ShardKSAEndpoint:
+    Value: !GetAtt DBShardKSA.Endpoint.Address
+    Export: {Name: utu-db-ksa-endpoint}
+
+  ShardUAEEndpoint:
+    Value: !GetAtt DBShardUAE.Endpoint.Address
+    Export: {Name: utu-db-uae-endpoint}
+
+  ShardKWTEndpoint:
+    Value: !GetAtt DBShardKWT.Endpoint.Address
+    Export: {Name: utu-db-kwt-endpoint}
+
+  ShardJOREndpoint:
+    Value: !GetAtt DBShardJOR.Endpoint.Address
+    Export: {Name: utu-db-jor-endpoint}
+
+  ShardMAREndpoint:
+    Value: !GetAtt DBShardMAR.Endpoint.Address
+    Export: {Name: utu-db-mar-endpoint}
+
+  ShardTUNEndpoint:
+    Value: !GetAtt DBShardTUN.Endpoint.Address
+    Export: {Name: utu-db-tun-endpoint}
+
+  TotalNodes:
+    Description: "6 primaries + 12 read replicas = 18 nodes total"
+    Value: "18"

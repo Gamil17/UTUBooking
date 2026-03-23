@@ -1,0 +1,247 @@
+config:
+  # UTUBooking Phase 4 — 500 Concurrent Full Booking Flow
+  # Tests: Auth → Hotel Search → Hotel Detail → Create Booking → STC Pay
+  # SLA targets: P95 < 800ms, P99 < 2s, error rate < 0.5%
+  # Run: LOAD_TEST_API_URL=https://api-staging.utubooking.com npx artillery run load-tests/artillery/scenarios/booking-flow-500c.yml
+
+  target: "{{ $processEnvironment.LOAD_TEST_API_URL }}"
+
+  phases:
+    # Phase 1: Warm-up — 50 users arrive over 60s
+    - name: "warm-up"
+      duration: 60
+      arrivalCount: 50
+
+    # Phase 2: Ramp — 2 → 10 arrivals/sec over 120s
+    - name: "ramp"
+      duration: 120
+      arrivalRate: 2
+      rampTo: 10
+
+    # Phase 3: Sustained peak — 10 arrivals/sec × 50s avg session = ~500 concurrent
+    - name: "peak-500-concurrent"
+      duration: 300
+      arrivalRate: 10
+
+    # Phase 4: Cool-down
+    - name: "cool-down"
+      duration: 60
+      arrivalRate: 10
+      rampTo: 1
+
+  http:
+    pool: 50           # Connection pool size per Artillery worker
+    timeout: 30        # Request timeout in seconds
+    extendedMetrics: true
+
+  processor: "./processors/booking-data.js"
+
+  # SLA enforcement — Artillery will exit non-zero if thresholds breached
+  ensure:
+    p95: 800           # Full booking flow P95 < 800ms
+    p99: 2000          # P99 < 2s (payment step adds ~400ms)
+    maxErrorRate: 0.5  # < 0.5% (vs 0.1% for search-only — payment adds variance)
+
+  plugins:
+    # Publish metrics to CloudWatch during load test
+    cloudwatch:
+      namespace: UTUBooking/LoadTest
+      region: me-south-1
+
+  variables:
+    # Hotel IDs seeded in staging DB (from staging/seeds/hotels.json)
+    makkahHotelIds:
+      - "MCM001"
+      - "MCM002"
+      - "MCM003"
+      - "MCM004"
+      - "MCM005"
+    madinahHotelIds:
+      - "MED001"
+      - "MED002"
+      - "MED003"
+
+scenarios:
+  - name: "Full Booking Flow — STC Pay"
+    weight: 60    # 60% of users use STC Pay (KSA primary market)
+    flow:
+      # Step 1: Login
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ generateEmail() }}"
+            password: "TestPass123!"
+          capture:
+            - json: "$.accessToken"
+              as: "authToken"
+            - json: "$.user.id"
+              as: "userId"
+            - json: "$.user.countryCode"
+              as: "countryCode"
+          expect:
+            - statusCode: 200
+            - hasProperty: "accessToken"
+
+      # Step 2: Search hotels
+      - get:
+          url: "/api/v1/hotels/search"
+          qs:
+            location: "{{ pickLocation() }}"
+            checkIn: "{{ checkInDate() }}"
+            checkOut: "{{ checkOutDate() }}"
+            guests: "{{ randomGuests() }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          capture:
+            - json: "$.results[0].id"
+              as: "hotelId"
+            - json: "$.results[0].price"
+              as: "hotelPrice"
+          expect:
+            - statusCode: 200
+            - hasProperty: "results"
+
+      # Step 3: Hotel detail page
+      - get:
+          url: "/api/v1/hotels/{{ hotelId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      # Step 4: Create booking
+      - post:
+          url: "/api/v1/bookings"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            hotelId: "{{ hotelId }}"
+            checkIn: "{{ checkInDate() }}"
+            checkOut: "{{ checkOutDate() }}"
+            guests: "{{ randomGuests() }}"
+            guestDetails:
+              firstName: "{{ randomFirstName() }}"
+              lastName: "{{ randomLastName() }}"
+              phone: "{{ randomSaudiPhone() }}"
+              nationality: "{{ countryCode }}"
+          capture:
+            - json: "$.bookingId"
+              as: "bookingId"
+            - json: "$.totalAmount"
+              as: "totalAmount"
+          expect:
+            - statusCode: 201
+            - hasProperty: "bookingId"
+
+      # Step 5: STC Pay payment
+      - post:
+          url: "/api/v1/payments/stcpay"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            bookingId: "{{ bookingId }}"
+            amount: "{{ totalAmount }}"
+            currency: "SAR"
+            stcPayMobile: "{{ randomSaudiPhone() }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "status"
+
+  - name: "Full Booking Flow — Mada"
+    weight: 25    # 25% Mada card
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ generateEmail() }}"
+            password: "TestPass123!"
+          capture:
+            - json: "$.accessToken"
+              as: "authToken"
+            - json: "$.user.countryCode"
+              as: "countryCode"
+
+      - get:
+          url: "/api/v1/hotels/search"
+          qs:
+            location: "Makkah"
+            checkIn: "{{ checkInDate() }}"
+            checkOut: "{{ checkOutDate() }}"
+            guests: 2
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          capture:
+            - json: "$.results[0].id"
+              as: "hotelId"
+
+      - post:
+          url: "/api/v1/bookings"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            hotelId: "{{ hotelId }}"
+            checkIn: "{{ checkInDate() }}"
+            checkOut: "{{ checkOutDate() }}"
+            guests: 2
+            guestDetails:
+              firstName: "{{ randomFirstName() }}"
+              lastName: "{{ randomLastName() }}"
+              phone: "{{ randomSaudiPhone() }}"
+              nationality: "SAU"
+          capture:
+            - json: "$.bookingId"
+              as: "bookingId"
+            - json: "$.totalAmount"
+              as: "totalAmount"
+
+      - post:
+          url: "/api/v1/payments/mada"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            bookingId: "{{ bookingId }}"
+            amount: "{{ totalAmount }}"
+            currency: "SAR"
+            cardToken: "tok_mada_test_{{ randomCardSuffix() }}"
+
+  - name: "Search Only — North Africa"
+    weight: 15    # 15% search-only (browse without booking — N.Africa users)
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ generateEmail() }}"
+            password: "TestPass123!"
+          capture:
+            - json: "$.accessToken"
+              as: "authToken"
+
+      - get:
+          url: "/api/v1/hotels/search"
+          qs:
+            location: "Makkah"
+            checkIn: "{{ checkInDate() }}"
+            checkOut: "{{ checkOutDate() }}"
+            guests: 2
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          capture:
+            - json: "$.results[0].id"
+              as: "hotelId"
+
+      - get:
+          url: "/api/v1/hotels/{{ hotelId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - get:
+          url: "/api/v1/flights/search"
+          qs:
+            origin: "CMN"
+            destination: "JED"
+            date: "{{ checkInDate() }}"
+            adults: 2
+          headers:
+            Authorization: "Bearer {{ authToken }}"

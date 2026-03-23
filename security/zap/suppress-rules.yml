@@ -1,0 +1,39 @@
+# UTUBooking — OWASP ZAP Accepted False Positives
+# Each entry documents the business justification for suppressing a ZAP finding.
+# All suppressions require sign-off from the security lead before merging.
+
+suppressions:
+
+  - ruleId: 10098
+    name: Cross-Domain Misconfiguration
+    risk: MEDIUM
+    justification: >
+      STCPay, Moyasar, and Stripe payment widgets load from their CDN domains.
+      These are trusted PCI DSS-certified payment processors. The cross-domain
+      resource access is intentional and required for payment form rendering.
+      Mitigation: Payment pages use frame-src CSP to allow only known payment CDNs.
+    approvedBy: security-lead
+    approvedDate: '2026-03-01'
+    reviewDate: '2026-09-01'
+
+  - ruleId: 10017
+    name: Cross-Domain JavaScript Source File Inclusion
+    risk: LOW
+    justification: >
+      STCPay SDK (b2b.stcpay.com.sa) and Stripe.js (js.stripe.com) are loaded
+      from trusted third-party domains. These are industry-standard payment SDKs
+      with established security track records and SRI integrity checks applied.
+    approvedBy: security-lead
+    approvedDate: '2026-03-01'
+    reviewDate: '2026-09-01'
+
+  - ruleId: 10015
+    name: Incomplete Cache-Control Header
+    risk: LOW
+    justification: >
+      API endpoints return Cache-Control: no-store by default (set at nginx gateway).
+      Some health-check endpoints intentionally allow caching at the ALB level.
+      This is not a security risk for health endpoints that return no user data.
+    approvedBy: security-lead
+    approvedDate: '2026-03-01'
+    reviewDate: '2026-09-01'

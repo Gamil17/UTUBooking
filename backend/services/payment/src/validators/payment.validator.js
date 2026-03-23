@@ -39,6 +39,28 @@ const stripeInitiateSchema = Joi.object({
   description: Joi.string().max(255).optional(),
 }).options({ stripUnknown: true });
 
+// ─── JazzCash: initiate ───────────────────────────────────────────────────────
+// Pakistan mobile format: 11 digits starting with 03 (hyphens/spaces stripped)
+const pkMobile = Joi.string()
+  .pattern(/^03\d{9}$/)
+  .required()
+  .messages({ 'string.pattern.base': 'mobileNumber must be a valid Pakistan mobile number (03xxxxxxxxx)' });
+
+const jazzcashInitiateSchema = Joi.object({
+  bookingId:    uuid,
+  amount:       Joi.number().positive().precision(2).required(),
+  mobileNumber: pkMobile,
+  description:  Joi.string().max(255).optional(),
+}).options({ stripUnknown: true });
+
+// ─── Easypaisa: initiate ──────────────────────────────────────────────────────
+const easypaisaInitiateSchema = Joi.object({
+  bookingId:    uuid,
+  amount:       Joi.number().positive().precision(2).required(),
+  mobileNumber: pkMobile,
+  description:  Joi.string().max(255).optional(),
+}).options({ stripUnknown: true });
+
 // ─── Helper ───────────────────────────────────────────────────────────────────
 function validate(schema, data) {
   return schema.validate(data, { abortEarly: false });
@@ -48,5 +70,7 @@ module.exports = {
   stcpayInitiateSchema,
   madaChargeSchema,
   stripeInitiateSchema,
+  jazzcashInitiateSchema,
+  easypaisaInitiateSchema,
   validate,
 };

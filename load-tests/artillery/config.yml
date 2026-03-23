@@ -1,0 +1,18 @@
+config:
+  target: '{{ $processEnvironment.LOAD_TEST_API_URL || "https://api.utubooking.com" }}'
+  http:
+    timeout: 30
+    pool: 50
+  tls:
+    rejectUnauthorized: true
+  defaults:
+    headers:
+      Accept: 'application/json'
+      Content-Type: 'application/json'
+      Accept-Language: 'en,ar;q=0.9'
+  plugins:
+    metrics-by-endpoint: {}
+  ensure:
+    p95: 500       # P95 must be < 500ms
+    p99: 1000      # P99 must be < 1000ms
+    maxErrorRate: 0.1  # Error rate must be < 0.1%

@@ -1,0 +1,358 @@
+# UTUBooking — Backend CI/CD
+# Deploys all 6 microservices to AWS ECS (me-south-1 Bahrain)
+#
+# Required GitHub Secrets:
+#   AWS_ACCESS_KEY_ID          — IAM user with ECR push + ECS deploy permissions
+#   AWS_SECRET_ACCESS_KEY
+#   AWS_ACCOUNT_ID             — 12-digit AWS account number
+#   DATABASE_URL               — postgres://... (RDS primary write endpoint)
+#   READ_DATABASE_URL          — postgres://... (RDS read replica endpoint)
+#   REDIS_URL                  — redis://... (single-node, used for local/dev fallback)
+#   REDIS_CLUSTER_URLS         — cfg.xxx.cache.amazonaws.com:6379 (ElastiCache cluster config endpoint)
+#   REDIS_AUTH_TOKEN           — ElastiCache auth token (PCI DSS required)
+#   ADMIN_SECRET               — Bearer token for /api/admin/tenants (whitelabel-service)
+#   JWT_SECRET
+#   JWT_REFRESH_SECRET
+#   STCPAY_API_KEY
+#   STCPAY_API_SECRET
+#   STCPAY_MERCHANT_ID
+#   STCPAY_WEBHOOK_SECRET
+#   MOYASAR_API_KEY
+#   MOYASAR_WEBHOOK_SECRET
+#   STRIPE_SECRET_KEY
+#   STRIPE_WEBHOOK_SECRET
+#   HOTELBEDS_API_KEY
+#   HOTELBEDS_SECRET
+#   AMADEUS_CLIENT_ID
+#   AMADEUS_CLIENT_SECRET
+#   SABRE_CLIENT_ID
+#   SABRE_CLIENT_SECRET
+#   SABRE_PCC
+#   LOAD_TEST_API_URL          — https://api.utubooking.com (for post-deploy k6 smoke test)
+#
+# Required GitHub Variables (non-secret):
+#   AWS_REGION                 — me-south-1
+#   ECS_CLUSTER                — utu-backend-cluster
+#   ECR_REGISTRY               — <account>.dkr.ecr.me-south-1.amazonaws.com
+
+name: Deploy Backend → AWS ECS (me-south-1)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:  # allow manual trigger
+
+env:
+  AWS_REGION:   me-south-1
+  ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+  ECS_CLUSTER:  ${{ vars.ECS_CLUSTER || 'utu-backend-cluster' }}
+
+# ── Jobs ────────────────────────────────────────────────────────────────────────
+
+jobs:
+
+  # ── 1. Lint & test every service that changed ─────────────────────────────────
+  test:
+    name: Test ${{ matrix.service.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: auth-service
+            path: backend/services/auth
+          - name: hotel-service
+            path: backend/hotel-service
+          - name: flight-service
+            path: backend/services/flight
+          - name: car-service
+            path: backend/services/car
+          - name: booking-service
+            path: backend/services/booking
+          - name: payment-service
+            path: backend/services/payment
+          - name: loyalty-service
+            path: backend/services/loyalty
+          - name: whitelabel-service
+            path: backend/services/whitelabel
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ${{ matrix.service.path }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.service.path }}
+        run: npm ci
+
+      - name: Run tests
+        working-directory: ${{ matrix.service.path }}
+        # Graceful skip if no test script defined
+        run: npm test --if-present
+        env:
+          NODE_ENV: test
+          # Minimal env needed for module loading in tests
+          DATABASE_URL:    ${{ secrets.DATABASE_URL }}
+          REDIS_URL:       ${{ secrets.REDIS_URL }}
+          JWT_SECRET:      ${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+
+  # ── 2. Build Docker images → push to ECR → deploy to ECS ────────────────────
+  build-and-deploy:
+    name: Build & Deploy ${{ matrix.service.name }}
+    runs-on: ubuntu-latest
+    needs: test
+    strategy:
+      fail-fast: false   # deploy other services even if one fails
+      matrix:
+        service:
+          - name: auth-service
+            path: backend/services/auth
+            dockerfile: backend/services/auth/Dockerfile
+            context: backend/services/auth
+            port: 3001
+            ecs_service: utu-auth-service
+            task_def: utu-auth-service
+
+          - name: hotel-service
+            path: backend/hotel-service
+            dockerfile: backend/hotel-service/Dockerfile
+            context: backend              # needs backend/adapters in context
+            port: 3003
+            ecs_service: utu-hotel-service
+            task_def: utu-hotel-service
+
+          - name: flight-service
+            path: backend/services/flight
+            dockerfile: backend/services/flight/Dockerfile
+            context: backend              # needs backend/adapters in context
+            port: 3004
+            ecs_service: utu-flight-service
+            task_def: utu-flight-service
+
+          - name: car-service
+            path: backend/services/car
+            dockerfile: backend/services/car/Dockerfile
+            context: backend              # needs backend/adapters in context
+            port: 3005
+            ecs_service: utu-car-service
+            task_def: utu-car-service
+
+          - name: booking-service
+            path: backend/services/booking
+            dockerfile: backend/services/booking/Dockerfile
+            context: backend/services/booking
+            port: 3006
+            ecs_service: utu-booking-service
+            task_def: utu-booking-service
+
+          - name: payment-service
+            path: backend/services/payment
+            dockerfile: backend/services/payment/Dockerfile
+            context: backend/services/payment
+            port: 3007
+            ecs_service: utu-payment-service
+            task_def: utu-payment-service
+
+          - name: loyalty-service
+            path: backend/services/loyalty
+            dockerfile: backend/services/loyalty/Dockerfile
+            context: backend/services/loyalty
+            port: 3008
+            ecs_service: utu-loyalty-service
+            task_def: utu-loyalty-service
+
+          - name: whitelabel-service
+            path: backend/services/whitelabel
+            dockerfile: backend/services/whitelabel/Dockerfile
+            context: backend/services/whitelabel
+            port: 3009
+            ecs_service: utu-whitelabel-service
+            task_def: utu-whitelabel-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Build context for services that share backend/adapters must be backend/
+      - name: Build and push Docker image to ECR
+        id: build-image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          SERVICE:   ${{ matrix.service.name }}
+        run: |
+          IMAGE_URI="${ECR_REGISTRY}/${SERVICE}:${IMAGE_TAG}"
+          LATEST_URI="${ECR_REGISTRY}/${SERVICE}:latest"
+
+          docker build \
+            --file ${{ matrix.service.dockerfile }} \
+            --tag "${IMAGE_URI}" \
+            --tag "${LATEST_URI}" \
+            --build-arg NODE_ENV=production \
+            ${{ matrix.service.context }}
+
+          docker push "${IMAGE_URI}"
+          docker push "${LATEST_URI}"
+
+          echo "image=${IMAGE_URI}" >> $GITHUB_OUTPUT
+
+      # Inject all secrets as environment variables into the ECS task definition
+      - name: Download current ECS task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ matrix.service.task_def }} \
+            --query taskDefinition \
+            > task-def.json
+
+      - name: Update image in task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-def.json
+          container-name:  ${{ matrix.service.name }}
+          image:           ${{ steps.build-image.outputs.image }}
+          environment-variables: |
+            NODE_ENV=production
+            PORT=${{ matrix.service.port }}
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            ADMIN_SECRET=${{ secrets.ADMIN_SECRET }}
+            READ_DATABASE_URL=${{ secrets.READ_DATABASE_URL }}
+            REDIS_URL=${{ secrets.REDIS_URL }}
+            REDIS_CLUSTER_URLS=${{ secrets.REDIS_CLUSTER_URLS }}
+            REDIS_AUTH_TOKEN=${{ secrets.REDIS_AUTH_TOKEN }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+            JWT_EXPIRY=15m
+            REFRESH_EXPIRY=7d
+            STCPAY_BASE_URL=https://b2b.stcpay.com.sa/b2b/payment
+            STCPAY_API_KEY=${{ secrets.STCPAY_API_KEY }}
+            STCPAY_API_SECRET=${{ secrets.STCPAY_API_SECRET }}
+            STCPAY_MERCHANT_ID=${{ secrets.STCPAY_MERCHANT_ID }}
+            STCPAY_SANDBOX_MODE=false
+            STCPAY_WEBHOOK_SECRET=${{ secrets.STCPAY_WEBHOOK_SECRET }}
+            STCPAY_CALLBACK_URL=https://api.utubooking.com/api/payments/webhook
+            MOYASAR_API_KEY=${{ secrets.MOYASAR_API_KEY }}
+            MOYASAR_WEBHOOK_SECRET=${{ secrets.MOYASAR_WEBHOOK_SECRET }}
+            MOYASAR_CALLBACK_URL=https://api.utubooking.com/api/payments/mada/callback
+            STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+            STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+            HOTELBEDS_API_KEY=${{ secrets.HOTELBEDS_API_KEY }}
+            HOTELBEDS_SECRET=${{ secrets.HOTELBEDS_SECRET }}
+            HOTELBEDS_BASE_URL=https://api.hotelbeds.com/hotel-api/1.0
+            HOTELBEDS_CAR_BASE_URL=https://api.hotelbeds.com/car-rental-api/1.0
+            AMADEUS_CLIENT_ID=${{ secrets.AMADEUS_CLIENT_ID }}
+            AMADEUS_CLIENT_SECRET=${{ secrets.AMADEUS_CLIENT_SECRET }}
+            AMADEUS_HOSTNAME=production
+            SABRE_CLIENT_ID=${{ secrets.SABRE_CLIENT_ID }}
+            SABRE_CLIENT_SECRET=${{ secrets.SABRE_CLIENT_SECRET }}
+            SABRE_TOKEN_URL=https://api.sabre.com/v2/auth/token
+            SABRE_BASE_URL=https://api.sabre.com
+            SABRE_PCC=${{ secrets.SABRE_PCC }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition:  ${{ steps.task-def.outputs.task-definition }}
+          service:          ${{ matrix.service.ecs_service }}
+          cluster:          ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "✅ ${{ matrix.service.name }} deployed to ECS (${AWS_REGION})"
+          echo "   Image: ${{ steps.build-image.outputs.image }}"
+          echo "   ECS service: ${{ matrix.service.ecs_service }}"
+
+  # ── 3. Run DB migrations after all services deploy ───────────────────────────
+  migrate:
+    name: Run DB Migrations
+    runs-on: ubuntu-latest
+    needs: build-and-deploy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install migration dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run node-pg-migrate
+        working-directory: backend
+        run: npx node-pg-migrate up
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # ── 4. Smoke test the gateway ─────────────────────────────────────────────────
+  smoke-test:
+    name: Smoke Test Gateway
+    runs-on: ubuntu-latest
+    needs: migrate
+    steps:
+      - name: Health check — API gateway
+        run: |
+          echo "Checking https://api.utubooking.com/health ..."
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.utubooking.com/health || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Gateway healthy (HTTP 200)"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $STATUS — retrying in 10s..."
+            sleep 10
+          done
+          echo "❌ Gateway did not return 200 after 5 attempts"
+          exit 1
+
+  # ── 5. Post-deploy k6 smoke test (10 VUs, 30s) ───────────────────────────────
+  k6-smoke:
+    name: k6 Smoke Test
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Run k6 smoke test
+        run: k6 run load-tests/k6/smoke-test.js
+        env:
+          K6_TARGET_URL: ${{ secrets.LOAD_TEST_API_URL || 'https://api.utubooking.com' }}

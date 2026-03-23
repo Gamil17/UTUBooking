@@ -31,8 +31,8 @@ export const GATEWAY_BY_COUNTRY: Record<string, string> = {
   ID: 'midtrans',  // Indonesia
   MY: 'ipay88',    // Malaysia
 
-  // --- PHASE 6 (Planned) ---
-  PK: 'jazzcash',  // Pakistan
+  // --- PHASE 6 (Complete) ---
+  PK: 'jazzcash',  // Pakistan — primary (JazzCash); Easypaisa available as secondary
   IN: 'razorpay',  // India
   BD: 'razorpay',  // Bangladesh
 
@@ -110,7 +110,14 @@ export const GATEWAY_CONFIG: Record<string, {
     fee: 1.5,
     minAmount: 0.5,
     maxAmount: 500000,
-    webhook: process.env.JAZZCASH_WEBHOOK_URL || 'https://api.utubooking.com/webhooks/jazzcash',
+    webhook: process.env.JAZZCASH_RETURN_URL || 'https://api.utubooking.com/api/payments/jazzcash/callback',
+    timeout: 35000,
+  },
+  easypaisa: {
+    fee: 1.5,
+    minAmount: 0.5,
+    maxAmount: 500000,
+    webhook: process.env.EASYPAISA_POSTBACK_URL || 'https://api.utubooking.com/api/payments/easypaisa/callback',
     timeout: 35000,
   },
 };
@@ -157,12 +164,20 @@ export function calculateFee(gateway: string, amountInUSD: number): number {
  * Gets all available gateways for a given country (for UI fallback selection).
  * Returns primary gateway first, then alternatives.
  */
+// Country-specific secondary gateways (shown in checkout as alternatives)
+const SECONDARY_GATEWAYS: Record<string, string[]> = {
+  PK: ['easypaisa'],  // JazzCash primary; Easypaisa secondary (Telenor users)
+};
+
 export function getAvailableGateways(countryCode: string): string[] {
-  const primary = getGateway(countryCode);
-  const alternatives = ['stripe']; // Stripe as universal fallback
+  const cc = countryCode?.toUpperCase();
+  const primary = getGateway(cc);
+  const secondaries = SECONDARY_GATEWAYS[cc] ?? [];
+  const fallback = ['stripe']; // Stripe as universal fallback
 
   return [
     primary,
-    ...alternatives.filter((g) => g !== primary),
+    ...secondaries.filter((g) => g !== primary),
+    ...fallback.filter((g) => g !== primary),
   ];
 }

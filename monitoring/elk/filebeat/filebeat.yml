@@ -1,0 +1,96 @@
+# UTUBooking Phase 4 — Filebeat configuration
+# Ships nginx access logs + ECS container JSON logs to Logstash
+
+filebeat.inputs:
+
+  # ── Nginx access logs ─────────────────────────────────────────────────────
+  - type: log
+    id: nginx-access
+    enabled: true
+    paths:
+      - /var/log/nginx/access.log
+      - /var/log/nginx/access.log.*
+    tags: ["nginx"]
+    fields:
+      log_type: nginx-access
+      environment: ${ENVIRONMENT:production}
+    fields_under_root: false
+    # Multiline not needed — nginx logs are single-line
+
+  # ── Application service logs (Winston JSON) ────────────────────────────────
+  - type: log
+    id: app-services
+    enabled: true
+    paths:
+      - /var/log/utu/*.log
+      - /var/log/utu/**/*.log
+    tags: ["app"]
+    fields:
+      log_type: app
+      environment: ${ENVIRONMENT:production}
+    fields_under_root: false
+    # Handle Winston JSON log rotation
+    scan_frequency: 10s
+    close_inactive: 5m
+
+  # ── Docker container logs (ECS Fargate via CloudWatch — local dev only) ────
+  - type: container
+    id: docker-containers
+    enabled: true
+    paths:
+      - '/var/lib/docker/containers/*/*.log'
+    tags: ["docker"]
+    fields:
+      log_type: container
+    stream: all
+    # Parse Docker JSON log format
+    processors:
+      - decode_json_fields:
+          fields: ["message"]
+          target: ""
+          overwrite_keys: true
+
+# ── Processors applied to all inputs ─────────────────────────────────────────
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata:
+      # Detects AWS EC2/ECS metadata automatically
+      timeout: 3s
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+  - drop_fields:
+      fields: ["agent.ephemeral_id", "agent.hostname", "agent.id", "agent.version"]
+      ignore_missing: true
+
+# ── Output: Logstash ──────────────────────────────────────────────────────────
+output.logstash:
+  hosts: ["logstash:5044"]
+  # Bulk send for efficiency
+  bulk_max_size: 2048
+  # Retry settings
+  max_retries: 3
+  timeout: 30s
+  # TLS (enable in prod — comment out for local dev)
+  # ssl.certificate_authorities: ["/etc/filebeat/certs/ca.crt"]
+
+# ── Logging ──────────────────────────────────────────────────────────────────
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
+
+# ── Monitoring (optional — enable if using Kibana Stack Monitoring) ──────────
+# monitoring:
+#   enabled: true
+#   elasticsearch:
+#     hosts: ["http://elasticsearch:9200"]
+
+# ── Queue: in-memory with overflow protection ──────────────────────────────
+queue.mem:
+  events: 4096
+  flush.min_events: 512
+  flush.timeout: 5s

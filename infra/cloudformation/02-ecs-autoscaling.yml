@@ -1,0 +1,400 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking Phase 4 — ECS Application Auto Scaling for all 11 microservices.
+  Min 2 tasks (HA), Max 20 tasks (10 for payment/booking, 15 for wallet).
+  Target: CPU 60-70% per service. Scale-out in 60s. Scale-in in 300s.
+  Hajj pre-warm scheduled action: cron(0 0 19 5 ? *) — May 19 annually.
+
+Parameters:
+  ECSCluster:
+    Type: String
+    Default: utu-backend-cluster
+
+# ── Macro: scalable target + CPU target-tracking policy per service ──────────
+# Repeated 7 times with different service names and max capacity.
+
+Resources:
+
+  # ── Auth Service (max 20) ─────────────────────────────────────────────────────
+  AuthScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 2
+      MaxCapacity: 20
+      ResourceId: !Sub 'service/${ECSCluster}/utu-auth-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  AuthScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-auth-cpu-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AuthScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Hotel Service (max 20 — primary Hajj traffic driver) ─────────────────────
+  HotelScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 2
+      MaxCapacity: 20
+      ResourceId: !Sub 'service/${ECSCluster}/utu-hotel-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  HotelScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-hotel-cpu-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref HotelScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ALB request-based scale-out for hotel search bursts (complement to CPU)
+  HotelRequestScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-hotel-requests-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref HotelScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 1000.0  # 1000 requests per task per minute
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ALBRequestCountPerTarget
+          ResourceLabel: !Sub
+            - '${ALBSuffix}/targetgroup/${TGSuffix}'
+            - ALBSuffix: !Select [1, !Split ['loadbalancer/', !ImportValue utu-alb-arn]]
+              TGSuffix: !Select [1, !Split [':targetgroup/', !ImportValue utu-hotel-tg-arn]]
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Flight Service (max 20) ───────────────────────────────────────────────────
+  FlightScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 2
+      MaxCapacity: 20
+      ResourceId: !Sub 'service/${ECSCluster}/utu-flight-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  FlightScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-flight-cpu-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref FlightScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Car Service (max 20) ──────────────────────────────────────────────────────
+  CarScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 2
+      MaxCapacity: 20
+      ResourceId: !Sub 'service/${ECSCluster}/utu-car-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  CarScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-car-cpu-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref CarScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Booking Service (max 10 — downstream payment processor rate limits) ────────
+  BookingScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 2
+      MaxCapacity: 10
+      ResourceId: !Sub 'service/${ECSCluster}/utu-booking-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  BookingScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-booking-cpu-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref BookingScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Payment Service (max 10 — STC Pay / Moyasar API rate limits) ──────────────
+  PaymentScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 2
+      MaxCapacity: 10
+      ResourceId: !Sub 'service/${ECSCluster}/utu-payment-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  PaymentScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-payment-cpu-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref PaymentScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Loyalty Service (max 20) ──────────────────────────────────────────────────
+  LoyaltyScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 2
+      MaxCapacity: 20
+      ResourceId: !Sub 'service/${ECSCluster}/utu-loyalty-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  LoyaltyScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-loyalty-cpu-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref LoyaltyScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Phase 4: Wallet Service (max 15 — FX conversion is CPU-heavy) ────────────
+  WalletScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 2
+      MaxCapacity: 15
+      ResourceId: !Sub 'service/${ECSCluster}/utu-wallet-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  WalletScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-wallet-cpu-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref WalletScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 65.0  # Higher threshold — FX calls are async-heavy, CPU spikes are brief
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Phase 4: Pricing Service (max 8 — Claude API calls are async) ────────────
+  PricingScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 8
+      ResourceId: !Sub 'service/${ECSCluster}/utu-pricing-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  PricingScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-pricing-cpu-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref PricingScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70.0  # AI calls are I/O-bound; fewer tasks needed vs CPU-bound services
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Phase 4: Whitelabel Service (max 5 — B2B admin only, low traffic) ────────
+  WhitelabelScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 5
+      ResourceId: !Sub 'service/${ECSCluster}/utu-whitelabel-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  WhitelabelScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-whitelabel-cpu-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref WhitelabelScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Phase 4: Notifications Service (max 20 — Hajj push burst) ────────────────
+  NotificationsScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 2
+      MaxCapacity: 20
+      ResourceId: !Sub 'service/${ECSCluster}/utu-notifications-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  NotificationsScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-notifications-cpu-target
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref NotificationsScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 50.0  # Keep extra capacity ready — Hajj push bursts are sudden
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Phase 4: Hajj Pre-Warm Scheduled Scaling ──────────────────────────────────
+  # Fires May 19 00:00 UTC annually (7 days before Hajj starts May 26).
+  # Bumps minimums for high-traffic services to avoid cold-start lag during peak.
+  # NOTE: ScheduledActions reference ScalableTargets; targets must exist first.
+
+  HajjPreWarmHotel:
+    Type: AWS::ApplicationAutoScaling::ScheduledAction
+    Properties:
+      ScheduledActionName: hajj-pre-warm-hotel
+      ServiceNamespace: ecs
+      ResourceId: !Sub 'service/${ECSCluster}/utu-hotel-service'
+      ScalableDimension: ecs:service:DesiredCount
+      Schedule: 'cron(0 0 19 5 ? *)'  # May 19 00:00 UTC annually
+      ScalableTargetAction:
+        MinCapacity: 10   # Up from 2 — hotel is primary Hajj traffic driver
+        MaxCapacity: 20
+
+  HajjPreWarmBooking:
+    Type: AWS::ApplicationAutoScaling::ScheduledAction
+    Properties:
+      ScheduledActionName: hajj-pre-warm-booking
+      ServiceNamespace: ecs
+      ResourceId: !Sub 'service/${ECSCluster}/utu-booking-service'
+      ScalableDimension: ecs:service:DesiredCount
+      Schedule: 'cron(0 0 19 5 ? *)'
+      ScalableTargetAction:
+        MinCapacity: 8    # Up from 2
+        MaxCapacity: 10
+
+  HajjPreWarmPayment:
+    Type: AWS::ApplicationAutoScaling::ScheduledAction
+    Properties:
+      ScheduledActionName: hajj-pre-warm-payment
+      ServiceNamespace: ecs
+      ResourceId: !Sub 'service/${ECSCluster}/utu-payment-service'
+      ScalableDimension: ecs:service:DesiredCount
+      Schedule: 'cron(0 0 19 5 ? *)'
+      ScalableTargetAction:
+        MinCapacity: 6    # Up from 2
+        MaxCapacity: 10
+
+  HajjPreWarmAuth:
+    Type: AWS::ApplicationAutoScaling::ScheduledAction
+    Properties:
+      ScheduledActionName: hajj-pre-warm-auth
+      ServiceNamespace: ecs
+      ResourceId: !Sub 'service/${ECSCluster}/utu-auth-service'
+      ScalableDimension: ecs:service:DesiredCount
+      Schedule: 'cron(0 0 19 5 ? *)'
+      ScalableTargetAction:
+        MinCapacity: 8    # Up from 2 — every booking requires an auth check
+        MaxCapacity: 20
+
+  # Post-Hajj scale-back: May 27 00:00 UTC (day after Hajj ends)
+  HajjScaleDownHotel:
+    Type: AWS::ApplicationAutoScaling::ScheduledAction
+    Properties:
+      ScheduledActionName: hajj-scale-down-hotel
+      ServiceNamespace: ecs
+      ResourceId: !Sub 'service/${ECSCluster}/utu-hotel-service'
+      ScalableDimension: ecs:service:DesiredCount
+      Schedule: 'cron(0 0 27 5 ? *)'
+      ScalableTargetAction:
+        MinCapacity: 2
+        MaxCapacity: 20
+
+  HajjScaleDownBooking:
+    Type: AWS::ApplicationAutoScaling::ScheduledAction
+    Properties:
+      ScheduledActionName: hajj-scale-down-booking
+      ServiceNamespace: ecs
+      ResourceId: !Sub 'service/${ECSCluster}/utu-booking-service'
+      ScalableDimension: ecs:service:DesiredCount
+      Schedule: 'cron(0 0 27 5 ? *)'
+      ScalableTargetAction:
+        MinCapacity: 2
+        MaxCapacity: 10
+
+  HajjScaleDownPayment:
+    Type: AWS::ApplicationAutoScaling::ScheduledAction
+    Properties:
+      ScheduledActionName: hajj-scale-down-payment
+      ServiceNamespace: ecs
+      ResourceId: !Sub 'service/${ECSCluster}/utu-payment-service'
+      ScalableDimension: ecs:service:DesiredCount
+      Schedule: 'cron(0 0 27 5 ? *)'
+      ScalableTargetAction:
+        MinCapacity: 2
+        MaxCapacity: 10
+
+  HajjScaleDownAuth:
+    Type: AWS::ApplicationAutoScaling::ScheduledAction
+    Properties:
+      ScheduledActionName: hajj-scale-down-auth
+      ServiceNamespace: ecs
+      ResourceId: !Sub 'service/${ECSCluster}/utu-auth-service'
+      ScalableDimension: ecs:service:DesiredCount
+      Schedule: 'cron(0 0 27 5 ? *)'
+      ScalableTargetAction:
+        MinCapacity: 2
+        MaxCapacity: 20

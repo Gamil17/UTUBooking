@@ -1,0 +1,491 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking — Application Load Balancer + VPC networking (me-south-1 Bahrain).
+  Creates: public subnets, internet gateway, ALB, 7 target groups (one per microservice),
+  HTTPS listener with path-based routing, HTTP→HTTPS redirect.
+
+# ── Parameters ─────────────────────────────────────────────────────────────────
+Parameters:
+  VpcCidr:
+    Type: String
+    Default: '10.0.0.0/16'
+  PublicSubnet1Cidr:
+    Type: String
+    Default: '10.0.1.0/24'
+  PublicSubnet2Cidr:
+    Type: String
+    Default: '10.0.2.0/24'
+  PrivateSubnet1Cidr:
+    Type: String
+    Default: '10.0.11.0/24'
+  PrivateSubnet2Cidr:
+    Type: String
+    Default: '10.0.12.0/24'
+  AcmCertArn:
+    Type: String
+    Description: ACM certificate ARN for api.utubooking.com (me-south-1)
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [production, staging]
+
+# ── Resources ──────────────────────────────────────────────────────────────────
+Resources:
+
+  # ── VPC ──────────────────────────────────────────────────────────────────────
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: utu-vpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: utu-igw
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # ── Subnets (Bahrain has 2 AZs: me-south-1a, me-south-1b) ───────────────────
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet1Cidr
+      AvailabilityZone: me-south-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: utu-public-1a
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet2Cidr
+      AvailabilityZone: me-south-1b
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: utu-public-1b
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet1Cidr
+      AvailabilityZone: me-south-1a
+      Tags:
+        - Key: Name
+          Value: utu-private-1a
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet2Cidr
+      AvailabilityZone: me-south-1b
+      Tags:
+        - Key: Name
+          Value: utu-private-1b
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet2RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  # ── Security Groups ───────────────────────────────────────────────────────────
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ALB — allow 80/443 inbound from internet
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: '0.0.0.0/0'
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: '0.0.0.0/0'
+      Tags:
+        - Key: Name
+          Value: utu-alb-sg
+
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ECS tasks — allow inbound from ALB only
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3001
+          ToPort: 3008
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: utu-ecs-sg
+
+  # ── Application Load Balancer ─────────────────────────────────────────────────
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: utu-alb
+      Scheme: internet-facing
+      Type: application
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      LoadBalancerAttributes:
+        - Key: access_logs.s3.enabled
+          Value: 'true'
+        - Key: access_logs.s3.bucket
+          Value: !Sub 'utu-alb-logs-${AWS::AccountId}'
+        - Key: idle_timeout.timeout_seconds
+          Value: '60'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ── HTTP → HTTPS redirect listener ───────────────────────────────────────────
+  HTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            StatusCode: HTTP_301
+
+  # ── HTTPS listener with path-based routing ────────────────────────────────────
+  HTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      Certificates:
+        - CertificateArn: !Ref AcmCertArn
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: '404'
+            ContentType: application/json
+            MessageBody: '{"error":"NOT_FOUND"}'
+
+  # ── Target Groups (one per microservice) ─────────────────────────────────────
+  AuthTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-auth-tg
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3001
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+      Tags:
+        - Key: Service
+          Value: auth
+
+  HotelTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-hotel-tg
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3003
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+      Tags:
+        - Key: Service
+          Value: hotel
+
+  FlightTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-flight-tg
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3004
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+      Tags:
+        - Key: Service
+          Value: flight
+
+  CarTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-car-tg
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3005
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+      Tags:
+        - Key: Service
+          Value: car
+
+  BookingTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-booking-tg
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3006
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+      # Session stickiness for 3-step booking wizard
+      TargetGroupAttributes:
+        - Key: stickiness.enabled
+          Value: 'true'
+        - Key: stickiness.type
+          Value: lb_cookie
+        - Key: stickiness.lb_cookie.duration_seconds
+          Value: '86400'
+      Tags:
+        - Key: Service
+          Value: booking
+
+  PaymentTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-payment-tg
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3007
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+      Tags:
+        - Key: Service
+          Value: payment
+
+  LoyaltyTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-loyalty-tg
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3008
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+      Tags:
+        - Key: Service
+          Value: loyalty
+
+  # ── Listener Rules (path-based routing) ──────────────────────────────────────
+  AuthListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 10
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/v1/auth/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref AuthTargetGroup
+
+  HotelListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 20
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/v1/hotels/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref HotelTargetGroup
+
+  FlightListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 30
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/v1/flights/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref FlightTargetGroup
+
+  CarListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 40
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/v1/cars/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref CarTargetGroup
+
+  BookingListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 50
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/v1/bookings/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref BookingTargetGroup
+
+  LoyaltyListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 60
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/v1/loyalty/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref LoyaltyTargetGroup
+
+  PaymentListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 70
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/payments/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref PaymentTargetGroup
+
+# ── Outputs ────────────────────────────────────────────────────────────────────
+Outputs:
+  ALBArn:
+    Value: !Ref ALB
+    Export:
+      Name: utu-alb-arn
+  ALBDNSName:
+    Value: !GetAtt ALB.DNSName
+    Export:
+      Name: utu-alb-dns
+  VPCId:
+    Value: !Ref VPC
+    Export:
+      Name: utu-vpc-id
+  PrivateSubnet1Id:
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: utu-private-subnet-1
+  PrivateSubnet2Id:
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: utu-private-subnet-2
+  ECSSecurityGroupId:
+    Value: !Ref ECSSecurityGroup
+    Export:
+      Name: utu-ecs-sg-id
+  HTTPSListenerArn:
+    Value: !Ref HTTPSListener
+    Export:
+      Name: utu-https-listener-arn
+  AuthTargetGroupArn:
+    Value: !Ref AuthTargetGroup
+    Export:
+      Name: utu-auth-tg-arn
+  HotelTargetGroupArn:
+    Value: !Ref HotelTargetGroup
+    Export:
+      Name: utu-hotel-tg-arn
+  FlightTargetGroupArn:
+    Value: !Ref FlightTargetGroup
+    Export:
+      Name: utu-flight-tg-arn
+  CarTargetGroupArn:
+    Value: !Ref CarTargetGroup
+    Export:
+      Name: utu-car-tg-arn
+  BookingTargetGroupArn:
+    Value: !Ref BookingTargetGroup
+    Export:
+      Name: utu-booking-tg-arn
+  PaymentTargetGroupArn:
+    Value: !Ref PaymentTargetGroup
+    Export:
+      Name: utu-payment-tg-arn
+  LoyaltyTargetGroupArn:
+    Value: !Ref LoyaltyTargetGroup
+    Export:
+      Name: utu-loyalty-tg-arn

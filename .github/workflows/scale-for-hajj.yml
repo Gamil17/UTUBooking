@@ -1,0 +1,97 @@
+name: Pre-scale for Hajj Peak Traffic
+
+# Manual trigger only — run 2 hours before known Hajj booking peak.
+# Example: Run this on Sha'ban 15 (4 months before Hajj) at 10:00 AST.
+#
+# After Hajj peak: re-run with action=scale-down to return to auto-scaling.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Scale action'
+        required: true
+        default: 'scale-up'
+        type: choice
+        options:
+          - scale-up    # Set desired count to 15 for all services
+          - scale-down  # Reset to minimum (2) — auto-scaling takes over
+      desired_count:
+        description: 'Desired task count for scale-up (default: 15)'
+        required: false
+        default: '15'
+
+env:
+  AWS_REGION: me-south-1
+  ECS_CLUSTER: ${{ vars.ECS_CLUSTER || 'utu-backend-cluster' }}
+
+jobs:
+  scale:
+    name: ${{ inputs.action }} — ECS tasks to ${{ inputs.desired_count || 2 }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Set desired count
+        run: |
+          if [ "${{ inputs.action }}" = "scale-up" ]; then
+            DESIRED=${{ inputs.desired_count }}
+          else
+            DESIRED=2  # Return to minimum; auto-scaling manages from here
+          fi
+
+          SERVICES=(
+            utu-auth-service
+            utu-hotel-service
+            utu-flight-service
+            utu-car-service
+            utu-booking-service
+            utu-payment-service
+            utu-loyalty-service
+          )
+
+          for SERVICE in "${SERVICES[@]}"; do
+            echo "Setting ${SERVICE} desired count to ${DESIRED}..."
+            aws ecs update-service \
+              --cluster "${ECS_CLUSTER}" \
+              --service "${SERVICE}" \
+              --desired-count "${DESIRED}" \
+              --region "${AWS_REGION}" \
+              --no-cli-pager
+          done
+
+          echo "All services updated to desired count: ${DESIRED}"
+
+      - name: Wait for services to stabilize
+        run: |
+          SERVICES=(
+            utu-auth-service
+            utu-hotel-service
+            utu-flight-service
+            utu-car-service
+            utu-booking-service
+            utu-payment-service
+            utu-loyalty-service
+          )
+
+          for SERVICE in "${SERVICES[@]}"; do
+            echo "Waiting for ${SERVICE} to stabilize..."
+            aws ecs wait services-stable \
+              --cluster "${ECS_CLUSTER}" \
+              --services "${SERVICE}" \
+              --region "${AWS_REGION}"
+            echo "${SERVICE} stable ✅"
+          done
+
+      - name: Summary
+        run: |
+          echo "✅ All 7 ECS services scaled (${{ inputs.action }})"
+          echo "Desired count: ${{ inputs.action == 'scale-up' && inputs.desired_count || '2' }}"
+          echo "Cluster: ${ECS_CLUSTER} (${AWS_REGION})"
+          echo ""
+          echo "Monitor at: https://monitoring.utubooking.com/grafana/d/utu-hajj-peak"

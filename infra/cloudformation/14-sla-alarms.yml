@@ -1,0 +1,290 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking Phase 4 — SLA 99.95% CloudWatch Composite Alarms
+  99.95% SLA = 4.38 hours downtime/year = 21.9 minutes/month budget
+  Composite alarm aggregates: health checks + latency + errors + replica lag
+  SNS → PagerDuty P1 + Slack #ops-alerts
+
+Parameters:
+  HealthCheckBothPrimaries:
+    Type: String
+    Description: Route53 calculated health check ID (from stack 09 output)
+    Default: !ImportValue utu-health-check-both-primaries
+
+  HealthCheckBahrain:
+    Type: String
+    Default: !ImportValue utu-health-check-bahrain
+
+  HealthCheckRiyadh:
+    Type: String
+    Default: !ImportValue utu-health-check-riyadh
+
+  HealthCheckEUWest:
+    Type: String
+    Default: !ImportValue utu-health-check-eu-west
+
+Resources:
+
+  # ── SNS Topics ────────────────────────────────────────────────────────────
+
+  P1AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: utu-p1-pagerduty
+      DisplayName: UTUBooking P1 PagerDuty Alerts
+      Subscriptions:
+        - Protocol: https
+          Endpoint: !Sub 'https://events.pagerduty.com/integration/${PagerDutyIntegrationKey}/enqueue'
+        - Protocol: https
+          Endpoint: !Sub '${SlackWebhookUrl}'
+
+  SLABreachTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: utu-sla-breach-alerts
+      DisplayName: UTUBooking SLA Breach Alerts
+
+  # ── Component Alarms (building blocks for composite) ──────────────────────
+
+  # Alarm: Both primary regions unhealthy (Route53 calculated check)
+  AlarmBothRegionsDown:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-both-primaries-down
+      AlarmDescription: >
+        Both Bahrain and Riyadh regions are failing health checks.
+        Traffic cannot be served from any primary region.
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref HealthCheckBothPrimaries
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Ref P1AlertTopic
+      TreatMissingData: breaching
+
+  # Alarm: P99 latency > 1s (5 consecutive 1-minute periods = 5 min)
+  AlarmP99LatencyBreach:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-p99-latency-breach
+      AlarmDescription: API P99 latency exceeded 1s for 5 minutes
+      Namespace: UTUBooking/API
+      MetricName: P99ResponseTime
+      Statistic: p99
+      Period: 60
+      EvaluationPeriods: 5
+      Threshold: 1000  # milliseconds
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  # Alarm: Error rate > 1% (2 consecutive periods)
+  AlarmErrorRateBreach:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-error-rate-breach
+      AlarmDescription: 5xx error rate exceeded 1% for 2 minutes
+      Metrics:
+        - Id: errors
+          MetricStat:
+            Metric:
+              Namespace: UTUBooking/API
+              MetricName: 5xxCount
+            Period: 60
+            Stat: Sum
+        - Id: total
+          MetricStat:
+            Metric:
+              Namespace: UTUBooking/API
+              MetricName: RequestCount
+            Period: 60
+            Stat: Sum
+        - Id: errorRate
+          Expression: "errors / total"
+          Label: ErrorRate
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 0.01
+      EvaluationPeriods: 2
+      TreatMissingData: notBreaching
+
+  # Alarm: RDS replica lag > 30s
+  AlarmReplicaLagBreach:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-rds-replica-lag
+      AlarmDescription: RDS read replica lag exceeds 30 seconds — read queries may return stale data
+      Namespace: AWS/RDS
+      MetricName: ReplicaLag
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 5
+      Threshold: 30
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  # Alarm: ECS booking service task count < 2 (min HA threshold)
+  AlarmBookingTasksLow:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-booking-tasks-below-min
+      AlarmDescription: Booking service has fewer than 2 running tasks
+      Namespace: AWS/ECS
+      MetricName: RunningTaskCount
+      Dimensions:
+        - Name: ClusterName
+          Value: utu-backend-cluster
+        - Name: ServiceName
+          Value: utu-booking-service
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 2
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+
+  # Alarm: ECS payment service task count < 2
+  AlarmPaymentTasksLow:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-payment-tasks-below-min
+      AlarmDescription: Payment service has fewer than 2 running tasks
+      Namespace: AWS/ECS
+      MetricName: RunningTaskCount
+      Dimensions:
+        - Name: ClusterName
+          Value: utu-backend-cluster
+        - Name: ServiceName
+          Value: utu-payment-service
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 2
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+
+  # ── SLA Composite Alarm ────────────────────────────────────────────────────
+  # ALARM state = at least 1 of these conditions is breaching.
+  # This is what feeds the SLA budget calculation.
+
+  AlarmSLABreach:
+    Type: AWS::CloudWatch::CompositeAlarm
+    Properties:
+      AlarmName: utu-sla-breach
+      AlarmDescription: >
+        UTUBooking SLA 99.95% breach detector.
+        Triggers when ANY of: regions down, P99 latency, error rate,
+        RDS lag, or critical service task count drops below minimum.
+        SLA budget: 21.9 minutes/month. Track cumulative alarm duration
+        vs budget using CloudWatch Alarm History.
+      AlarmRule: !Sub |
+        ALARM("utu-both-primaries-down") OR
+        ALARM("utu-p99-latency-breach") OR
+        ALARM("utu-error-rate-breach") OR
+        ALARM("utu-rds-replica-lag") OR
+        ALARM("utu-booking-tasks-below-min") OR
+        ALARM("utu-payment-tasks-below-min")
+      AlarmActions:
+        - !Ref SLABreachTopic
+        - !Ref P1AlertTopic
+      OKActions:
+        - !Ref SLABreachTopic
+      TreatMissingData: breaching
+
+  # ── SLA Budget CloudWatch Dashboard ───────────────────────────────────────
+
+  SLADashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: UTUBooking-SLA-Budget
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "alarm",
+              "properties": {
+                "title": "SLA Composite Alarm Status",
+                "alarms": ["arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:utu-sla-breach"],
+                "width": 24,
+                "height": 3
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "title": "SLA Budget Burn — Monthly (21.9 min budget)",
+                "metrics": [
+                  ["AWS/CloudWatch", "AlarmStateTime", "AlarmName", "utu-sla-breach", {"stat": "Sum", "period": 2592000, "label": "Downtime this month (s)"}]
+                ],
+                "annotations": {
+                  "horizontal": [{"value": 1314, "label": "Budget limit (21.9 min)", "color": "#ff0000"}]
+                },
+                "width": 12,
+                "height": 6
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "title": "Route53 Health — All Regions",
+                "metrics": [
+                  ["AWS/Route53", "HealthCheckStatus", "HealthCheckId", "${HealthCheckBahrain}", {"label": "Bahrain", "color": "#2ca02c"}],
+                  ["AWS/Route53", "HealthCheckStatus", "HealthCheckId", "${HealthCheckRiyadh}", {"label": "Riyadh", "color": "#1f77b4"}],
+                  ["AWS/Route53", "HealthCheckStatus", "HealthCheckId", "${HealthCheckEUWest}", {"label": "EU-West", "color": "#ff7f0e"}]
+                ],
+                "yAxis": {"left": {"min": 0, "max": 1}},
+                "width": 12,
+                "height": 6
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "title": "P99 Latency by Service (ms)",
+                "metrics": [
+                  ["UTUBooking/API", "P99ResponseTime", "Service", "booking", {"stat": "p99"}],
+                  ["UTUBooking/API", "P99ResponseTime", "Service", "payment", {"stat": "p99"}],
+                  ["UTUBooking/API", "P99ResponseTime", "Service", "hotel", {"stat": "p99"}]
+                ],
+                "annotations": {
+                  "horizontal": [{"value": 1000, "label": "SLA threshold (1s)", "color": "#ff0000"}]
+                },
+                "width": 12,
+                "height": 6
+              }
+            },
+            {
+              "type": "alarm",
+              "properties": {
+                "title": "Component Alarm Status",
+                "alarms": [
+                  "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:utu-both-primaries-down",
+                  "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:utu-p99-latency-breach",
+                  "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:utu-error-rate-breach",
+                  "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:utu-rds-replica-lag",
+                  "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:utu-booking-tasks-below-min",
+                  "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:utu-payment-tasks-below-min"
+                ],
+                "width": 24,
+                "height": 6
+              }
+            }
+          ]
+        }
+
+Outputs:
+  SLAAlarmArn:
+    Value: !GetAtt AlarmSLABreach.Arn
+    Export: {Name: utu-sla-alarm-arn}
+
+  P1TopicArn:
+    Value: !Ref P1AlertTopic
+    Export: {Name: utu-p1-topic-arn}
+
+  SLATopicArn:
+    Value: !Ref SLABreachTopic
+    Export: {Name: utu-sla-topic-arn}

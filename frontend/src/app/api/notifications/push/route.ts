@@ -17,7 +17,7 @@ function ensureVapidConfigured() {
 
 // ─── Multilingual notification templates ─────────────────────────────────────
 
-type Locale = 'en' | 'ar' | 'fr';
+type Locale = 'en' | 'ar' | 'fr' | 'id' | 'tr';
 type TriggerType = 'booking_confirmed' | 'price_alert' | 'checkin_reminder';
 
 interface NotificationTemplate {
@@ -68,9 +68,37 @@ const TEMPLATES: Record<Locale, Record<TriggerType, NotificationTemplate>> = {
       body: 'Votre séjour à {hotel} commence demain. Bon voyage !',
     },
   },
+  id: {
+    booking_confirmed: {
+      title: 'Pemesanan Dikonfirmasi!',
+      body: 'Pemesanan Anda #{ref} telah dikonfirmasi. Semoga perjalanan Anda diberkahi.',
+    },
+    price_alert: {
+      title: 'Harga Turun!',
+      body: 'Hotel yang Anda lihat turun ke Rp {price}/malam.',
+    },
+    checkin_reminder: {
+      title: 'Check-in Besok',
+      body: 'Masa menginap Anda di {hotel} dimulai besok. Selamat perjalanan!',
+    },
+  },
+  tr: {
+    booking_confirmed: {
+      title: 'Rezervasyon Onaylandı!',
+      body: '#{ref} numaralı rezervasyonunuz onaylandı. Hayırlı yolculuklar.',
+    },
+    price_alert: {
+      title: 'Fiyat Düştü!',
+      body: 'İncelediğiniz bir otel {price} SAR/geceye düştü.',
+    },
+    checkin_reminder: {
+      title: 'Yarın Check-in',
+      body: '{hotel} otелindeki konaklamanız yarın başlıyor. İyi yolculuklar!',
+    },
+  },
 };
 
-const VALID_LOCALES: Locale[] = ['en', 'ar', 'fr'];
+const VALID_LOCALES: Locale[] = ['en', 'ar', 'fr', 'id', 'tr'];
 const VALID_TRIGGERS: TriggerType[] = [
   'booking_confirmed',
   'price_alert',

@@ -1,0 +1,797 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking Stack 10 — Secondary Region: Riyadh (me-central-1)
+  Single stack covering VPC, ALB, ECS cluster + autoscaling, ElastiCache Redis cluster,
+  and RDS cross-region read replica. Mirrors Bahrain (me-south-1) stack 01–04 pattern.
+  VPC CIDR: 10.1.0.0/16 (distinct from Bahrain 10.0.0.0/16).
+  Deploy in region: me-central-1
+
+Parameters:
+  AcmCertArn:
+    Type: String
+    Description: ACM certificate ARN for api.utubooking.com in me-central-1
+
+  BahrainRdsPrimaryArn:
+    Type: String
+    Description: ARN of the Bahrain RDS primary instance (source for cross-region replica)
+
+  ECSClusterName:
+    Type: String
+    Default: utu-backend-cluster-riyadh
+    Description: ECS cluster name for the Riyadh region
+
+  ECRAccountId:
+    Type: String
+    Description: AWS account ID where ECR images are stored (me-south-1 primary)
+
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [production, staging]
+
+  DbInstanceClass:
+    Type: String
+    Default: db.r7g.xlarge
+    Description: RDS replica instance class
+
+  CacheNodeType:
+    Type: String
+    Default: cache.r7g.large
+    Description: ElastiCache node type (matches Bahrain cluster)
+
+Resources:
+
+  # ─── VPC (10.1.0.0/16) ───────────────────────────────────────────────────────
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.1.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: utu-vpc-riyadh
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: utu-igw-riyadh
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # me-central-1 has 2 AZs: me-central-1a, me-central-1b
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.1.0/24
+      AvailabilityZone: me-central-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: utu-public-riyadh-1a
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.2.0/24
+      AvailabilityZone: me-central-1b
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: utu-public-riyadh-1b
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.11.0/24
+      AvailabilityZone: me-central-1a
+      Tags:
+        - Key: Name
+          Value: utu-private-riyadh-1a
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.1.12.0/24
+      AvailabilityZone: me-central-1b
+      Tags:
+        - Key: Name
+          Value: utu-private-riyadh-1b
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet2RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  NatEip:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEip.AllocationId
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: utu-nat-riyadh
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateSubnet1RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnet2RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  # ─── Security Groups ──────────────────────────────────────────────────────────
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ALB Riyadh — allow 80/443 inbound from internet
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: utu-alb-sg-riyadh
+
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ECS tasks Riyadh — allow inbound from ALB only
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3001
+          ToPort: 3012
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: utu-ecs-sg-riyadh
+
+  CacheSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ElastiCache Riyadh — allow from ECS tasks only
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !Ref ECSSecurityGroup
+      Tags:
+        - Key: Name
+          Value: utu-cache-sg-riyadh
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: RDS Riyadh replica — allow from ECS tasks only
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref ECSSecurityGroup
+      Tags:
+        - Key: Name
+          Value: utu-rds-sg-riyadh
+
+  # ─── Application Load Balancer ────────────────────────────────────────────────
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: utu-alb-riyadh
+      Scheme: internet-facing
+      Type: application
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '60'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Region
+          Value: me-central-1
+
+  HTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            StatusCode: HTTP_301
+
+  HTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      Certificates:
+        - CertificateArn: !Ref AcmCertArn
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: '404'
+            ContentType: application/json
+            MessageBody: '{"error":"NOT_FOUND"}'
+
+  # Health check target group (used by Route53 stack 09 /health endpoint)
+  HealthTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-health-tg-riyadh
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3001
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+
+  HealthListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 1
+      Conditions:
+        - Field: path-pattern
+          Values: ['/health']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref HealthTargetGroup
+
+  # Replicate all path-based routing rules from stack 01 (same port/path structure)
+  AuthTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-auth-tg-riyadh
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3001
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+
+  HotelTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-hotel-tg-riyadh
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3003
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+
+  FlightTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-flight-tg-riyadh
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3004
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+
+  BookingTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-booking-tg-riyadh
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3006
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+      TargetGroupAttributes:
+        - Key: stickiness.enabled
+          Value: 'true'
+        - Key: stickiness.type
+          Value: lb_cookie
+        - Key: stickiness.lb_cookie.duration_seconds
+          Value: '86400'
+
+  PaymentTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-payment-tg-riyadh
+      VpcId: !Ref VPC
+      Protocol: HTTP
+      Port: 3007
+      TargetType: ip
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      HealthCheckTimeoutSeconds: 5
+      DeregistrationDelay: 30
+
+  AuthRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 10
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/v1/auth/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref AuthTargetGroup
+
+  HotelRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 20
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/v1/hotels/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref HotelTargetGroup
+
+  FlightRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 30
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/v1/flights/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref FlightTargetGroup
+
+  BookingRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 50
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/v1/bookings/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref BookingTargetGroup
+
+  PaymentRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 70
+      Conditions:
+        - Field: path-pattern
+          Values: ['/api/payments/*']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref PaymentTargetGroup
+
+  # ─── ECS Cluster + Auto Scaling ──────────────────────────────────────────────
+  # Min 1 task (Riyadh is secondary — smaller footprint), Max 20 (Hajj ceiling same as primary)
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref ECSClusterName
+      CapacityProviders:
+        - FARGATE
+        - FARGATE_SPOT
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+          Base: 1
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+      Tags:
+        - Key: Region
+          Value: me-central-1
+
+  # ── Auth — min 1, max 20
+  AuthScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 20
+      ResourceId: !Sub 'service/${ECSClusterName}/utu-auth-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  AuthScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-auth-cpu-riyadh
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AuthScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Hotel — min 1, max 20 (KSA is primary hotel market)
+  HotelScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 20
+      ResourceId: !Sub 'service/${ECSClusterName}/utu-hotel-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  HotelScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-hotel-cpu-riyadh
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref HotelScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Booking — min 1, max 10
+  BookingScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 10
+      ResourceId: !Sub 'service/${ECSClusterName}/utu-booking-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  BookingScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-booking-cpu-riyadh
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref BookingScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Payment — min 1, max 10
+  PaymentScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 10
+      ResourceId: !Sub 'service/${ECSClusterName}/utu-payment-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  PaymentScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-payment-cpu-riyadh
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref PaymentScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ── Notifications — min 1, max 20 (Hajj push volume)
+  NotificationsScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 20
+      ResourceId: !Sub 'service/${ECSClusterName}/utu-notifications-service'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+
+  NotificationsScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-notifications-cpu-riyadh
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref NotificationsScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60.0
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 300
+        ScaleOutCooldown: 60
+
+  # ─── ElastiCache Redis — 3 shards × 2 replicas (9 nodes) ────────────────────
+  # Independent of Bahrain — each region warms its own cache.
+  # Same topology as stack 03 but with 2 replicas/shard (secondary = smaller footprint).
+
+  CacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: ElastiCache subnet group — Riyadh private subnets
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+
+  CacheParameterGroup:
+    Type: AWS::ElastiCache::ParameterGroup
+    Properties:
+      CacheParameterGroupFamily: redis7
+      Description: UTUBooking Redis params — Riyadh
+      Properties:
+        cluster-enabled: 'yes'
+        maxmemory-policy: allkeys-lru
+        tcp-keepalive: '60'
+
+  RedisCluster:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupDescription: UTUBooking Redis cluster — Riyadh (me-central-1)
+      ReplicationGroupId: utu-redis-riyadh
+      NumNodeGroups: 3           # 3 shards
+      ReplicasPerNodeGroup: 2    # 2 replicas per shard = 9 nodes total
+      NodeGroupConfiguration:
+        - Slots: 0-5460
+          PrimaryAvailabilityZone: me-central-1a
+          ReplicaAvailabilityZones: [me-central-1b, me-central-1a]
+        - Slots: 5461-10922
+          PrimaryAvailabilityZone: me-central-1b
+          ReplicaAvailabilityZones: [me-central-1a, me-central-1b]
+        - Slots: 10923-16383
+          PrimaryAvailabilityZone: me-central-1a
+          ReplicaAvailabilityZones: [me-central-1b, me-central-1a]
+      CacheNodeType: !Ref CacheNodeType
+      Engine: redis
+      EngineVersion: '7.2'
+      CacheParameterGroupName: !Ref CacheParameterGroup
+      CacheSubnetGroupName: !Ref CacheSubnetGroup
+      SecurityGroupIds:
+        - !Ref CacheSecurityGroup
+      AtRestEncryptionEnabled: true
+      TransitEncryptionEnabled: true
+      AutomaticFailoverEnabled: true
+      MultiAZEnabled: true
+      Tags:
+        - Key: Region
+          Value: me-central-1
+
+  # ─── RDS Cross-Region Read Replica ───────────────────────────────────────────
+  # Read-only replica of Bahrain primary. Used for KSA region search queries (lower latency).
+  # Can be promoted to standalone primary for DR (RTO ~15 min vs 4h without replica).
+
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: RDS subnet group — Riyadh private subnets
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags:
+        - Key: Region
+          Value: me-central-1
+
+  RDSReadReplica:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: utu-db-riyadh-replica
+      DBInstanceClass: !Ref DbInstanceClass
+      SourceDBInstanceIdentifier: !Ref BahrainRdsPrimaryArn
+      # Cross-region replica — no engine/storage needed (inherited from source)
+      PubliclyAccessible: false
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+      # Enhanced monitoring for replication lag tracking
+      MonitoringInterval: 60
+      MonitoringRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/rds-monitoring-role'
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      Tags:
+        - Key: Name
+          Value: utu-db-riyadh-replica
+        - Key: Region
+          Value: me-central-1
+        - Key: Role
+          Value: read-replica
+
+  # ─── CloudWatch Alarms ────────────────────────────────────────────────────────
+
+  AlarmRDSReplicationLag:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: UTU-Riyadh-RDS-ReplicationLag-High
+      AlarmDescription: RDS cross-region replication lag > 30s — Riyadh reads may be stale
+      Namespace: AWS/RDS
+      MetricName: ReplicaLag
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: utu-db-riyadh-replica
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 30
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: breaching
+
+  AlarmRedisMemoryHigh:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: UTU-Riyadh-Redis-MemoryHigh
+      AlarmDescription: ElastiCache Riyadh memory usage > 85% — consider scaling
+      Namespace: AWS/ElastiCache
+      MetricName: DatabaseMemoryUsagePercentage
+      Dimensions:
+        - Name: ReplicationGroupId
+          Value: utu-redis-riyadh
+      Statistic: Average
+      Period: 600
+      EvaluationPeriods: 2
+      Threshold: 85
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  AlarmALB5xx:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: UTU-Riyadh-ALB-5xx-High
+      AlarmDescription: Riyadh ALB 5xx rate > 50/min — service degradation in me-central-1
+      Namespace: AWS/ApplicationELB
+      MetricName: HTTPCode_Target_5XX_Count
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !GetAtt ALB.LoadBalancerFullName
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 3
+      Threshold: 50
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+Outputs:
+  ALBDNSName:
+    Description: Riyadh ALB DNS name (use in Route53 stack 09 RiyadhAlbDns parameter)
+    Value: !GetAtt ALB.DNSName
+    Export:
+      Name: utu-alb-dns-riyadh
+
+  ALBHostedZoneId:
+    Description: Riyadh ALB hosted zone ID (use in Route53 stack 09 RiyadhAlbHostedZoneId parameter)
+    Value: !GetAtt ALB.CanonicalHostedZoneID
+    Export:
+      Name: utu-alb-hz-riyadh
+
+  VPCId:
+    Value: !Ref VPC
+    Export:
+      Name: utu-vpc-id-riyadh
+
+  PrivateSubnet1Id:
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: utu-private-subnet-1-riyadh
+
+  PrivateSubnet2Id:
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: utu-private-subnet-2-riyadh
+
+  ECSSecurityGroupId:
+    Value: !Ref ECSSecurityGroup
+    Export:
+      Name: utu-ecs-sg-id-riyadh
+
+  ECSClusterName:
+    Value: !Ref ECSCluster
+    Export:
+      Name: utu-ecs-cluster-riyadh
+
+  RedisClusterEndpoint:
+    Description: Redis configuration endpoint for cluster mode (Riyadh)
+    Value: !GetAtt RedisCluster.ConfigurationEndPoint.Address
+    Export:
+      Name: utu-redis-endpoint-riyadh
+
+  RDSReplicaEndpoint:
+    Description: RDS read replica endpoint (Riyadh — use as READ_DATABASE_URL)
+    Value: !GetAtt RDSReadReplica.Endpoint.Address
+    Export:
+      Name: utu-rds-replica-endpoint-riyadh
+
+  HTTPSListenerArn:
+    Value: !Ref HTTPSListener
+    Export:
+      Name: utu-https-listener-arn-riyadh

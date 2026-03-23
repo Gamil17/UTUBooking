@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking — RDS PostgreSQL read replicas × 2 (me-south-1 Bahrain).
+  Both replicas in different AZs from each other for HA.
+  Instance: db.r7g.xlarge (same class as primary).
+  Read routing: hotel/flight/car search services use READ_DATABASE_URL.
+
+Parameters:
+  PrimaryDBInstanceId:
+    Type: String
+    Description: Identifier of the existing primary RDS instance
+    Default: utu-booking-db
+  DBSubnetGroupName:
+    Type: String
+    Description: Existing DB subnet group name
+    Default: utu-db-subnets
+  Environment:
+    Type: String
+    Default: production
+
+Resources:
+
+  # ── DB Security Group for replicas ────────────────────────────────────────────
+  RDSReplicaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: RDS read replicas — allow 5432 from ECS tasks only
+      VpcId: !ImportValue utu-vpc-id
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !ImportValue utu-ecs-sg-id
+      Tags:
+        - Key: Name
+          Value: utu-rds-replica-sg
+
+  # ── Parameter Group: enable slow query logging ────────────────────────────────
+  DBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Family: postgres16
+      Description: UTUBooking PostgreSQL 16 — slow query logging enabled
+      Parameters:
+        log_min_duration_statement: '1000'   # Log queries > 1s
+        log_connections: '1'
+        log_disconnections: '1'
+        log_lock_waits: '1'
+        shared_preload_libraries: pg_stat_statements
+        pg_stat_statements.track: all
+
+  # ── Read Replica 1 (me-south-1a) ──────────────────────────────────────────────
+  ReadReplica1:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: utu-booking-db-replica-1
+      DBInstanceClass: db.r7g.xlarge
+      SourceDBInstanceIdentifier: !Ref PrimaryDBInstanceId
+      AvailabilityZone: me-south-1a
+      DBSubnetGroupName: !Ref DBSubnetGroupName
+      DBParameterGroupName: !Ref DBParameterGroup
+      VPCSecurityGroups:
+        - !Ref RDSReplicaSecurityGroup
+      PubliclyAccessible: false
+      StorageEncrypted: true
+      MonitoringInterval: 60       # Enhanced monitoring: 60s granularity
+      MonitoringRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/rds-monitoring-role'
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      EnableCloudwatchLogsExports:
+        - postgresql
+        - upgrade
+      AutoMinorVersionUpgrade: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Role
+          Value: read-replica-1
+
+  # ── Read Replica 2 (me-south-1b) ──────────────────────────────────────────────
+  ReadReplica2:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: utu-booking-db-replica-2
+      DBInstanceClass: db.r7g.xlarge
+      SourceDBInstanceIdentifier: !Ref PrimaryDBInstanceId
+      AvailabilityZone: me-south-1b
+      DBSubnetGroupName: !Ref DBSubnetGroupName
+      DBParameterGroupName: !Ref DBParameterGroup
+      VPCSecurityGroups:
+        - !Ref RDSReplicaSecurityGroup
+      PubliclyAccessible: false
+      StorageEncrypted: true
+      MonitoringInterval: 60
+      MonitoringRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/rds-monitoring-role'
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      EnableCloudwatchLogsExports:
+        - postgresql
+        - upgrade
+      AutoMinorVersionUpgrade: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Role
+          Value: read-replica-2
+
+# ── Outputs ────────────────────────────────────────────────────────────────────
+Outputs:
+  Replica1Endpoint:
+    Description: >
+      Replica 1 connection string (set as READ_DATABASE_URL for hotel/flight/car services).
+      Connection string: postgres://<user>:<pass>@<endpoint>:5432/utu_booking
+    Value: !GetAtt ReadReplica1.Endpoint.Address
+    Export:
+      Name: utu-db-replica-1-endpoint
+  Replica2Endpoint:
+    Description: Replica 2 endpoint (standby / failover for replica 1)
+    Value: !GetAtt ReadReplica2.Endpoint.Address
+    Export:
+      Name: utu-db-replica-2-endpoint

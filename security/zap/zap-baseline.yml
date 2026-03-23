@@ -1,0 +1,44 @@
+# UTUBooking — OWASP ZAP Baseline Scan Configuration
+# Passive scan only (safe for production). Crawls the API and checks for
+# common vulnerabilities without sending attack payloads.
+#
+# Usage:
+#   docker run --rm -v $(pwd)/security/zap:/zap/wrk/:rw \
+#     ghcr.io/zaproxy/zaproxy:stable \
+#     zap-baseline.py \
+#     -t https://api.utubooking.com \
+#     -c /zap/wrk/zap-baseline.yml \
+#     -r /zap/wrk/reports/baseline-$(date +%Y%m%d).html \
+#     -J /zap/wrk/reports/baseline-$(date +%Y%m%d).json
+
+# Alert thresholds: FAIL build if any HIGH or CRITICAL finding not in suppress list.
+# WARN on MEDIUM findings. IGNORE LOW and INFORMATIONAL.
+
+rules:
+  # ── Rules to FAIL on (HIGH severity) ───────────────────────────────────────
+  - id: 10038   # Content Security Policy (CSP) Header Not Set
+    threshold: FAIL
+  - id: 10035   # Strict-Transport-Security Header Not Set
+    threshold: FAIL
+  - id: 10016   # Web Browser XSS Protection Not Enabled
+    threshold: FAIL
+  - id: 40014   # Cross-Site Request Forgery
+    threshold: FAIL
+  - id: 40018   # SQL Injection
+    threshold: FAIL
+
+  # ── Rules to WARN on (MEDIUM severity) ──────────────────────────────────────
+  - id: 10054   # Cookie Without SameSite Attribute
+    threshold: WARN
+  - id: 10015   # Incomplete or No Cache-control Header Set
+    threshold: WARN
+  - id: 90033   # Loosely Scoped Cookie
+    threshold: WARN
+
+  # ── Accepted false positives (documented in suppress-rules.yml) ──────────────
+  # Rule 10098: Cross-Domain Misconfiguration — ACCEPTED for payment iframes
+  - id: 10098
+    threshold: IGNORE
+  # Rule 10017: Cross-Domain JavaScript Source File Inclusion — STCPay SDK
+  - id: 10017
+    threshold: IGNORE

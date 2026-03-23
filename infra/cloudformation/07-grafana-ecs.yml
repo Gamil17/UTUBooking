@@ -1,0 +1,239 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking — Grafana 11.3 on ECS Fargate behind the ALB.
+  Available at https://monitoring.utubooking.com/grafana.
+  Datasources and dashboards provisioned as code from monitoring/grafana/.
+  EFS for SQLite persistence. GitHub SSO auth.
+
+Parameters:
+  GrafanaAdminPassword:
+    Type: String
+    NoEcho: true
+    Description: Initial Grafana admin password (change after first login)
+  GithubOAuthClientId:
+    Type: String
+  GithubOAuthClientSecret:
+    Type: String
+    NoEcho: true
+  GithubOrgName:
+    Type: String
+    Default: amec-solutions
+  PrometheusUrl:
+    Type: String
+    Description: Internal Prometheus URL reachable from ECS VPC
+    Default: 'http://prometheus:9090'
+  ECSCluster:
+    Type: String
+    Default: utu-backend-cluster
+
+Resources:
+
+  # ── EFS for Grafana SQLite database ──────────────────────────────────────────
+  GrafanaEFS:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      PerformanceMode: generalPurpose
+      ThroughputMode: bursting
+      FileSystemTags:
+        - Key: Name
+          Value: utu-grafana-efs
+
+  GrafanaEFSMountTarget1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref GrafanaEFS
+      SubnetId: !ImportValue utu-private-subnet-1
+      SecurityGroups:
+        - !Ref GrafanaEFSSecurityGroup
+
+  GrafanaEFSMountTarget2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref GrafanaEFS
+      SubnetId: !ImportValue utu-private-subnet-2
+      SecurityGroups:
+        - !Ref GrafanaEFSSecurityGroup
+
+  # ── Security Groups ───────────────────────────────────────────────────────────
+  GrafanaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Grafana ECS task — allow 3000 from ALB
+      VpcId: !ImportValue utu-vpc-id
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          SourceSecurityGroupId: !ImportValue utu-ecs-sg-id
+
+  GrafanaEFSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EFS for Grafana — allow NFS from Grafana task
+      VpcId: !ImportValue utu-vpc-id
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          SourceSecurityGroupId: !Ref GrafanaSecurityGroup
+
+  # ── Target Group ──────────────────────────────────────────────────────────────
+  GrafanaTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-grafana-tg
+      VpcId: !ImportValue utu-vpc-id
+      Protocol: HTTP
+      Port: 3000
+      TargetType: ip
+      HealthCheckPath: /grafana/api/health
+      HealthCheckIntervalSeconds: 30
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      DeregistrationDelay: 30
+
+  # ── ALB Listener Rule: monitoring.utubooking.com → Grafana ────────────────────
+  GrafanaListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !ImportValue utu-https-listener-arn
+      Priority: 5
+      Conditions:
+        - Field: host-header
+          Values: ['monitoring.utubooking.com']
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref GrafanaTargetGroup
+
+  # ── ECS Task Definition ───────────────────────────────────────────────────────
+  GrafanaTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: utu-grafana-task-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+
+  GrafanaTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: utu-grafana-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  GrafanaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/utu-grafana
+      RetentionInDays: 30
+
+  GrafanaTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: utu-grafana
+      Cpu: '512'
+      Memory: '1024'
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      TaskRoleArn: !GetAtt GrafanaTaskRole.Arn
+      ExecutionRoleArn: !GetAtt GrafanaTaskExecutionRole.Arn
+      Volumes:
+        - Name: grafana-storage
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref GrafanaEFS
+            TransitEncryption: ENABLED
+      ContainerDefinitions:
+        - Name: grafana
+          Image: grafana/grafana:11.3.0
+          PortMappings:
+            - ContainerPort: 3000
+          MountPoints:
+            - SourceVolume: grafana-storage
+              ContainerPath: /var/lib/grafana
+          Environment:
+            - Name: GF_SERVER_ROOT_URL
+              Value: 'https://monitoring.utubooking.com/grafana'
+            - Name: GF_SERVER_SERVE_FROM_SUB_PATH
+              Value: 'true'
+            - Name: GF_SECURITY_ADMIN_PASSWORD
+              Value: !Ref GrafanaAdminPassword
+            - Name: GF_SECURITY_DISABLE_GRAVATAR
+              Value: 'true'
+            - Name: GF_USERS_ALLOW_SIGN_UP
+              Value: 'false'
+            - Name: GF_AUTH_ANONYMOUS_ENABLED
+              Value: 'false'
+            # GitHub SSO
+            - Name: GF_AUTH_GITHUB_ENABLED
+              Value: 'true'
+            - Name: GF_AUTH_GITHUB_CLIENT_ID
+              Value: !Ref GithubOAuthClientId
+            - Name: GF_AUTH_GITHUB_CLIENT_SECRET
+              Value: !Ref GithubOAuthClientSecret
+            - Name: GF_AUTH_GITHUB_ALLOWED_ORGANIZATIONS
+              Value: !Ref GithubOrgName
+            - Name: GF_AUTH_GITHUB_ALLOW_SIGN_UP
+              Value: 'true'
+            # Alerting: use Alertmanager as alert backend (no duplicate alert rules)
+            - Name: GF_UNIFIED_ALERTING_ENABLED
+              Value: 'false'
+            - Name: GF_ALERTING_ENABLED
+              Value: 'false'
+            # Provisioning paths
+            - Name: GF_PATHS_PROVISIONING
+              Value: /etc/grafana/provisioning
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/utu-grafana
+              awslogs-region: me-south-1
+              awslogs-stream-prefix: grafana
+          HealthCheck:
+            Command: ['CMD-SHELL', 'wget -qO- http://localhost:3000/grafana/api/health || exit 1']
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+
+  # ── ECS Service ───────────────────────────────────────────────────────────────
+  GrafanaService:
+    Type: AWS::ECS::Service
+    DependsOn: GrafanaListenerRule
+    Properties:
+      ServiceName: utu-grafana
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref GrafanaTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - !ImportValue utu-private-subnet-1
+            - !ImportValue utu-private-subnet-2
+          SecurityGroups:
+            - !Ref GrafanaSecurityGroup
+          AssignPublicIp: DISABLED
+      LoadBalancers:
+        - ContainerName: grafana
+          ContainerPort: 3000
+          TargetGroupArn: !Ref GrafanaTargetGroup
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+
+Outputs:
+  GrafanaURL:
+    Value: 'https://monitoring.utubooking.com/grafana'
