@@ -67,11 +67,48 @@
     "poweredBy": "UTUBooking tarafından sunulur",
     "language": "Dil"
   },
+  "consent": {
+    "title": "Kişisel Verilerinizin Korunması (KVKK)",
+    "intro": "UTUBooking olarak, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) uyarınca kişisel verilerinizi işlemekteyiz.",
+    "dataCollected": "Ad-soyad, e-posta adresi, telefon numarası, uyruk ve ödeme bilgileri.",
+    "purposeLabel": "Amaçlar",
+    "purposes": "Rezervasyon süreçlerinin yürütülmesi, müşteri iletişimi, ödeme işlemleri ve yasal yükümlülüklerin yerine getirilmesi.",
+    "rightsLabel": "KVKK kapsamındaki haklarınız",
+    "rights": "Verilerinize erişim, düzeltme, silme, işlemenin kısıtlanması, veri taşınabilirliği ve itiraz hakkına sahipsiniz.",
+    "contact": "Talepleriniz için",
+    "storageNote": "Verileriniz Türkiye (İstanbul) ve AB (Frankfurt) veri merkezlerinde saklanmaktadır. Saklama süresi: aktif hesaplar için sözleşme süresi + 10 yıl.",
+    "retentionNote": "Bu tercih 1 yıl boyunca hatırlanır.",
+    "privacyLink": "Gizlilik Politikası",
+    "acceptBtn": "Kabul Ediyorum",
+    "declineBtn": "Reddet",
+    "revokeBtn": "Geri Al",
+    "limitedModeLabel": "Sınırlı mod",
+    "limitedModeMsg": "Kişisel verileriniz işlenmeyecektir. Rezervasyon ve bazı özellikler kullanılamayabilir."
+  },
   "notifications": {
     "enableTitle": "Güncellemeleri Alın",
     "enableBody": "Rezervasyon onayları, fiyat düşüşleri ve giriş hatırlatmaları alın.",
     "enableBtn": "Bildirimleri Etkinleştir",
     "deniedMsg": "Bildirimler engellendi. Lütfen tarayıcı ayarlarınızda etkinleştirin.",
     "subscribedMsg": "Artık rezervasyon güncellemeleri alacaksınız."
+  },
+  "quota": {
+    "title": "Hac Kontenjan Durumu",
+    "loading": "Kontenjan bilgisi yükleniyor…",
+    "error": "Kontenjan bilgisi alınamadı.",
+    "retry": "Yeniden Dene",
+    "year": "{year} yılı kontenjanı",
+    "totalQuota": "Toplam Kontenjan",
+    "remaining": "Kalan Yer",
+    "waitlist": "Bekleme Listesi",
+    "estimatedWait": "Tahmini Bekleme",
+    "waitYears": "~{years} yıl",
+    "applicationOpen": "Başvurular Açık",
+    "applicationClosed": "Başvurular Kapalı",
+    "applicationWindow": "Başvuru Dönemi",
+    "helpline": "İletişim Hattı",
+    "portalLink": "Diyanet Başvuru Portalı →",
+    "portalLinkAriaLabel": "Resmi Diyanet hac başvuru portalına git",
+    "dataFreshness": "Son güncelleme: {date}"
   }
 }

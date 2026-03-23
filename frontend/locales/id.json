@@ -67,11 +67,110 @@
     "poweredBy": "Diproduksi oleh UTUBooking",
     "language": "Bahasa"
   },
+  "payment": {
+    "title": "Metode Pembayaran",
+    "selectMethod": "Pilih metode pembayaran",
+    "gopay": "GoPay",
+    "gopayDesc": "Bayar dengan saldo GoPay Anda",
+    "shopeepay": "ShopeePay",
+    "shopeepayDesc": "Bayar dengan saldo ShopeePay Anda",
+    "qris": "QRIS",
+    "qrisDesc": "Scan QR dengan aplikasi e-wallet apapun",
+    "bankTransfer": "Transfer Bank",
+    "bankTransferDesc": "Virtual Account BCA, BNI, atau BRI",
+    "mandiriVa": "Mandiri Virtual Account",
+    "mandiriVaDesc": "Bayar via ATM atau m-banking Mandiri",
+    "deeplinkBtn": "Buka Aplikasi",
+    "scanQr": "Scan kode QR ini",
+    "vaNumber": "Nomor Virtual Account",
+    "billerCode": "Kode Biller",
+    "billKey": "Kode Tagihan",
+    "expiry": "Berlaku hingga",
+    "checkStatus": "Cek Status Pembayaran",
+    "pending": "Menunggu pembayaran…",
+    "completed": "Pembayaran berhasil!",
+    "failed": "Pembayaran gagal."
+  },
   "notifications": {
     "enableTitle": "Tetap Terupdate",
     "enableBody": "Dapatkan konfirmasi pemesanan, penurunan harga, dan pengingat check-in.",
     "enableBtn": "Aktifkan Notifikasi",
     "deniedMsg": "Notifikasi diblokir. Harap aktifkan di pengaturan browser Anda.",
     "subscribedMsg": "Anda sekarang akan menerima pembaruan pemesanan."
+  },
+  "flights": {
+    "airlines": {
+      "GA": "Garuda Indonesia",
+      "JT": "Lion Air",
+      "QG": "Citilink Indonesia",
+      "ID": "Batik Air"
+    },
+    "airlineTypes": {
+      "FSC": "Maskapai Layanan Penuh",
+      "LCC": "Maskapai Berbiaya Rendah"
+    },
+    "airports": {
+      "CGK": "Bandara Soekarno-Hatta, Jakarta",
+      "SUB": "Bandara Juanda, Surabaya",
+      "DPS": "Bandara Ngurah Rai, Bali",
+      "UPG": "Bandara Sultan Hasanuddin, Makassar",
+      "JED": "Bandara King Abdulaziz, Jeddah",
+      "MED": "Bandara Prince Mohammad bin Abdulaziz, Madinah"
+    },
+    "popularRoutes": "Rute Populer ke Tanah Suci",
+    "routes": {
+      "cgkJed": "Jakarta (CGK) → Jeddah (JED) — Rute Umrah Tersibuk",
+      "cgkMed": "Jakarta (CGK) → Madinah (MED)",
+      "subJed": "Surabaya (SUB) → Jeddah (JED)",
+      "dpsJed": "Bali (DPS) → Jeddah (via Jakarta)",
+      "cgkSub": "Jakarta (CGK) → Surabaya (SUB)",
+      "cgkDps": "Jakarta (CGK) → Bali (DPS)",
+      "cgkUpg": "Jakarta (CGK) → Makassar (UPG)"
+    },
+    "baggage": {
+      "included": "Bagasi {kg} kg termasuk",
+      "paid": "Bagasi berbayar"
+    },
+    "cabin": {
+      "economy": "Kelas Ekonomi",
+      "business": "Kelas Bisnis",
+      "first": "Kelas Pertama"
+    }
+  },
+  "garuda": {
+    "loyaltyProgram": "GarudaMiles",
+    "loyaltyTagline": "Kumpulkan mil untuk setiap penerbangan Garuda Indonesia",
+    "memberNumberLabel": "Nomor Anggota GarudaMiles (opsional)",
+    "memberNumberHint": "mis. 000-123456789",
+    "earnMilesLabel": "Estimasi Mil yang Diperoleh",
+    "baggagePolicy": "Bagasi 30 kg termasuk di semua rute Umrah",
+    "pnrLabel": "Kode Pemesanan Garuda",
+    "ticketLabel": "Nomor Tiket Elektronik",
+    "eTicketNote": "Tiket elektronik akan dikirim ke alamat email Anda.",
+    "fareFamilies": {
+      "lite": "Garuda Lite",
+      "smart": "Garuda Smart",
+      "freedom": "Garuda Freedom"
+    },
+    "bookingFormNote": "Masukkan nomor GarudaMiles Anda untuk mengumpulkan mil pada penerbangan ini."
+  },
+  "quota": {
+    "title": "Status Kuota Haji",
+    "loading": "Memuat informasi kuota…",
+    "error": "Gagal memuat informasi kuota.",
+    "retry": "Coba Lagi",
+    "year": "Kuota tahun {year}",
+    "totalQuota": "Total Kuota",
+    "remaining": "Sisa Kuota",
+    "waitlist": "Daftar Tunggu",
+    "estimatedWait": "Estimasi Tunggu",
+    "waitYears": "~{years} tahun",
+    "applicationOpen": "Pendaftaran Dibuka",
+    "applicationClosed": "Pendaftaran Ditutup",
+    "applicationWindow": "Masa Pendaftaran",
+    "helpline": "Helpline",
+    "portalLink": "Portal Pendaftaran Kemenag →",
+    "portalLinkAriaLabel": "Buka portal pendaftaran haji resmi Kemenag",
+    "dataFreshness": "Diperbarui: {date}"
   }
 }

@@ -67,11 +67,60 @@
     "poweredBy": "UTUBooking کی طرف سے",
     "language": "زبان"
   },
+  "mehram": {
+    "stepTitle": "محرم کی ضرورت",
+    "subtitle": "سعودی عرب میں ۴۵ سال سے کم عمر خواتین حاجیوں کو مرد سرپرست (محرم) کے ساتھ یا لائسنس یافتہ گروپ میں سفر کرنا لازمی ہے۔",
+    "genderLabel": "آپ کی جنس",
+    "genderMale": "مرد",
+    "genderFemale": "خاتون",
+    "ageLabel": "آپ کی عمر",
+    "agePlaceholder": "مثلاً ۳۲",
+    "optionTitle": "سفر کا انتظام",
+    "optionWithMahram": "محرم (مرد سرپرست) کے ساتھ سفر",
+    "optionGroup": "لائسنس یافتہ گروپ ٹور میں شامل ہونا",
+    "companionNameLabel": "محرم کا پورا نام",
+    "companionNamePlaceholder": "پاسپورٹ کے مطابق",
+    "relationshipLabel": "آپ سے رشتہ",
+    "relationships": {
+      "husband": "شوہر",
+      "father": "والد",
+      "brother": "بھائی",
+      "son": "بیٹا",
+      "uncle": "چچا",
+      "grandfather": "دادا"
+    },
+    "groupOperatorLabel": "لائسنس یافتہ ٹور آپریٹر کا نام",
+    "groupOperatorPlaceholder": "مثلاً النور حج سروسز",
+    "blockedMessage": "۴۵ سال سے کم عمر خواتین حاجیوں کے لیے یہ بکنگ مکمل کرنے کے لیے محرم کے ساتھ یا منظور شدہ لائسنس یافتہ گروپ کے ساتھ سفر کرنا لازمی ہے۔",
+    "exemptMessage": "چونکہ آپ کی عمر ۴۵ سال یا اس سے زیادہ ہے، آپ سعودی وزارت حج کے رہنما اصولوں کے مطابق منظور شدہ گروپ کے ساتھ آزادانہ سفر کر سکتی ہیں۔",
+    "maleExemptMessage": "محرم کی ضرورت مرد حاجیوں پر لاگو نہیں ہوتی۔",
+    "continueBtn": "جاری رکھیں",
+    "backBtn": "واپس"
+  },
   "notifications": {
     "enableTitle": "اپ ڈیٹ رہیں",
     "enableBody": "بکنگ کی تصدیقات، قیمتوں میں کمی، اور چیک ان کی یادوں حاصل کریں۔",
     "enableBtn": "اطلاعات فعال کریں",
     "deniedMsg": "اطلاعات مسدود ہیں۔ براہ کرم اپنے براؤزر کی سیٹنگز میں فعال کریں۔",
     "subscribedMsg": "آپ اب بکنگ کی تازہ معلومات حاصل کریں گے۔"
+  },
+  "quota": {
+    "title": "حج کوٹہ کی صورتحال",
+    "loading": "کوٹہ کی معلومات لوڈ ہو رہی ہیں…",
+    "error": "کوٹہ کی معلومات حاصل نہ ہو سکیں۔",
+    "retry": "دوبارہ کوشش کریں",
+    "year": "{year} کا کوٹہ",
+    "totalQuota": "کل کوٹہ",
+    "remaining": "باقی نشستیں",
+    "waitlist": "انتظار کی فہرست",
+    "estimatedWait": "متوقع انتظار",
+    "waitYears": "تقریباً {years} سال",
+    "applicationOpen": "درخواستیں کھلی ہیں",
+    "applicationClosed": "درخواستیں بند ہیں",
+    "applicationWindow": "درخواست کی مدت",
+    "helpline": "ہیلپ لائن",
+    "portalLink": "MoRA درخواست پورٹل →",
+    "portalLinkAriaLabel": "وزارت مذہبی امور کے سرکاری حج درخواست پورٹل پر جائیں",
+    "dataFreshness": "آخری تازہ کاری: {date}"
   }
 }
