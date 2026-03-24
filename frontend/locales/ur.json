@@ -122,5 +122,27 @@
     "portalLink": "MoRA درخواست پورٹل →",
     "portalLinkAriaLabel": "وزارت مذہبی امور کے سرکاری حج درخواست پورٹل پر جائیں",
     "dataFreshness": "آخری تازہ کاری: {date}"
+  },
+  "halal": {
+    "badge": "حلال دوست",
+    "no_alcohol": "شراب سے پاک",
+    "halal_food": "حلال کھانا",
+    "prayer_room": "نماز کا کمرہ",
+    "qibla_direction": "قبلہ کی سمت",
+    "zamzam_water": "زمزم کا پانی",
+    "female_only_floor": "خواتین کی منزل",
+    "no_pork": "سور سے پاک"
+  },
+  "cityGuide": {
+    "pageTitle": "{city} کے لیے مسلم گائیڈ",
+    "muslimPop": "مسلم آبادی",
+    "halalDining": "قریب حلال ریستوران",
+    "mosques": "مساجد",
+    "departureAirport": "قریب ترین عمرہ روانگی ایئرپورٹ",
+    "islamicServices": "اسلامی خدمات",
+    "searchFlights": "{airport} سے پروازیں تلاش کریں",
+    "loadingRestaurants": "حلال ریستوران تلاش ہو رہے ہیں…",
+    "noRestaurants": "قریب کوئی حلال ریستوران نہیں ملا۔",
+    "retryBtn": "دوبارہ کوشش کریں"
   }
 }

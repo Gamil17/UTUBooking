@@ -9,8 +9,9 @@ const searchSchema = Joi.object({
   priceMin: Joi.number().min(0).optional(),
   priceMax: Joi.number().min(0).optional(),
   currency: Joi.string().valid('SAR', 'AED', 'USD').default('SAR'),
-  isUmrah:  Joi.boolean().default(false),
-  isHajj:   Joi.boolean().default(false),
+  isUmrah:       Joi.boolean().default(false),
+  isHajj:        Joi.boolean().default(false),
+  halal_friendly: Joi.boolean().default(false),
   page:     Joi.number().integer().min(1).default(1),
   limit:    Joi.number().integer().min(1).max(50).default(20),
 });

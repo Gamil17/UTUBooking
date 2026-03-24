@@ -73,5 +73,27 @@
     "enableBtn": "فعال‌سازی اطلاع‌رسانی",
     "deniedMsg": "اطلاع‌رسانی‌ها مسدود هستند. لطفاً در تنظیمات مرورگر خود فعال کنید.",
     "subscribedMsg": "اکنون به‌روزرسانی‌های رزرو را دریافت خواهید کرد."
+  },
+  "halal": {
+    "badge": "حلال‌پسند",
+    "no_alcohol": "بدون الکل",
+    "halal_food": "غذای حلال",
+    "prayer_room": "اتاق نماز",
+    "qibla_direction": "جهت قبله",
+    "zamzam_water": "آب زمزم",
+    "female_only_floor": "طبقه ویژه بانوان",
+    "no_pork": "بدون گوشت خوک"
+  },
+  "cityGuide": {
+    "pageTitle": "راهنمای مسلمانان در {city}",
+    "muslimPop": "جمعیت مسلمان",
+    "halalDining": "رستوران‌های حلال نزدیک",
+    "mosques": "مساجد",
+    "departureAirport": "نزدیک‌ترین فرودگاه عزیمت عمره",
+    "islamicServices": "خدمات اسلامی",
+    "searchFlights": "جستجوی پرواز از {airport}",
+    "loadingRestaurants": "در حال جستجوی رستوران‌های حلال…",
+    "noRestaurants": "رستوران حلالی در نزدیکی یافت نشد.",
+    "retryBtn": "تلاش مجدد"
   }
 }

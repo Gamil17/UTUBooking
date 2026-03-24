@@ -76,7 +76,7 @@
     "ageLabel": "Your Age",
     "agePlaceholder": "e.g. 32",
     "optionTitle": "Travel Arrangement",
-    "optionWithMahram": "Traveling with a Mahram (male guardian)",
+    "optionWithMahram": "Travelling with a Mahram (male guardian)",
     "optionGroup": "Joining a licensed group tour",
     "companionNameLabel": "Mahram's Full Name",
     "companionNamePlaceholder": "As shown on passport",
@@ -91,8 +91,8 @@
     },
     "groupOperatorLabel": "Licensed Tour Operator Name",
     "groupOperatorPlaceholder": "e.g. Al-Noor Hajj Services",
-    "blockedMessage": "Female pilgrims under 45 must travel with a Mahram or join a licensed authorized group to complete this booking.",
-    "exemptMessage": "As you are 45 or older, you may travel independently in an authorized group per Saudi Ministry of Hajj guidelines.",
+    "blockedMessage": "Female pilgrims under 45 must travel with a Mahram or join a licensed authorised group to complete this booking.",
+    "exemptMessage": "As you are 45 or older, you may travel independently in an authorised group per Saudi Ministry of Hajj guidelines.",
     "maleExemptMessage": "Mahram requirements do not apply to male pilgrims.",
     "continueBtn": "Continue",
     "backBtn": "Back"
@@ -140,6 +140,18 @@
     "errorInvalidFormat": "Invalid format. Use STATE/YEAR/NUMBER (e.g. UP/2026/001234).",
     "errorUnconfirmed": "Only CONFIRMED applications can be linked to a UTUBooking reservation.",
     "contactHint": "For queries: hajcommittee.gov.in · 1800-11-8899 (toll-free)"
+  },
+  "quota": {
+    "title": "National Hajj Quota — {year}",
+    "totalQuota": "Total Quota",
+    "remaining": "Remaining Places",
+    "waitlist": "Waitlist",
+    "estimatedWait": "Estimated Wait",
+    "estimatedWaitYears": "{years} year(s)",
+    "applicationWindow": "Application Window",
+    "helpline": "Helpline",
+    "portalCta": "Visit Official Portal",
+    "notSupported": "Quota tracking not available for this country."
   },
   "notifications": {
     "enableTitle": "Stay Updated",

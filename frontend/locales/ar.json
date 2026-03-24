@@ -73,5 +73,27 @@
     "enableBtn": "تفعيل الإشعارات",
     "deniedMsg": "الإشعارات محجوبة. يرجى تفعيلها من إعدادات المتصفح.",
     "subscribedMsg": "ستتلقى الآن تحديثات حجوزاتك."
+  },
+  "halal": {
+    "badge": "ملائم للحلال",
+    "no_alcohol": "خالٍ من الكحول",
+    "halal_food": "طعام حلال",
+    "prayer_room": "غرفة للصلاة",
+    "qibla_direction": "اتجاه القبلة",
+    "zamzam_water": "ماء زمزم",
+    "female_only_floor": "طابق للنساء فقط",
+    "no_pork": "خالٍ من لحم الخنزير"
+  },
+  "cityGuide": {
+    "pageTitle": "دليل المسلم إلى {city}",
+    "muslimPop": "عدد المسلمين",
+    "halalDining": "مطاعم حلال قريبة",
+    "mosques": "المساجد",
+    "departureAirport": "أقرب مطار للسفر إلى العمرة",
+    "islamicServices": "الخدمات الإسلامية",
+    "searchFlights": "ابحث عن رحلات من {airport}",
+    "loadingRestaurants": "جارٍ البحث عن مطاعم حلال...",
+    "noRestaurants": "لا توجد مطاعم حلال قريبة.",
+    "retryBtn": "حاول مجدداً"
   }
 }

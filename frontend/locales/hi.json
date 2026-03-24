@@ -147,5 +147,27 @@
     "enableBtn": "सूचनाएं सक्षम करें",
     "deniedMsg": "सूचनाएं ब्लॉक की गई हैं। कृपया अपनी ब्राउजर सेटिंग्स में सक्षम करें।",
     "subscribedMsg": "आप अब बुकिंग अपडेट प्राप्त करेंगे।"
+  },
+  "halal": {
+    "badge": "हलाल-अनुकूल",
+    "no_alcohol": "शराब-मुक्त",
+    "halal_food": "हलाल भोजन",
+    "prayer_room": "नमाज़ कक्ष",
+    "qibla_direction": "क़िब्ला दिशा",
+    "zamzam_water": "ज़मज़म जल",
+    "female_only_floor": "महिला-केवल मंज़िल",
+    "no_pork": "सूअर-मुक्त"
+  },
+  "cityGuide": {
+    "pageTitle": "{city} के लिए मुस्लिम गाइड",
+    "muslimPop": "मुस्लिम जनसंख्या",
+    "halalDining": "पास में हलाल रेस्तरां",
+    "mosques": "मस्जिदें",
+    "departureAirport": "निकटतम उमरा प्रस्थान हवाई अड्डा",
+    "islamicServices": "इस्लामिक सेवाएँ",
+    "searchFlights": "{airport} से उड़ान खोजें",
+    "loadingRestaurants": "हलाल रेस्तरां ढूंढे जा रहे हैं…",
+    "noRestaurants": "पास में कोई हलाल रेस्तरां नहीं मिला।",
+    "retryBtn": "पुनः प्रयास करें"
   }
 }

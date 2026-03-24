@@ -131,6 +131,37 @@ function _extractFacilities(facilities) {
     .filter(Boolean);
 }
 
+/**
+ * Maps Hotelbeds facility list to UTUBooking halal_amenities schema.
+ * Uses keyword matching against facility names/descriptions — more resilient
+ * than hardcoding numeric facility codes (catalog varies by region).
+ *
+ * @param {Array} facilities  raw facilities array from Hotelbeds content API
+ * @returns {{ halalAmenities: object, isHalalFriendly: boolean } | null}
+ */
+function _extractHalalAmenities(facilities) {
+  if (!facilities?.length) return null;
+
+  const names = facilities.map((f) =>
+    (f.facilityName || f.description || '').toLowerCase(),
+  );
+
+  const amenities = {
+    no_alcohol:         names.some((n) => n.includes('no alcohol') || n.includes('alcohol free') || n.includes('alcohol-free')),
+    halal_food:         names.some((n) => n.includes('halal food') || n.includes('halal menu') || n.includes('halal restaurant') || n.includes('halal dining')),
+    prayer_room:        names.some((n) => n.includes('prayer room') || n.includes('prayer space') || n.includes('musalla') || n.includes('mosque') || n.includes('prayer mat')),
+    qibla_direction:    names.some((n) => n.includes('qibla') || n.includes('kiblah')),
+    zamzam_water:       names.some((n) => n.includes('zamzam') || n.includes('zam zam')),
+    female_only_floor:  names.some((n) => n.includes('female only') || n.includes('ladies only') || n.includes("women's floor")),
+    no_pork:            names.some((n) => n.includes('no pork') || n.includes('pork free') || n.includes('pork-free')),
+  };
+
+  const isHalalFriendly = amenities.halal_food || amenities.prayer_room || amenities.no_alcohol;
+  if (!Object.values(amenities).some(Boolean)) return null;
+
+  return { halalAmenities: amenities, isHalalFriendly };
+}
+
 function _isMakkahSearch(destination, isHajj, isUmrah) {
   if (isHajj || isUmrah) return true;
   return MAKKAH_CODES.has(String(destination ?? '').toUpperCase());
@@ -152,6 +183,8 @@ function _toHotelOffer(raw, { checkIn, checkOut, currency = 'SAR' }) {
   const lon = raw.longitude ? parseFloat(raw.longitude) : null;
   const distanceHaramM = (lat && lon) ? _haversineM(lat, lon, HARAM_LAT, HARAM_LON) : null;
 
+  const halal = _extractHalalAmenities(raw.facilities);
+
   return {
     id:               String(raw.code),
     hotelbedsCode:    String(raw.code),
@@ -162,6 +195,8 @@ function _toHotelOffer(raw, { checkIn, checkOut, currency = 'SAR' }) {
     city:             raw.destinationName ?? '',
     images:           _extractImages(raw.images),
     amenities:        _extractFacilities(raw.facilities),
+    halalAmenities:   halal?.halalAmenities  ?? null,
+    isHalalFriendly:  halal?.isHalalFriendly ?? false,
     pricePerNight,
     totalPrice:       parseFloat((pricePerNight * nights).toFixed(2)),
     currency,

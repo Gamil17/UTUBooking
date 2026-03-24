@@ -172,5 +172,27 @@
     "portalLink": "Portal Pendaftaran Kemenag →",
     "portalLinkAriaLabel": "Buka portal pendaftaran haji resmi Kemenag",
     "dataFreshness": "Diperbarui: {date}"
+  },
+  "halal": {
+    "badge": "Ramah Halal",
+    "no_alcohol": "Bebas Alkohol",
+    "halal_food": "Makanan Halal",
+    "prayer_room": "Ruang Sholat",
+    "qibla_direction": "Arah Kiblat",
+    "zamzam_water": "Air Zamzam",
+    "female_only_floor": "Lantai Khusus Wanita",
+    "no_pork": "Bebas Babi"
+  },
+  "cityGuide": {
+    "pageTitle": "Panduan Muslim di {city}",
+    "muslimPop": "Populasi Muslim",
+    "halalDining": "Restoran Halal Terdekat",
+    "mosques": "Masjid",
+    "departureAirport": "Bandara Keberangkatan Umroh Terdekat",
+    "islamicServices": "Layanan Islam",
+    "searchFlights": "Cari Penerbangan dari {airport}",
+    "loadingRestaurants": "Mencari restoran halal…",
+    "noRestaurants": "Tidak ada restoran halal di sekitar.",
+    "retryBtn": "Coba Lagi"
   }
 }

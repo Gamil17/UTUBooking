@@ -96,11 +96,11 @@
     "errorNetwork": "Tidak dapat menghubungi Tabung Haji. Sila cuba lagi.",
     "invalidIc": "Sila masukkan nombor IC yang sah (12 digit).",
     "statuses": {
-      "REGISTERED":     "Berdaftar",
-      "CONFIRMED":      "Disahkan",
-      "ACTIVE":         "Dalam Haji",
-      "COMPLETED":      "Mabrur",
-      "SUSPENDED":      "Digantung",
+      "REGISTERED": "Berdaftar",
+      "CONFIRMED": "Disahkan",
+      "ACTIVE": "Dalam Haji",
+      "COMPLETED": "Mabrur",
+      "SUSPENDED": "Digantung",
       "NOT_REGISTERED": "Belum Berdaftar"
     }
   },
@@ -110,5 +110,27 @@
     "enableBtn": "Dayakan Pemberitahuan",
     "deniedMsg": "Pemberitahuan disekat. Sila dayakan dalam tetapan penyemak imbas anda.",
     "subscribedMsg": "Anda akan menerima kemas kini tempahan sekarang."
+  },
+  "halal": {
+    "badge": "Mesra Halal",
+    "no_alcohol": "Bebas Alkohol",
+    "halal_food": "Makanan Halal",
+    "prayer_room": "Bilik Solat",
+    "qibla_direction": "Arah Kiblat",
+    "zamzam_water": "Air Zamzam",
+    "female_only_floor": "Tingkat Wanita Sahaja",
+    "no_pork": "Bebas Babi"
+  },
+  "cityGuide": {
+    "pageTitle": "Panduan Muslim di {city}",
+    "muslimPop": "Penduduk Muslim",
+    "halalDining": "Restoran Halal Berdekatan",
+    "mosques": "Masjid",
+    "departureAirport": "Lapangan Terbang Berlepas Umrah Terdekat",
+    "islamicServices": "Perkhidmatan Islam",
+    "searchFlights": "Cari Penerbangan dari {airport}",
+    "loadingRestaurants": "Mencari restoran halal…",
+    "noRestaurants": "Tiada restoran halal berdekatan.",
+    "retryBtn": "Cuba Lagi"
   }
 }

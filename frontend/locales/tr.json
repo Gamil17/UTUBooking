@@ -110,5 +110,27 @@
     "portalLink": "Diyanet Başvuru Portalı →",
     "portalLinkAriaLabel": "Resmi Diyanet hac başvuru portalına git",
     "dataFreshness": "Son güncelleme: {date}"
+  },
+  "halal": {
+    "badge": "Helal Dostu",
+    "no_alcohol": "Alkol Yok",
+    "halal_food": "Helal Yemek",
+    "prayer_room": "Namaz Odası",
+    "qibla_direction": "Kıble Yönü",
+    "zamzam_water": "Zemzem Suyu",
+    "female_only_floor": "Sadece Kadınlar Katı",
+    "no_pork": "Domuz Eti Yok"
+  },
+  "cityGuide": {
+    "pageTitle": "{city} Müslüman Rehberi",
+    "muslimPop": "Müslüman Nüfusu",
+    "halalDining": "Yakınlardaki Helal Restoranlar",
+    "mosques": "Camiler",
+    "departureAirport": "En Yakın Umre Kalkış Havalimanı",
+    "islamicServices": "İslami Hizmetler",
+    "searchFlights": "{airport} Çıkışlı Uçuş Ara",
+    "loadingRestaurants": "Helal restoranlar aranıyor…",
+    "noRestaurants": "Yakında helal restoran bulunamadı.",
+    "retryBtn": "Tekrar Dene"
   }
 }
