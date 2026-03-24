@@ -63,7 +63,8 @@ ALWAYS use `getShardPool(countryCode)` from `backend/shared/shard-router.js` —
 - Add Portuguese (pt-BR) privacy policy and consent UI before BR launch
 
 ### Payment Rules
-- US:  PayPal primary (see `PaymentRouter.ts` — `US: 'paypal'`); Stripe card secondary
+- US:  Stripe primary (Cards, Apple Pay, Google Pay); PayPal secondary; Affirm BNPL for bookings ≥ $200
+       (see `PaymentRouter.ts` — `US: 'stripe'`, secondaries: `['paypal', 'affirm']`)
 - EU:  Stripe Payment Element (`automatic_payment_methods: true`); see `EuropePaymentSelector.tsx`
 - CH:  TWINT primary (see `twint.gateway.js`); Stripe card fallback
 - NEVER hardcode a payment gateway — ALWAYS use `PaymentRouter.getGateway(countryCode)`
@@ -77,6 +78,7 @@ Run: `npm run i18n:validate` before every push to main
 ```
 BOOKINGCOM_USERNAME / BOOKINGCOM_PASSWORD / BOOKINGCOM_ENV
 PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET / PAYPAL_ENV / PAYPAL_WEBHOOK_ID
+AFFIRM_PUBLIC_KEY / AFFIRM_PRIVATE_KEY / AFFIRM_ENV
 TWINT_CLIENT_ID / TWINT_CLIENT_SECRET / TWINT_PARTNER_ID / TWINT_WEBHOOK_SECRET
 DPO_EMAIL / EU_DATA_CONTROLLER / EU_REPRESENTATIVE_EMAIL
 ```

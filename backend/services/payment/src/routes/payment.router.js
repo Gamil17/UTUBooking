@@ -9,6 +9,9 @@ const ipay88Ctrl    = require('../controllers/ipay88.controller');
 const jazzcashCtrl  = require('../controllers/jazzcash.controller');
 const easypaisaCtrl = require('../controllers/easypaisa.controller');
 const razorpayCtrl  = require('../controllers/razorpay.controller');
+const twintCtrl     = require('../controllers/twint.controller');
+const paypalCtrl    = require('../controllers/paypal.controller');
+const affirmCtrl    = require('../controllers/affirm.controller');
 const {
   stcpayWebhookAuth,
   moyasarWebhookAuth,
@@ -34,9 +37,15 @@ router.post('/webhook',               stcpayWebhookAuth, stcpayCtrl.webhook);
 router.post('/mada/charge',           madaCtrl.charge);
 router.post('/mada/webhook',          moyasarWebhookAuth, madaCtrl.webhook);
 
-// ─── Stripe (Visa / Mastercard — international) ───────────────────────────────
-router.post('/stripe/initiate',       stripeCtrl.initiate);
-router.post('/stripe/webhook',        stripeWebhookAuth, stripeCtrl.webhook);
+// ─── Stripe (Visa / Mastercard — international legacy) ───────────────────────
+router.post('/stripe/initiate',              stripeCtrl.initiate);
+router.post('/stripe/webhook',               stripeWebhookAuth, stripeCtrl.webhook);
+
+// ─── Stripe Payment Element (EU — automatic_payment_methods) ─────────────────
+// Supports: SEPA Direct Debit, iDEAL, Bancontact, BLIK, Klarna, Apple Pay,
+//           Google Pay, and any method enabled in Stripe Dashboard.
+// Frontend: POST → { clientSecret } → mount <PaymentElement> → stripe.confirmPayment()
+router.post('/stripe/element/initiate',      stripeCtrl.initiateElement);
 
 // ─── iyzico (Turkey — TRY) ───────────────────────────────────────────────────
 // callback is form-encoded from browser; no header-based auth — verified via iyzico API
@@ -78,6 +87,37 @@ router.post('/razorpay/webhook',
   express.raw({ type: 'application/json', limit: '1mb' }),
   rawBodyCapture,
   razorpayCtrl.webhook);
+
+// ─── TWINT (Switzerland — CHF) ───────────────────────────────────────────────
+// Webhook uses raw body (HMAC-SHA256 via X-TWINT-Signature).
+// initiate + status use standard JSON body.
+// rawBodyCapture is re-used from the Razorpay handler above.
+router.post('/twint/initiate',             twintCtrl.initiate);
+router.get('/twint/status/:checkoutId',    twintCtrl.status);
+router.post('/twint/webhook',
+  express.raw({ type: 'application/json', limit: '64kb' }),
+  rawBodyCapture,
+  twintCtrl.webhook);
+
+// ─── PayPal (USA + global fallback — USD) ────────────────────────────────────
+// Webhook uses raw body for PayPal's own signature verification endpoint.
+// initiate + capture use standard JSON body.
+router.post('/paypal/initiate',            paypalCtrl.initiate);
+router.post('/paypal/capture',             paypalCtrl.capture);
+router.post('/paypal/webhook',
+  express.raw({ type: 'application/json', limit: '64kb' }),
+  rawBodyCapture,
+  paypalCtrl.webhook);
+
+// ─── Affirm BNPL (USA — USD, bookings > $200) ────────────────────────────────
+// Webhook uses raw body for HMAC-SHA256 over X-Affirm-Signature header.
+// initiate + confirm use standard JSON body.
+router.post('/affirm/initiate',            affirmCtrl.initiate);
+router.post('/affirm/confirm',             affirmCtrl.confirm);
+router.post('/affirm/webhook',
+  express.raw({ type: 'application/json', limit: '64kb' }),
+  rawBodyCapture,
+  affirmCtrl.webhook);
 
 // ─── Status lookup ────────────────────────────────────────────────────────────
 router.get('/:bookingId', async (req, res, next) => {
