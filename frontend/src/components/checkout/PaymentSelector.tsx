@@ -32,6 +32,8 @@ import SwitzerlandPaymentSelector from './SwitzerlandPaymentSelector';
 import PakistanPaymentSelector from './PakistanPaymentSelector';
 import IndiaPaymentSelector from './IndiaPaymentSelector';
 import IndonesianPaymentSelector from './IndonesianPaymentSelector';
+import MalaysianPaymentSelector from './MalaysianPaymentSelector';
+import TurkeyPaymentSelector from './TurkeyPaymentSelector';
 import USAPaymentSelector from './USAPaymentSelector';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -168,12 +170,27 @@ export default function PaymentSelector({
   }
 
   // ── MYR — iPay88 (Malaysia) ───────────────────────────────────────────────
-  // MalaysianPaymentSelector not yet implemented — fall through to Stripe
-  // TODO: add MalaysianPaymentSelector when iPay88 frontend component is ready
+  if (currency === 'MYR') {
+    return (
+      <MalaysianPaymentSelector
+        bookingId={bookingId}
+        amountMYR={amount}
+        onCancel={onCancel}
+      />
+    );
+  }
 
   // ── TRY — iyzico (Turkey) ─────────────────────────────────────────────────
-  // TurkeyPaymentSelector not yet implemented — fall through to Stripe
-  // TODO: add TurkeyPaymentSelector when iyzico frontend component is ready
+  if (currency === 'TRY') {
+    return (
+      <TurkeyPaymentSelector
+        bookingId={bookingId}
+        amountTRY={amount}
+        onSuccess={onSuccess}
+        onCancel={onCancel}
+      />
+    );
+  }
 
   // ── GCC — legacy STC Pay / Mada / Stripe (handled by BookingFlowScreen) ──
   // GCC tenants use the mobile BookingFlowScreen; web checkout uses Stripe card.
