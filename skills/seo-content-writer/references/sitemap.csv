@@ -1,26 +1,26 @@
-url,title,category,priority
-/,UTUBooking Home,core,high
-/hotels/makkah,Hotels in Makkah,hotels,high
-/hotels/makkah/masjid-al-haram,Hotels Near Masjid Al-Haram,hotels,high
-/hotels/madinah,Hotels in Madinah,hotels,high
-/hotels/riyadh,Hotels in Riyadh,hotels,medium
-/hotels/jeddah,Hotels in Jeddah,hotels,medium
-/hotels/dubai,Hotels in Dubai,hotels,medium
-/hotels?filter=halal,Halal-Certified Hotels,hotels,medium
-/hajj-packages,Hajj Packages,packages,high
-/umrah-packages,Umrah Packages,packages,high
-/flights/jeddah-jed,Flights to Jeddah,flights,high
-/flights/riyadh-ruh,Flights to Riyadh,flights,medium
-/flights/saudi-arabia,Flights to Saudi Arabia,flights,high
-/car-rental/saudi-arabia,Car Rental Saudi Arabia,car-rental,high
-/car-rental/makkah,Car Rental Makkah,car-rental,medium
-/car-rental/madinah,Car Rental Madinah,car-rental,medium
-/car-rental/riyadh,Car Rental Riyadh,car-rental,medium
-/car-rental/jeddah,Car Rental Jeddah,car-rental,medium
-/us/umrah-packages,Umrah Packages USA,packages,medium
-/about,About UTUBooking,brand,low
-/blog,Blog,content,medium
-/ar/hotels/makkah/masjid-al-haram,فنادق قريبة من المسجد الحرام,hotels-ar,high
-/ar/hajj-packages,باقات الحج,packages-ar,high
-/ar/umrah-packages,باقات العمرة,packages-ar,high
-/ar/flights/jeddah-jed,رحلات إلى جدة,flights-ar,high
+Link,Title,MetaDescription
+https://utubooking.com/,UTUBooking — Hotels Flights & Umrah Packages,Book hotels near Masjid Al-Haram, Umrah packages, flights to Jeddah and car rental in Saudi Arabia. Trusted by pilgrims from 25+ countries.
+https://utubooking.com/hotels/makkah,Hotels in Makkah Near Masjid Al-Haram,Browse 200+ hotels in Makkah with real Haram proximity data. Filter by walking time to the gate — not just star rating and price.
+https://utubooking.com/hotels/makkah/masjid-al-haram,Hotels Near Masjid Al-Haram — Walking Distance Filter,Find hotels within 500m of Masjid Al-Haram. UTUBooking shows real walking times from lobby to gate for every property.
+https://utubooking.com/hotels/madinah,Hotels in Madinah Near the Prophet's Mosque,Book hotels in Madinah close to Masjid Al-Nabawi. Compare rooms by walking time to the Prophet's Mosque.
+https://utubooking.com/hotels/riyadh,Hotels in Riyadh — Business & Leisure,Find hotels in Riyadh for business travel and leisure stays. Central, airport, and diplomatic quarter locations.
+https://utubooking.com/hotels/jeddah,Hotels in Jeddah — Gateway to Makkah,Book hotels in Jeddah near King Abdulaziz International Airport and the historic Al-Balad district.
+https://utubooking.com/hotels/dubai,Hotels in Dubai — UAE Accommodation,Compare and book hotels across Dubai — downtown, Marina, Deira, and airport locations.
+https://utubooking.com/hotels?filter=halal,Halal-Certified Hotels — Verified Amenities,Filter hotels by verified halal amenities: prayer mats, qibla markers, and halal-certified kitchens. Checked by UTUBooking, not self-reported.
+https://utubooking.com/hajj-packages,Hajj Packages 2026 — Full Pilgrimage Packages,Compare Hajj packages for 2026 from Saudi Arabia, UAE, and international departures. Hotels near Haram included.
+https://utubooking.com/umrah-packages,Umrah Packages — Hotel + Flight Bundles,Book complete Umrah packages with hotels near Masjid Al-Haram, return flights, and transport. Year-round and Ramadan packages available.
+https://utubooking.com/flights/jeddah-jed,Flights to Jeddah (JED) — Book Direct,Compare flights to King Abdulaziz International Airport Jeddah from Gulf, MENA, Europe, and international origins.
+https://utubooking.com/flights/riyadh-ruh,Flights to Riyadh (RUH) — King Khalid Airport,Book flights to Riyadh from major cities. Business class and economy fares with flexible rebooking.
+https://utubooking.com/flights/saudi-arabia,Flights to Saudi Arabia — All Airports,Compare flights to Jeddah, Riyadh, Madinah, Dammam, and Tabuk. Filter by airline, stops, and price.
+https://utubooking.com/car-rental/saudi-arabia,Car Rental Saudi Arabia — Makkah Madinah Riyadh,Rent a car in Saudi Arabia for Umrah and Hajj travel. Makkah, Madinah, Jeddah, and Riyadh pickup available.
+https://utubooking.com/car-rental/makkah,Car Rental Makkah — Airport & Hotel Pickup,Rent a car in Makkah for transport between the Haram, hotels, and holy sites during Umrah or Hajj.
+https://utubooking.com/car-rental/madinah,Car Rental Madinah — Ziyarat Transport,Book a car in Madinah for visits to Masjid Al-Nabawi, Quba Mosque, and the Baqi cemetery.
+https://utubooking.com/car-rental/riyadh,Car Rental Riyadh — Business & Leisure,Rent a car in Riyadh for business travel. Airport pickup at King Khalid International Airport available.
+https://utubooking.com/car-rental/jeddah,Car Rental Jeddah — Airport & City Pickup,Book a car in Jeddah for airport transfers, business, and Al-Balad sightseeing.
+https://utubooking.com/us/umrah-packages,Umrah Packages USA — Flights from US Cities,Book Umrah packages with flights from New York, Chicago, Los Angeles, and other US departure cities. USD pricing.
+https://utubooking.com/about,About UTUBooking — Our Story,UTUBooking is built for Muslim travelers. Learn about our mission, the Haram proximity filter, and our team.
+https://utubooking.com/blog,UTUBooking Blog — Pilgrimage Travel Guides,Practical guides for Hajj and Umrah: hotel guides, booking timelines, packing lists, and destination tips.
+https://utubooking.com/ar/hotels/makkah/masjid-al-haram,فنادق قريبة من المسجد الحرام — أسعار ومسافات حقيقية,ابحث عن أفضل فنادق مكة المكرمة القريبة من المسجد الحرام مع أوقات المشي الحقيقية من الفندق إلى أبواب الحرم.
+https://utubooking.com/ar/hajj-packages,باقات الحج 2026 — الإقامة والتنقلات,احجز باقات الحج الشاملة مع فنادق قريبة من الحرم المكي وتنقلات داخلية وخدمات طوال فترة الحج.
+https://utubooking.com/ar/umrah-packages,باقات العمرة — فندق ورحلة,احجز باقة عمرة كاملة تشمل الفندق القريب من المسجد الحرام والطيران والتنقلات الداخلية.
+https://utubooking.com/ar/flights/jeddah-jed,رحلات إلى جدة — مطار الملك عبدالعزيز,ابحث عن أرخص رحلات الطيران إلى مطار جدة الدولي من دول الخليج والشرق الأوسط وأوروبا.
