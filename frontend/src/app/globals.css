@@ -19,12 +19,22 @@ body {
   font-family: var(--font-family);
 }
 
-/* Language-specific fonts */
+/* Language-specific fonts — Latin script (Inter) */
+/* Phase 1-7 */
 [lang="en"],
 [lang="fr"],
 [lang="tr"],
 [lang="id"],
-[lang="ms"] {
+[lang="ms"],
+/* Phase 8-12 — European + Americas (all Latin script) */
+[lang="de"],
+[lang="en-GB"],
+[lang="it"],
+[lang="nl"],
+[lang="pl"],
+[lang="es"],
+[lang="pt-BR"],
+[lang="es-419"] {
   --font-family: var(--font-inter), system-ui, sans-serif;
 }
 

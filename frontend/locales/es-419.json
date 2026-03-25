@@ -181,5 +181,20 @@
     "loadingRestaurants": "Buscando restaurantes halal…",
     "noRestaurants": "No se encontraron restaurantes halal cercanos.",
     "retryBtn": "Intentar de nuevo"
+  },
+  "payment": {
+    "total": "Total a pagar",
+    "mercadopago": "MercadoPago",
+    "card": "Tarjeta",
+    "mpTitle": "Pagar con MercadoPago",
+    "mpSubtitle": "Serás redirigido/a al checkout seguro de MercadoPago. Elige tu método favorito.",
+    "mpBtn": "Pagar con MercadoPago",
+    "mpConnecting": "Conectando con MercadoPago…",
+    "mpRedirecting": "Redirigiendo al checkout…",
+    "mpLocalMethods": "Métodos disponibles en {country}",
+    "cancel": "Cancelar",
+    "retry": "Intentar de nuevo",
+    "trustMp": "Pagos seguros procesados por MercadoPago · Cifrado SSL",
+    "trustCard": "Pagos seguros via Stripe."
   }
 }

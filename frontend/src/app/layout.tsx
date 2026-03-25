@@ -5,7 +5,10 @@ import Providers from '@/providers';
 import TenantProvider from '@/components/TenantProvider';
 import PwaInit from '@/components/PwaInit';
 import { parseTenantHeader, getLocaleAttrs } from '@/lib/tenant';
-import KVKKBanner from '@/components/compliance/KVKKBanner';
+import KVKKBanner        from '@/components/compliance/KVKKBanner';
+import GDPRConsentBanner from '@/components/compliance/GDPRConsentBanner';
+import DpdpConsentBanner from '@/components/compliance/DpdpConsentBanner';
+import CCPAFooterLink    from '@/components/compliance/CCPAFooterLink';
 import './globals.css';
 import '@/styles/urdu.css';
 import '@/styles/hindi.css';
@@ -68,7 +71,11 @@ export default async function RootLayout({
       >
         <TenantProvider config={tenantConfig}>
           <Providers>{children}</Providers>
-          <KVKKBanner countryCode={countryCode} />
+          {/* Compliance banners — each self-guards by locale/countryCode */}
+          <GDPRConsentBanner countryCode={countryCode} />
+          <KVKKBanner        countryCode={countryCode} />
+          <DpdpConsentBanner countryCode={countryCode} />
+          <CCPAFooterLink    countryCode={countryCode} />
         </TenantProvider>
         <PwaInit />
       </body>

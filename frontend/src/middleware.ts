@@ -71,6 +71,20 @@ export async function middleware(request: NextRequest) {
     response.headers.set('x-country-code', countryCode);
   }
 
+  // Quebec French routing — Law 25 / Bill 96 require French interface for QC residents.
+  // Detection: Cloudflare cf-region-code header (QC) OR Accept-Language: fr-CA/fr-*.
+  // Sets x-locale-override: fr so request.ts uses the French message bundle.
+  const regionCode    = request.headers.get('cf-region-code') ?? '';
+  const acceptLang    = request.headers.get('accept-language') ?? '';
+  const isQuebec      = countryCode === 'CA' && regionCode === 'QC';
+  const isFrenchCA    = acceptLang.toLowerCase().startsWith('fr-ca') ||
+                        acceptLang.toLowerCase().startsWith('fr-');
+  if (isQuebec || (countryCode === 'CA' && isFrenchCA)) {
+    response.headers.set('x-locale-override', 'fr');
+  } else if (countryCode === 'CA') {
+    response.headers.set('x-locale-override', 'en-US');
+  }
+
   return response;
 }
 

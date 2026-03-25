@@ -24,6 +24,15 @@ const INTL_LOCALE: Record<Locale, string> = {
   ur: 'ur-PK',
   hi: 'hi-IN',   // Indian numbering: 12,34,567 grouping via Intl
   fa: 'fa-IR',
+  // EU/Global (Phase 8–12)
+  de: 'de-DE',
+  'en-GB': 'en-GB',
+  it: 'it-IT',
+  nl: 'nl-NL',
+  pl: 'pl-PL',
+  es: 'es-ES',
+  'pt-BR': 'pt-BR',
+  'es-419': 'es-419',
 };
 
 // ── formatPrice ──────────────────────────────────────────────────────────────
@@ -110,6 +119,15 @@ const DISTANCE_UNIT_M: Record<Locale, string> = {
   ur: 'میٹر',
   hi: 'मीटर',
   fa: 'متر',
+  // EU/Global (Phase 8–12) — all metric
+  de: 'm',
+  'en-GB': 'm',
+  it: 'm',
+  nl: 'm',
+  pl: 'm',
+  es: 'm',
+  'pt-BR': 'm',
+  'es-419': 'm',
 };
 
 const DISTANCE_UNIT_KM: Record<Locale, string> = {
@@ -122,6 +140,15 @@ const DISTANCE_UNIT_KM: Record<Locale, string> = {
   ur: 'کلومیٹر',
   hi: 'कि.मी.',
   fa: 'کیلومتر',
+  // EU/Global (Phase 8–12) — all metric
+  de: 'km',
+  'en-GB': 'km',
+  it: 'km',
+  nl: 'km',
+  pl: 'km',
+  es: 'km',
+  'pt-BR': 'km',
+  'es-419': 'km',
 };
 
 // ── Helper: sensible fraction digit defaults per currency ─────────────────────
