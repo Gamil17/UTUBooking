@@ -1,0 +1,56 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\(page|layout|error|loading|route\\)\\\\.tsx?$\")",
+      "Bash(find 'D:/0660 Claude Code for Business Run Your Entire Company With AI Team/01.1 UTUBooking App/monitoring/grafana/' -type f -name *.json -o -name *.yml -o -name *.yaml -o -name *.md)",
+      "Bash(mkdir -p \"d:/0660 Claude Code for Business Run Your Entire Company With AI Team/01.1 UTUBooking App/monitoring/elk/logstash/pipeline\")",
+      "Bash(mkdir -p \"d:/0660 Claude Code for Business Run Your Entire Company With AI Team/01.1 UTUBooking App/monitoring/elk/filebeat\")",
+      "Bash(mkdir -p \"d:/0660 Claude Code for Business Run Your Entire Company With AI Team/01.1 UTUBooking App/monitoring/grafana/provisioning/alerting\")",
+      "Bash(mkdir -p \"d:/0660 Claude Code for Business Run Your Entire Company With AI Team/01.1 UTUBooking App/load-tests/artillery/processors\")",
+      "Bash(npm install:*)",
+      "Bash(find '/d/0660 Claude Code for Business Run Your Entire Company With AI Team/01.1 UTUBooking App' -name *Amadeus* -o -name *Sabre* -o -name *amadeus* -o -name *sabre*)",
+      "Bash(find '/d/0660 Claude Code for Business Run Your Entire Company With AI Team/01.1 UTUBooking App/backend' -maxdepth 2 -name *.md -type f)",
+      "Bash(node -e \"const p = require\\(''./node_modules/react-day-picker/package.json''\\); console.log\\(p.version\\)\")",
+      "Bash(node -e \"const p = require\\(''./node_modules/@react-pdf/renderer/package.json''\\); console.log\\(p.version\\)\")",
+      "Bash(node -e \"const m = require\\(''d:/0660 Claude Code for Business Run Your Entire Company With AI Team/01.1 UTUBooking App/frontend/node_modules/react-day-picker/package.json''\\); console.log\\(JSON.stringify\\(m.exports?.[''./style.css''] ?? m.style ?? ''no style export'', null, 2\\)\\)\")"
+    ]
+  },
+
+  "mcpServers": {
+
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "env": {
+        "OPENAPI_MCP_HEADERS": "{\"Authorization\": \"Bearer ${NOTION_API_KEY}\", \"Notion-Version\": \"2022-06-28\"}"
+      }
+    },
+
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}",
+        "SLACK_TEAM_ID": "${SLACK_TEAM_ID}"
+      }
+    },
+
+    "gdrive": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gdrive"],
+      "env": {
+        "GDRIVE_CLIENT_ID": "${GDRIVE_CLIENT_ID}",
+        "GDRIVE_CLIENT_SECRET": "${GDRIVE_CLIENT_SECRET}",
+        "GDRIVE_REFRESH_TOKEN": "${GDRIVE_REFRESH_TOKEN}"
+      }
+    },
+
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    }
+  }
+}

@@ -8,6 +8,7 @@ node_modules/
 .env.local
 .env.*.local
 *.env
+.env.mcp          # MCP server secrets (Notion, Slack, GDrive, GitHub tokens)
 
 # Build output
 .next/
