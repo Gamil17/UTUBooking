@@ -59,12 +59,17 @@ Key files:
 
 ## Marketing Skills Suite (Ryan Doser Method — Part 4)
 
+**Version:** 1.6.0 "Real Skills v1.0" (pending tag)
+
 ### Foundation Skills (run these on every output)
 
 | Skill | File | Trigger |
 |---|---|---|
-| Anti-Slop Filter | `anti-slop.md` | "Run anti-slop on this content" |
-| Skill Creator | `skill-creator/SKILL.md` | "Create a new skill for [task]" |
+| Anti-Slop Filter | `anti-slop.md` | "Run anti-slop on this content" — 4-part system |
+| Skill Creator | `skill-creator/SKILL.md` | "Create a new skill for [task]" — v1.2.0 spec |
+| Auto-Improve | `auto-improve.md` | Passive — runs automatically, never invoke directly |
+| Crosscheck | `crosscheck.md` | "Crosscheck this" / "Ask GPT" / "Get a second opinion" |
+| MCP Setup | `mcp-setup.md` | "MCP", "connect to", "set up [tool]" |
 | Content Reviewer | `marketing/content-reviewer.md` | "Review this content before publishing" |
 
 ### Content Creation Skills
@@ -117,3 +122,4 @@ Key files:
 | v1.3.0 | Content Engine | SEO Copywriter Skill + 90-day calendar |
 | v1.4.0 | SEO Command Center | All 5 AI Ranking skills + GA4/GSC/DataForSEO |
 | v1.5.0 | Marketing Skills Suite | 9 marketing skills: anti-slop, skill-creator, LinkedIn, email, ads, video, repurpose, CTA, reviewer |
+| v1.6.0 | Real Skills v1.0 | 3 new: auto-improve (passive), crosscheck (GPT+Gemini), mcp-setup; anti-slop upgraded to 4-part; skill-creator to v1.2.0 spec |

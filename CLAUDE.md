@@ -60,15 +60,23 @@ Load when task matches trigger. See `skills/README.md` for full list.
 | Weekly SEO report | `skills/seo-command-center/SKILL.md` |
 | Quality check | `skills/marketing/content-reviewer.md` |
 
-### Standing Marketing Rules
+### API Keys (v1.0 addition)
+`APIs.env` at project root — contains `OPENROUTER_API_KEY` for Crosscheck + image generation.
+Never commit this file (already in `.gitignore`).
+
+### Standing Marketing Rules (v1.0 corrected)
 - **Always** run `skills/anti-slop.md` before delivering any final content
 - **Always** reference `skills/seo-content-writer/references/tone-of-voice.md` for voice
-- Never use em dashes (—) in any content output
+- **ZERO** em dashes (—) in any content — replace with comma, colon, or split sentence
+- **ZERO** emojis in blog posts or marketing copy
+- **ZERO** semicolons — split into two sentences
 - No hashtags in LinkedIn posts
 - Confirm before overwriting any existing file
 - All content is draft only — NEVER publish without human approval
 - Arabic content requires native Gulf Arabic speaker review before use
 - Keep sub-agent instructions tight — load only what each agent needs
+- Auto-Improve (`skills/auto-improve.md`) runs passively after every skill — do not invoke directly
+- Crosscheck (`skills/crosscheck.md`) requires EXPLICIT user request before calling any external model
 
 ### Session Startup Checklist (Marketing Sessions)
 1. Read this file and `marketing/CLAUDE.md`

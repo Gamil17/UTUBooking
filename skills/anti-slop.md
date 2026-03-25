@@ -1,53 +1,106 @@
 ---
 name: anti-slop
-description: Scans any content for AI-generated filler language and rewrites
-  flagged sections. Use after generating any blog post, email, social post,
-  or ad copy for UTUBooking. Flags 40+ known AI phrases, em dashes, and
-  UTUBooking-specific banned terms. Applies tone-of-voice.md rules.
+description: Scans content for AI-generated filler language and rewrites flagged
+  sections. Use after generating any blog post, email, social post, or ad copy
+  for UTUBooking. Catches structural patterns, formatting giveaways, phrase
+  patterns, and content red flags. Outputs slop report + clean rewrite.
 ---
 
 # Anti-Slop Filter
-
-Scan the provided content. Flag every instance of AI-generated filler.
-Rewrite each flagged section without losing meaning.
 Reference: skills/seo-content-writer/references/tone-of-voice.md
 
-## Tier 1 — Always Flag & Rewrite
+Scan the provided content. Flag every instance across all 4 parts.
+Rewrite flagged sections without losing meaning.
 
-delve, leverage, synergy, game-changer, landscape, paradigm shift,
-robust, innovative, comprehensive, streamline, cutting-edge, state-of-the-art,
-holistic, impactful, actionable insights, move the needle, circle back,
-at the end of the day, it goes without saying, needless to say,
-it is important to note, in today's digital age, in conclusion,
-utilize (→ use), commence (→ start), facilitate, endeavour,
-seamless, hassle-free, world-class, best-in-class, transformative
+---
 
-## Tier 2 — UTUBooking-Specific Bans
+## PART 1 — Structural Red Flags
 
-tourist (when referring to Makkah/Madinah visitors — use 'pilgrim' or 'traveler')
-guaranteed results / guarantee rankings (legal risk)
-cheapest (→ most affordable / best value)
-Any competitor name in negative context (Wego, Almosafer, Booking.com, Agoda)
-"book your dream Umrah" (cliché — be specific instead)
-"spiritual journey of a lifetime" (overused — describe the actual benefit)
+| Pattern | Example | Fix |
+|---|---|---|
+| Binary contrasts | 'it's not X, it's Y' | State the positive directly |
+| Triple threats | 'fast, efficient, reliable' | Pick the one that matters most |
+| Infomercial transitions | 'The catch?' / 'Here's the thing:' | Cut the transition, state the point |
+| Corporate verbs | 'highlighting the benefits', 'leveraging synergies' | Use direct verbs: 'shows', 'uses' |
+| Hedging | 'arguably', 'it could be said that' | State it or cut it |
+| Thesaurus abuse | 'utilize', 'commence', 'endeavour' | use, start, try |
 
-## Tier 3 — Flag & Review (context-dependent)
+---
 
-absolutely, certainly, of course, as we know,
-I hope this email finds you well, I wanted to reach out,
-touch base, bandwidth, deep dive
+## PART 2 — Formatting Giveaways
 
-## Structural Issues to Fix
+- More than 1 arrow (→) per post: cut to 0 or 1
+- 2+ emojis per section: cut entirely in blog posts — zero emojis
+- Em dashes (—) anywhere: replace with comma, colon, or split the sentence
+- Semicolons anywhere: split into two sentences — never use semicolons
 
-- Em dashes (—): replace with comma, colon, or split the sentence
-- Sentences over 25 words: split them
-- Three or more consecutive sentences starting with 'The'
-- Paragraphs over 4 sentences in social/email content
-- Passive voice: rewrite as active ('Hotels are filtered by...' → 'Filter hotels by...')
+---
 
-## Output Format
+## PART 3 — Phrase Patterns (rewrite every instance)
 
-1. List flagged instances with original text quoted
-2. Show rewrite for each
-3. Deliver clean final version
-4. Summary line: "[X] instances flagged, [X] rewritten"
+| Pattern | Example |
+|---|---|
+| 'No X. No Y. Just Z.' | 'No fluff. No theory. Just actionable insights.' |
+| 'game has changed' | Any form — delete or replace with what specifically changed |
+| 'real' overload | 'real results', 'real strategy', 'real people' — be specific instead |
+| 'Enter:' | 'Enter: my revolutionary framework' — delete, state it directly |
+| 'To Your Success' | Sign-off filler — cut or replace with specific forward-looking line |
+| 'changed everything' | State what specifically changed and how |
+
+---
+
+## PART 4 — Content Red Flags
+
+| Red flag | What it looks like | Fix |
+|---|---|---|
+| Symbol obsession | 'this symbolizes...', 'this represents...' | State the concrete thing |
+| Generic case studies | 'Sarah Chen, a busy mom of 3...' (invented) | Use real data or UTUBooking stories from experiences.md |
+| Hyperbole | 'this one shift transformed my business' | Specific metric or delete |
+| 'changed everything' | Any variation | Replace with what specifically changed |
+
+---
+
+## SLOP WORD LIST — Never Use These
+
+delve, tapestry, vibrant, landscape, realm, embark, excels, vital, comprehensive,
+intricate, pivotal, moreover, arguably, notably, spark, sparked, supercharge,
+supercharged, enhance, navigate, ignite, ignited, robust, multi-faceted, solely,
+crucial, ensure, portray, ongoing, vigilance, intriguing, holistic, game-changer,
+revolutionary, unleash, cutting-edge, synergy, seamlessly, transformative
+
+**UTUBooking additions:**
+tourist (for pilgrims), seamless, hassle-free, world-class, best-in-class,
+guaranteed results, cheapest (→ most affordable)
+
+---
+
+## OUTPUT FORMAT
+
+### Slop Report
+List every instance by category with context snippet and total count:
+- **Slop Words:** [X instances] — list each with surrounding context
+- **Phrase Patterns:** [X instances]
+- **Structural Issues:** [X instances]
+- **Formatting Giveaways:** [X instances]
+- **Total:** [X] instances found
+
+### Clean Rewrite
+Full rewrite applying Ryan's Voice Formula below.
+
+---
+
+## RYAN'S VOICE FORMULA (apply to all rewrites)
+
+- Punchy, plainspoken, confident
+- Short sentences: 8-15 words average
+- Active voice: subject → verb → object
+- 8th-grade reading level
+- Short paragraphs: 2-3 sentences maximum
+- Lead with the point — not the context
+- Specific examples over vague claims
+- Write like you talk
+
+**UTUBooking additions:**
+- Use 'pilgrim' or 'traveler' — never 'tourist' for Makkah/Madinah context
+- SAR first for Gulf audience
+- Specific distances in metres (not 'close to' or 'near')
