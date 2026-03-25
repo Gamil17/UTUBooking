@@ -18,7 +18,9 @@
       "CGK", "SUB", "DPS", "UPG",
       "KUL", "PEN", "JHB", "BKI",
       "LHR", "CDG", "FRA", "MXP",
-      "DEL", "BOM", "MAA", "CCU", "HYD", "BLR", "AMD", "LKO"
+      "DEL", "BOM", "MAA", "CCU", "HYD", "BLR", "AMD", "LKO",
+      "JFK", "LAX", "ORD", "IAD", "IAH", "DTW",
+      "YYZ", "YUL"
     ],
     "airlines": [
       "SV", "WY", "EK", "EY", "GF", "KU", "MS", "ME", "TK", "PC",
@@ -26,7 +28,9 @@
       "GA", "JT", "QG", "ID",
       "MH", "AK", "OD",
       "6E", "AI", "SG", "UK",
-      "QR", "BA", "LH", "AF", "IB"
+      "QR", "BA", "LH", "AF", "IB",
+      "AA", "UA", "DL", "B6",
+      "AC"
     ]
   },
 
@@ -40,6 +44,75 @@
     "MS": { "name": "EgyptAir", "nameAr": "مصر للطيران", "hub": "CAI", "type": "FSC", "country": "EG" },
     "ME": { "name": "Middle East Airlines", "nameAr": "طيران الشرق الأوسط", "hub": "BEY", "type": "FSC", "country": "LB" },
     "QR": { "name": "Qatar Airways", "nameAr": "الخطوط الجوية القطرية", "hub": "DOH", "type": "FSC", "country": "QA" },
+
+    "AA": {
+      "name": "American Airlines",
+      "hub": "DFW",
+      "type": "FSC",
+      "country": "US",
+      "iataCode": "AA",
+      "icaoCode": "AAL",
+      "alliance": "oneworld",
+      "codeshare": ["BA", "IB", "QR"],
+      "umrahRoutes": ["JFK-JED", "LAX-JED", "ORD-JED", "IAD-JED", "DTW-JED"],
+      "note": "No nonstop US↔JED service. Connections via LHR (BA codeshare), DOH (QR codeshare), or DXB (EK interline). Largest US carrier by fleet.",
+      "connectionHubs": ["LHR", "DOH", "DXB", "AUH"]
+    },
+    "UA": {
+      "name": "United Airlines",
+      "hub": "IAD",
+      "type": "FSC",
+      "country": "US",
+      "iataCode": "UA",
+      "icaoCode": "UAL",
+      "alliance": "star_alliance",
+      "codeshare": ["LH", "TK", "EY"],
+      "umrahRoutes": ["JFK-JED", "ORD-JED", "IAD-JED", "IAH-JED", "LAX-JED"],
+      "note": "Connections via FRA/MUC (LH codeshare), IST (TK codeshare), AUH (EY). IAD is primary hub — strong DC Muslim community.",
+      "connectionHubs": ["FRA", "IST", "AUH", "LHR"]
+    },
+    "DL": {
+      "name": "Delta Air Lines",
+      "hub": "ATL",
+      "type": "FSC",
+      "country": "US",
+      "iataCode": "DL",
+      "icaoCode": "DAL",
+      "alliance": "sky_team",
+      "codeshare": ["AF", "KL", "QR"],
+      "umrahRoutes": ["JFK-JED", "DTW-JED", "ORD-JED", "LAX-JED"],
+      "note": "Connections via CDG (AF codeshare), AMS (KL codeshare), DOH (QR codeshare). DTW hub serves Dearborn Muslim community.",
+      "connectionHubs": ["CDG", "AMS", "DOH", "LHR"]
+    },
+    "B6": {
+      "name": "JetBlue",
+      "hub": "JFK",
+      "type": "LCC",
+      "country": "US",
+      "iataCode": "B6",
+      "icaoCode": "JBU",
+      "alliance": null,
+      "codeshare": ["AA"],
+      "umrahRoutes": ["JFK-JED"],
+      "note": "Transatlantic JFK↔LGW/LHR. Connects at London for onward SV/EK/QR to JED. Budget option for East Coast Muslims.",
+      "connectionHubs": ["LHR", "LGW"]
+    },
+    "AC": {
+      "name": "Air Canada",
+      "nameFr": "Air Canada",
+      "hub": "YYZ",
+      "type": "FSC",
+      "country": "CA",
+      "iataCode": "AC",
+      "icaoCode": "ACA",
+      "alliance": "star_alliance",
+      "loyaltyProgram": "Aeroplan",
+      "codeshare": ["UA", "LH", "TK", "SV", "EY"],
+      "umrahRoutes": ["YYZ-JED", "YUL-JED", "YYZ-MED"],
+      "note": "No AC nonstop YYZ/YUL↔JED. Best connections: via LHR (LH/UA codeshare), AUH (EY), IST (TK), DOH (QR interline). Star Alliance gives AC connections with LH, UA, TK. YYZ is primary hub; YUL is Quebec gateway (francophone Muslim community).",
+      "connectionHubs": ["LHR", "AUH", "IST", "DOH", "FRA"],
+      "quebecNote": "YUL (Montréal-Trudeau) serves Quebec's francophone Muslim community (~170,000 Muslims). French-language booking interface required under Quebec Law 25 / Bill 96."
+    },
     "RJ": { "name": "Royal Jordanian", "nameAr": "الملكية الأردنية", "hub": "AMM", "type": "FSC", "country": "JO" },
     "FZ": {
       "name": "Flydubai",
@@ -617,6 +690,30 @@
       "coordinates": { "lat": 26.7606, "lng": 80.8893 },
       "enabled": true,
       "note": "Uttar Pradesh Hajj gateway; UP has India's largest Muslim population; AI charter allocation; LKO↔JED Hajj direct"
+    },
+    "YYZ": {
+      "name": "Toronto Pearson International Airport",
+      "nameFr": "Aéroport international Pearson de Toronto",
+      "city": "Toronto",
+      "country": "Canada",
+      "countryCode": "CA",
+      "timezone": "America/Toronto",
+      "currency": "CAD",
+      "coordinates": { "lat": 43.6777, "lng": -79.6248 },
+      "enabled": true,
+      "note": "Canada's busiest airport; primary gateway for GTA's large Muslim community (Mississauga, Brampton, Scarborough). AC hub. No nonstop to JED — connections via AUH (EY), IST (TK), LHR (AC/BA), DOH (QR interline)."
+    },
+    "YUL": {
+      "name": "Montréal-Trudeau International Airport",
+      "nameFr": "Aéroport international Pierre-Elliott-Trudeau de Montréal",
+      "city": "Montréal",
+      "country": "Canada",
+      "countryCode": "CA",
+      "timezone": "America/Toronto",
+      "currency": "CAD",
+      "coordinates": { "lat": 45.4706, "lng": -73.7408 },
+      "enabled": true,
+      "note": "Quebec's primary airport; serves ~170,000 Québécois Muslims. AC hub. French-language interface required (Law 25 / Bill 96). Best connections to JED via LHR (AC nonstop YUL↔LHR) or AUH/DOH."
     }
   },
 
@@ -682,7 +779,88 @@
     "DEL-RUH": { "priority": "medium", "reason": "Delhi↔Riyadh — Indian expat community in KSA; 6E + AI" },
     "RUH-DEL": { "priority": "medium", "reason": "Riyadh↔Delhi expat return" },
     "BOM-DXB": { "priority": "medium", "reason": "Mumbai↔Dubai — large Indian Muslim expat community; EK + AI + 6E; Umrah connection via DXB" },
-    "DEL-DXB": { "priority": "medium", "reason": "Delhi↔Dubai — India's busiest international route; Umrah connection hub" }
+    "DEL-DXB": { "priority": "medium", "reason": "Delhi↔Dubai — India's busiest international route; Umrah connection hub" },
+
+    "JFK-JED": { "priority": "high", "reason": "New York↔Jeddah — largest US Umrah market; all itineraries are 1-stop via LHR/DOH/DXB/AUH; AA+BA/QR codeshare primary" },
+    "JED-JFK": { "priority": "high", "reason": "Jeddah↔New York — Umrah/Hajj return for East Coast US Muslims" },
+    "JFK-MED": { "priority": "high", "reason": "New York→Madinah — Umrah packages often land Madinah first; via DOH/DXB/AUH" },
+    "LAX-JED": { "priority": "high", "reason": "Los Angeles↔Jeddah — large West Coast Muslim community (SoCal); 1-stop via AUH (EY direct LAX↔AUH)/DXB" },
+    "JED-LAX": { "priority": "high", "reason": "Jeddah↔Los Angeles Umrah return" },
+    "ORD-JED": { "priority": "high", "reason": "Chicago↔Jeddah — large Chicagoland Muslim community; 1-stop via LHR/IST/DOH" },
+    "JED-ORD": { "priority": "high", "reason": "Jeddah↔Chicago Umrah/Hajj return" },
+    "DTW-JED": { "priority": "high", "reason": "Detroit/Dearborn↔Jeddah — highest US Muslim density (Dearborn, MI); 1-stop via DOH (QR)/DXB (EK)/AUH (EY)" },
+    "JED-DTW": { "priority": "high", "reason": "Jeddah↔Detroit — Umrah return; Dearborn community largest US Muslim hub" },
+    "IAD-JED": { "priority": "high", "reason": "Washington D.C.↔Jeddah — large DMV Muslim community; UA hub at IAD; 1-stop via IST (TK)/AUH (EY)/DOH (QR)" },
+    "JED-IAD": { "priority": "high", "reason": "Jeddah↔Washington D.C. Umrah/Hajj return" },
+    "IAH-JED": { "priority": "medium", "reason": "Houston↔Jeddah — EY nonstop IAH↔AUH then AUH↔JED; growing Texas Muslim community" },
+    "JED-IAH": { "priority": "medium", "reason": "Jeddah↔Houston return" },
+    "DTW-DOH": { "priority": "medium", "reason": "Detroit→Doha — QR connection hub for JED; DL codeshare" },
+    "JFK-DOH": { "priority": "medium", "reason": "New York→Doha — QR nonstop JFK↔DOH; then DOH↔JED" },
+    "JFK-AUH": { "priority": "medium", "reason": "New York→Abu Dhabi — EY nonstop; then AUH↔JED same-day connection" },
+    "LAX-AUH": { "priority": "medium", "reason": "Los Angeles→Abu Dhabi — EY nonstop LAX↔AUH; key West Coast→JED routing" },
+    "IAH-AUH": { "priority": "medium", "reason": "Houston→Abu Dhabi — EY nonstop; best IAH→JED routing" },
+
+    "YYZ-JED": { "priority": "high", "reason": "Toronto↔Jeddah — largest Canadian Muslim community (GTA + Mississauga); 1-stop via LHR/AUH/IST/DOH; AC + codeshare carriers" },
+    "JED-YYZ": { "priority": "high", "reason": "Jeddah↔Toronto — Umrah/Hajj return for Canadian Muslims" },
+    "YYZ-MED": { "priority": "high", "reason": "Toronto→Madinah — Canadian Umrah packages landing Madinah first; via AUH/DOH/IST" },
+    "MED-YYZ": { "priority": "high", "reason": "Madinah↔Toronto Umrah return" },
+    "YUL-JED": { "priority": "high", "reason": "Montréal↔Jeddah — Quebec francophone Muslim community (~170K); AC hub at YUL; 1-stop via LHR/AUH/IST" },
+    "JED-YUL": { "priority": "high", "reason": "Jeddah↔Montréal — Umrah return for Quebec Muslims" },
+    "YYZ-DOH": { "priority": "medium", "reason": "Toronto→Doha — QR connection hub for YYZ→JED; codeshare AC/QR interline" },
+    "YYZ-AUH": { "priority": "medium", "reason": "Toronto→Abu Dhabi — EY nonstop; best YYZ→JED routing" },
+    "YYZ-IST": { "priority": "medium", "reason": "Toronto→Istanbul — TK nonstop YYZ↔IST; convenient connection for JED/MED" },
+    "YUL-LHR": { "priority": "medium", "reason": "Montréal→London — AC nonstop YUL↔LHR; connection to JED via BA/EK" }
+  },
+
+  "usSpecialFilters": {
+    "connectionRouting": {
+      "description": "US→JED routing is always indirect (1-stop). Best connection hubs by US departure city.",
+      "preferredConnections": {
+        "JFK": ["DOH", "LHR", "AUH", "DXB"],
+        "DTW": ["DOH", "DXB", "AUH", "IST"],
+        "ORD": ["LHR", "IST", "DOH", "DXB"],
+        "LAX": ["AUH", "DXB", "DOH", "LHR"],
+        "IAD": ["IST", "AUH", "DOH", "LHR"],
+        "IAH": ["AUH", "DXB", "DOH"]
+      },
+      "maxLayoverHours": 8,
+      "filterKey": "usConnection",
+      "displayNote": "All US↔Jeddah flights connect via a Gulf or European hub. Typical journey time: 16–22 hours.",
+      "showInSearchResults": true
+    },
+    "umrahSeason": {
+      "peakMonths": [1, 2, 3, 4, 10, 11, 12],
+      "hajjMonth": 5,
+      "note": "US Umrah demand peaks Ramadan (Mar/Apr 2026) and end-of-year school breaks. Book 8–12 weeks ahead for peak dates.",
+      "ramadanUmrahNote": "Last 10 nights of Ramadan — highest demand; fares typically 40–60% above baseline. DTW, JFK, ORD, LAX routes sell out earliest."
+    }
+  },
+
+  "canadaSpecialFilters": {
+    "connectionRouting": {
+      "description": "CA→JED routing is always indirect (1-stop). Best connection hubs by Canadian departure city.",
+      "preferredConnections": {
+        "YYZ": ["AUH", "IST", "LHR", "DOH"],
+        "YUL": ["LHR", "AUH", "DOH", "IST"]
+      },
+      "maxLayoverHours": 8,
+      "filterKey": "caConnection",
+      "displayNote": "All Canada↔Jeddah flights connect via a Gulf or European hub. Typical journey time: 16–20 hours.",
+      "showInSearchResults": true
+    },
+    "quebecBilingual": {
+      "description": "Quebec users must be served in French (Quebec Law 25 / Bill 96). YUL is the primary QC departure airport.",
+      "primaryAirport": "YUL",
+      "locale": "fr",
+      "carrier": "AC",
+      "bookingNote": "Avis en français requis pour les utilisateurs du Québec (Loi 25 / Projet de loi 96)."
+    },
+    "umrahSeason": {
+      "peakMonths": [1, 2, 3, 4, 10, 11, 12],
+      "hajjMonth": 5,
+      "note": "Canadian Umrah demand peaks Ramadan and winter school breaks. YYZ routes sell out earliest. Book 8–10 weeks ahead.",
+      "ramadanNote": "Ramadan 2026: early March. YYZ/YUL demand surges 30–50% for last 10 nights of Ramadan."
+    }
   },
 
   "indiaSpecialFilters": {
