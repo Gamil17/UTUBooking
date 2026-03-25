@@ -362,12 +362,24 @@ export default function HomeScreen({ navigation }: Props) {
   }, [navigation, hotelForm]);
 
   const handleFlightSearch = useCallback(() => {
-    // Flights backend not yet live — no-op stub
-  }, []);
+    navigation.navigate('FlightResults', {
+      origin:      flightForm.from,
+      destination: flightForm.to,
+      date:        flightForm.departDate,
+      returnDate:  flightForm.returnDate || undefined,
+      passengers:  Number(flightForm.passengers) || 1,
+      cabin:       flightForm.cabin,
+    });
+  }, [navigation, flightForm]);
 
   const handleCarSearch = useCallback(() => {
-    // Cars backend not yet live — no-op stub
-  }, []);
+    navigation.navigate('CarRental', {
+      pickupCity:   carForm.pickupCity,
+      pickupDate:   carForm.pickupDate,
+      dropoffDate:  carForm.dropoffDate,
+      transmission: carForm.transmission,
+    });
+  }, [navigation, carForm]);
 
   const tabOptions = useMemo(() => [
     { value: 'hotels'  as const, label: tr.search.tabs.hotels },

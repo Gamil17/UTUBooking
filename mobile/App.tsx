@@ -29,12 +29,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import i18n, { applyRTL } from './i18n';
 
 // Screens
-import HomeScreen           from './screens/HomeScreen';
+import HomeScreen                          from './screens/HomeScreen';
 import HotelResultsScreen, { type HotelCardData } from './screens/HotelResultsScreen';
-import HotelDetailScreen    from './screens/HotelDetailScreen';
-import BookingFlowScreen    from './screens/BookingFlowScreen';
-import MyTripsScreen        from './screens/MyTripsScreen';
-import LoyaltyScreen        from './screens/LoyaltyScreen';
+import HotelDetailScreen                   from './screens/HotelDetailScreen';
+import BookingFlowScreen                   from './screens/BookingFlowScreen';
+import MyTripsScreen                       from './screens/MyTripsScreen';
+import LoyaltyScreen                       from './screens/LoyaltyScreen';
+import FlightSearchScreen, { type FlightOffer } from './screens/FlightSearchScreen';
+import CarRentalScreen,    { type CarOffer }    from './screens/CarRentalScreen';
 
 // ─── Navigation param lists ───────────────────────────────────────────────────
 export type RootStackParamList = {
@@ -44,6 +46,8 @@ export type RootStackParamList = {
   BookingFlow:   { hotel: HotelCardData; nights: number; total: number };
   MyTrips:       undefined;
   Loyalty:       undefined;
+  FlightResults: { origin?: string; destination?: string; date?: string; returnDate?: string; passengers?: number; cabin?: 'economy' | 'business' };
+  CarRental:     { pickupCity?: string; pickupDate?: string; dropoffDate?: string; transmission?: 'automatic' | 'manual' };
 };
 
 type TabParamList = {
@@ -87,7 +91,9 @@ function HomeStack() {
       <Stack.Screen name="HotelDetail"  component={HotelDetailScreen}  options={{ title: '' }} />
       <Stack.Screen name="BookingFlow"  component={BookingFlowScreen}  options={{ title: i18n.t('booking.title') }} />
       {/* MyTrips reachable from BookingFlow confirmation screen */}
-      <Stack.Screen name="MyTrips"      component={MyTripsScreen}      options={{ title: i18n.t('trips.title') }} />
+      <Stack.Screen name="MyTrips"       component={MyTripsScreen}       options={{ title: i18n.t('trips.title') }} />
+      <Stack.Screen name="FlightResults" component={FlightSearchScreen}  options={{ title: i18n.t('flights.title') }} />
+      <Stack.Screen name="CarRental"     component={CarRentalScreen}     options={{ title: i18n.t('cars.title') }} />
     </Stack.Navigator>
   );
 }

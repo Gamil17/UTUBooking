@@ -168,6 +168,50 @@ export default {
     ref:         'رقم الحجز',
   },
 
+  flights: {
+    title:       'الرحلات المتاحة',
+    count:       (n: number) => `${n.toLocaleString('ar-SA')} رحلة متاحة`,
+    sortCheapest:'الأرخص',
+    sortFastest: 'الأسرع',
+    direct:      'مباشر',
+    oneStop:     'توقف واحد',
+    multiStop:   'توقفان فأكثر',
+    duration:    (h: number, m: number) => `${h}س ${m}د`,
+    departs:     'إقلاع',
+    arrives:     'وصول',
+    perPerson:   '/ شخص',
+    bookFlight:  'احجز الرحلة',
+    accessibility: {
+      flightCard: (from: string, to: string) => `رحلة من ${from} إلى ${to}`,
+    },
+  },
+
+  cars: {
+    title:              'السيارات المتاحة',
+    count:              (n: number) => `${n.toLocaleString('ar-SA')} سيارة متاحة`,
+    perDay:             '/ يوم',
+    sortPrice:          'السعر ↑',
+    category: {
+      economy:  'اقتصادية',
+      midsize:  'متوسطة',
+      suv:      'دفع رباعي',
+      luxury:   'فاخرة',
+      minivan:  'ميني فان',
+    },
+    transmission: {
+      automatic: 'أوتوماتيك',
+      manual:    'يدوي',
+    },
+    seats:             (n: number) => `${n} مقاعد`,
+    doors:             (n: number) => `${n} أبواب`,
+    includesInsurance: 'يشمل التأمين',
+    freeCancellation:  'إلغاء مجاني',
+    bookCar:           'احجز السيارة',
+    accessibility: {
+      carCard: (make: string, model: string) => `تأجير سيارة ${make} ${model}`,
+    },
+  },
+
   loyalty: {
     title:           'برنامج الولاء',
     yourPoints:      (n: number) => `${n.toLocaleString('ar-SA')} نقطة`,

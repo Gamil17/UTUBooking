@@ -168,6 +168,50 @@ export default {
     ref:         'Ref',
   },
 
+  flights: {
+    title:       'Available Flights',
+    count:       (n: number) => `${n} flight${n === 1 ? '' : 's'} found`,
+    sortCheapest:'Cheapest',
+    sortFastest: 'Fastest',
+    direct:      'Direct',
+    oneStop:     '1 Stop',
+    multiStop:   '2+ Stops',
+    duration:    (h: number, m: number) => `${h}h ${m}m`,
+    departs:     'Departs',
+    arrives:     'Arrives',
+    perPerson:   '/ person',
+    bookFlight:  'Book Flight',
+    accessibility: {
+      flightCard: (from: string, to: string) => `Flight from ${from} to ${to}`,
+    },
+  },
+
+  cars: {
+    title:              'Available Cars',
+    count:              (n: number) => `${n} car${n === 1 ? '' : 's'} found`,
+    perDay:             '/ day',
+    sortPrice:          'Price ↑',
+    category: {
+      economy:  'Economy',
+      midsize:  'Midsize',
+      suv:      'SUV',
+      luxury:   'Luxury',
+      minivan:  'Minivan',
+    },
+    transmission: {
+      automatic: 'Automatic',
+      manual:    'Manual',
+    },
+    seats:             (n: number) => `${n} seats`,
+    doors:             (n: number) => `${n} doors`,
+    includesInsurance: 'Insurance included',
+    freeCancellation:  'Free cancellation',
+    bookCar:           'Reserve',
+    accessibility: {
+      carCard: (make: string, model: string) => `${make} ${model} car rental`,
+    },
+  },
+
   loyalty: {
     title:           'My Loyalty',
     yourPoints:      (n: number) => `${n.toLocaleString()} pts`,
