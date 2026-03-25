@@ -181,5 +181,32 @@
     "loadingRestaurants": "Halal-Restaurants werden gesucht…",
     "noRestaurants": "Keine Halal-Restaurants in der Nähe gefunden.",
     "retryBtn": "Erneut versuchen"
+  },
+  "partner": {
+    "badge": "Direktpartner",
+    "badgeTitle": "UTUBooking Direktpartner",
+    "badgeDesc": "Exklusive Tarife & Vorteile bei Direktbuchung über UTUBooking",
+    "tier": {
+      "platinum": "Platin-Partner",
+      "gold": "Gold-Partner",
+      "silver": "Silber-Partner",
+      "bronze": "Bronze-Partner"
+    },
+    "distanceHaram": "{m}m vom Al-Haram",
+    "freeCancellation": "Kostenlose Stornierung",
+    "perNight": "/ Nacht",
+    "book": "Jetzt buchen",
+    "perks": {
+      "earlyCheckIn": "Frühes Einchecken",
+      "lateCheckOut": "Spätes Auschecken",
+      "dedicatedConcierge": "Persönlicher Concierge",
+      "zamzamWaterDelivery": "Zamzam-Wasser",
+      "haramViewPriority": "Haram-Aussicht Priorität",
+      "haramShuttleService": "Haram-Shuttle",
+      "groupBookingDiscount": "Gruppenrabatt",
+      "pilgrimLoungeAccess": "Pilger-Lounge",
+      "privatePrayerRoom": "Privater Gebetsraum",
+      "hajjGroupCoordinator": "Hadsch-Koordinator"
+    }
   }
 }

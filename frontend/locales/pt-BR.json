@@ -262,5 +262,32 @@
     "revokeTitle": "Revogar consentimento",
     "successMsg": "Solicitação recebida. Responderemos em até 15 dias úteis.",
     "errorMsg": "Erro ao processar sua solicitação. Tente novamente."
+  },
+  "partner": {
+    "badge": "Parceiro Direto",
+    "badgeTitle": "Parceiro Direto UTUBooking",
+    "badgeDesc": "Tarifas e vantagens exclusivas ao reservar diretamente pelo UTUBooking",
+    "tier": {
+      "platinum": "Parceiro Platina",
+      "gold": "Parceiro Ouro",
+      "silver": "Parceiro Prata",
+      "bronze": "Parceiro Bronze"
+    },
+    "distanceHaram": "{m}m do Al-Haram",
+    "freeCancellation": "Cancelamento grátis",
+    "perNight": "/ noite",
+    "book": "Reservar agora",
+    "perks": {
+      "earlyCheckIn": "Check-in antecipado",
+      "lateCheckOut": "Check-out tardio",
+      "dedicatedConcierge": "Concierge dedicado",
+      "zamzamWaterDelivery": "Água Zamzam",
+      "haramViewPriority": "Vista prioritária do Haram",
+      "haramShuttleService": "Traslado Al-Haram",
+      "groupBookingDiscount": "Desconto em grupo",
+      "pilgrimLoungeAccess": "Lounge do peregrino",
+      "privatePrayerRoom": "Sala de oração privativa",
+      "hajjGroupCoordinator": "Coordenador de Hajj"
+    }
   }
 }

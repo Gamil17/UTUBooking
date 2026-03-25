@@ -95,5 +95,32 @@
     "loadingRestaurants": "جارٍ البحث عن مطاعم حلال...",
     "noRestaurants": "لا توجد مطاعم حلال قريبة.",
     "retryBtn": "حاول مجدداً"
+  },
+  "partner": {
+    "badge": "شريك مباشر",
+    "badgeTitle": "شريك UTUBooking المباشر",
+    "badgeDesc": "أسعار وامتيازات حصرية عند الحجز المباشر عبر UTUBooking",
+    "tier": {
+      "platinum": "شريك بلاتيني",
+      "gold": "شريك ذهبي",
+      "silver": "شريك فضي",
+      "bronze": "شريك برونزي"
+    },
+    "distanceHaram": "{m} متر من الحرم",
+    "freeCancellation": "إلغاء مجاني",
+    "perNight": "/ ليلة",
+    "book": "احجز الآن",
+    "perks": {
+      "earlyCheckIn": "تسجيل وصول مبكر",
+      "lateCheckOut": "تسجيل مغادرة متأخر",
+      "dedicatedConcierge": "خدمة كونسيرج مخصصة",
+      "zamzamWaterDelivery": "ماء زمزم",
+      "haramViewPriority": "أولوية الإطلالة على الحرم",
+      "haramShuttleService": "خدمة التوصيل للحرم",
+      "groupBookingDiscount": "خصم حجز المجموعات",
+      "pilgrimLoungeAccess": "صالة الحجاج",
+      "privatePrayerRoom": "غرفة صلاة خاصة",
+      "hajjGroupCoordinator": "منسق رحلات الحج"
+    }
   }
 }

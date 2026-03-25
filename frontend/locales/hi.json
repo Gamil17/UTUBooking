@@ -169,5 +169,32 @@
     "loadingRestaurants": "हलाल रेस्तरां ढूंढे जा रहे हैं…",
     "noRestaurants": "पास में कोई हलाल रेस्तरां नहीं मिला।",
     "retryBtn": "पुनः प्रयास करें"
+  },
+  "partner": {
+    "badge": "डायरेक्ट पार्टनर",
+    "badgeTitle": "UTUBooking डायरेक्ट पार्टनर",
+    "badgeDesc": "UTUBooking के ज़रिए सीधे बुकिंग पर एक्सक्लूसिव रेट और सुविधाएँ",
+    "tier": {
+      "platinum": "प्लैटिनम पार्टनर",
+      "gold": "गोल्ड पार्टनर",
+      "silver": "सिल्वर पार्टनर",
+      "bronze": "ब्रॉन्ज़ पार्टनर"
+    },
+    "distanceHaram": "अल-हरम से {m}मी",
+    "freeCancellation": "मुफ़्त रद्दीकरण",
+    "perNight": "/ रात",
+    "book": "अभी बुक करें",
+    "perks": {
+      "earlyCheckIn": "जल्दी चेक-इन",
+      "lateCheckOut": "देर से चेक-आउट",
+      "dedicatedConcierge": "समर्पित कंसीयर्ज",
+      "zamzamWaterDelivery": "ज़मज़म पानी",
+      "haramViewPriority": "हरम व्यू प्राथमिकता",
+      "haramShuttleService": "हरम शटल",
+      "groupBookingDiscount": "ग्रुप डिस्काउंट",
+      "pilgrimLoungeAccess": "हज लाउंज",
+      "privatePrayerRoom": "निजी नमाज़ कक्ष",
+      "hajjGroupCoordinator": "हज समन्वयक"
+    }
   }
 }

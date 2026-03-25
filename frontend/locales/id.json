@@ -194,5 +194,32 @@
     "loadingRestaurants": "Mencari restoran halal…",
     "noRestaurants": "Tidak ada restoran halal di sekitar.",
     "retryBtn": "Coba Lagi"
+  },
+  "partner": {
+    "badge": "Mitra Langsung",
+    "badgeTitle": "Mitra Langsung UTUBooking",
+    "badgeDesc": "Harga & keuntungan eksklusif saat memesan langsung melalui UTUBooking",
+    "tier": {
+      "platinum": "Mitra Platinum",
+      "gold": "Mitra Gold",
+      "silver": "Mitra Silver",
+      "bronze": "Mitra Bronze"
+    },
+    "distanceHaram": "{m}m dari Al-Haram",
+    "freeCancellation": "Pembatalan Gratis",
+    "perNight": "/ malam",
+    "book": "Pesan Sekarang",
+    "perks": {
+      "earlyCheckIn": "Check-in Lebih Awal",
+      "lateCheckOut": "Check-out Lebih Lambat",
+      "dedicatedConcierge": "Concierge Khusus",
+      "zamzamWaterDelivery": "Air Zamzam",
+      "haramViewPriority": "Prioritas Pemandangan Haram",
+      "haramShuttleService": "Shuttle Al-Haram",
+      "groupBookingDiscount": "Diskon Grup",
+      "pilgrimLoungeAccess": "Lounge Jamaah",
+      "privatePrayerRoom": "Ruang Sholat Pribadi",
+      "hajjGroupCoordinator": "Koordinator Haji"
+    }
   }
 }

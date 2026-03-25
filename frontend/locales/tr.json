@@ -132,5 +132,32 @@
     "loadingRestaurants": "Helal restoranlar aranıyor…",
     "noRestaurants": "Yakında helal restoran bulunamadı.",
     "retryBtn": "Tekrar Dene"
+  },
+  "partner": {
+    "badge": "Doğrudan Ortak",
+    "badgeTitle": "UTUBooking Doğrudan Ortağı",
+    "badgeDesc": "UTUBooking üzerinden doğrudan rezervasyon yaparak özel fiyat ve ayrıcalıklardan yararlanın",
+    "tier": {
+      "platinum": "Platin Ortak",
+      "gold": "Altın Ortak",
+      "silver": "Gümüş Ortak",
+      "bronze": "Bronz Ortak"
+    },
+    "distanceHaram": "Harem'e {m}m",
+    "freeCancellation": "Ücretsiz İptal",
+    "perNight": "/ gece",
+    "book": "Şimdi Rezervasyon Yap",
+    "perks": {
+      "earlyCheckIn": "Erken Giriş",
+      "lateCheckOut": "Geç Çıkış",
+      "dedicatedConcierge": "Özel Konsiyerj",
+      "zamzamWaterDelivery": "Zemzem Suyu",
+      "haramViewPriority": "Harem Manzarası Önceliği",
+      "haramShuttleService": "Harem Servisi",
+      "groupBookingDiscount": "Grup İndirimi",
+      "pilgrimLoungeAccess": "Hac Salonu",
+      "privatePrayerRoom": "Özel Namaz Odası",
+      "hajjGroupCoordinator": "Hac Koordinatörü"
+    }
   }
 }

@@ -144,5 +144,32 @@
     "loadingRestaurants": "حلال ریستوران تلاش ہو رہے ہیں…",
     "noRestaurants": "قریب کوئی حلال ریستوران نہیں ملا۔",
     "retryBtn": "دوبارہ کوشش کریں"
+  },
+  "partner": {
+    "badge": "براہ راست پارٹنر",
+    "badgeTitle": "UTUBooking کا براہ راست پارٹنر",
+    "badgeDesc": "UTUBooking کے ذریعے براہ راست بکنگ پر خصوصی نرخ اور مراعات",
+    "tier": {
+      "platinum": "پلاٹینم پارٹنر",
+      "gold": "گولڈ پارٹنر",
+      "silver": "سلور پارٹنر",
+      "bronze": "برونز پارٹنر"
+    },
+    "distanceHaram": "حرم سے {m} میٹر",
+    "freeCancellation": "مفت منسوخی",
+    "perNight": "/ رات",
+    "book": "ابھی بک کریں",
+    "perks": {
+      "earlyCheckIn": "جلد چیک ان",
+      "lateCheckOut": "دیر سے چیک آؤٹ",
+      "dedicatedConcierge": "مخصوص کنسیرج",
+      "zamzamWaterDelivery": "آب زمزم",
+      "haramViewPriority": "حرم منظر ترجیح",
+      "haramShuttleService": "حرم شٹل",
+      "groupBookingDiscount": "گروپ ڈسکاؤنٹ",
+      "pilgrimLoungeAccess": "حاجی لاؤنج",
+      "privatePrayerRoom": "نجی نماز کمرہ",
+      "hajjGroupCoordinator": "حج کوآرڈینیٹر"
+    }
   }
 }

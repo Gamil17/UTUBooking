@@ -181,5 +181,32 @@
     "loadingRestaurants": "Halal restaurants zoeken…",
     "noRestaurants": "Geen halal restaurants gevonden in de buurt.",
     "retryBtn": "Opnieuw proberen"
+  },
+  "partner": {
+    "badge": "Directe Partner",
+    "badgeTitle": "UTUBooking Directe Partner",
+    "badgeDesc": "Exclusieve tarieven & voordelen bij direct boeken via UTUBooking",
+    "tier": {
+      "platinum": "Platinum Partner",
+      "gold": "Gouden Partner",
+      "silver": "Zilveren Partner",
+      "bronze": "Bronzen Partner"
+    },
+    "distanceHaram": "{m}m van Al-Haram",
+    "freeCancellation": "Gratis annulering",
+    "perNight": "/ nacht",
+    "book": "Nu boeken",
+    "perks": {
+      "earlyCheckIn": "Vroeg inchecken",
+      "lateCheckOut": "Laat uitchecken",
+      "dedicatedConcierge": "Persoonlijke conciërge",
+      "zamzamWaterDelivery": "Zamzam water",
+      "haramViewPriority": "Al-Haram uitzicht prioriteit",
+      "haramShuttleService": "Al-Haram shuttle",
+      "groupBookingDiscount": "Groepskorting",
+      "pilgrimLoungeAccess": "Pelgrims lounge",
+      "privatePrayerRoom": "Privé gebedsruimte",
+      "hajjGroupCoordinator": "Hajj coördinator"
+    }
   }
 }

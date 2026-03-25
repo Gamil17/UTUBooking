@@ -196,5 +196,32 @@
     "retry": "Intentar de nuevo",
     "trustMp": "Pagos seguros procesados por MercadoPago · Cifrado SSL",
     "trustCard": "Pagos seguros via Stripe."
+  },
+  "partner": {
+    "badge": "Socio Directo",
+    "badgeTitle": "Socio Directo UTUBooking",
+    "badgeDesc": "Tarifas y ventajas exclusivas al reservar directamente a través de UTUBooking",
+    "tier": {
+      "platinum": "Socio Platino",
+      "gold": "Socio Oro",
+      "silver": "Socio Plata",
+      "bronze": "Socio Bronce"
+    },
+    "distanceHaram": "{m}m del Al-Haram",
+    "freeCancellation": "Cancelación gratuita",
+    "perNight": "/ noche",
+    "book": "Reservar ahora",
+    "perks": {
+      "earlyCheckIn": "Entrada anticipada",
+      "lateCheckOut": "Salida tardía",
+      "dedicatedConcierge": "Conserje dedicado",
+      "zamzamWaterDelivery": "Agua Zamzam",
+      "haramViewPriority": "Prioridad vista Al-Haram",
+      "haramShuttleService": "Traslado Al-Haram",
+      "groupBookingDiscount": "Descuento grupo",
+      "pilgrimLoungeAccess": "Sala peregrinos",
+      "privatePrayerRoom": "Sala de oración privada",
+      "hajjGroupCoordinator": "Coordinador Hajj"
+    }
   }
 }

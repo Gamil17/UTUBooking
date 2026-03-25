@@ -95,5 +95,32 @@
     "loadingRestaurants": "در حال جستجوی رستوران‌های حلال…",
     "noRestaurants": "رستوران حلالی در نزدیکی یافت نشد.",
     "retryBtn": "تلاش مجدد"
+  },
+  "partner": {
+    "badge": "شریک مستقیم",
+    "badgeTitle": "شریک مستقیم UTUBooking",
+    "badgeDesc": "نرخ‌ها و امتیازات انحصاری هنگام رزرو مستقیم از طریق UTUBooking",
+    "tier": {
+      "platinum": "شریک پلاتینیوم",
+      "gold": "شریک طلایی",
+      "silver": "شریک نقره‌ای",
+      "bronze": "شریک برنزی"
+    },
+    "distanceHaram": "{m} متر از حرم",
+    "freeCancellation": "لغو رایگان",
+    "perNight": "/ شب",
+    "book": "همین الان رزرو کنید",
+    "perks": {
+      "earlyCheckIn": "ورود زودهنگام",
+      "lateCheckOut": "خروج دیرهنگام",
+      "dedicatedConcierge": "کنسیرج اختصاصی",
+      "zamzamWaterDelivery": "آب زمزم",
+      "haramViewPriority": "اولویت منظره حرم",
+      "haramShuttleService": "سرویس ایاب و ذهاب حرم",
+      "groupBookingDiscount": "تخفیف گروهی",
+      "pilgrimLoungeAccess": "سالن حجاج",
+      "privatePrayerRoom": "اتاق نماز خصوصی",
+      "hajjGroupCoordinator": "هماهنگ‌کننده حج"
+    }
   }
 }

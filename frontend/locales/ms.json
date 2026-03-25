@@ -132,5 +132,32 @@
     "loadingRestaurants": "Mencari restoran halal…",
     "noRestaurants": "Tiada restoran halal berdekatan.",
     "retryBtn": "Cuba Lagi"
+  },
+  "partner": {
+    "badge": "Rakan Kongsi Langsung",
+    "badgeTitle": "Rakan Kongsi Langsung UTUBooking",
+    "badgeDesc": "Kadar & keistimewaan eksklusif apabila menempah terus melalui UTUBooking",
+    "tier": {
+      "platinum": "Rakan Platinum",
+      "gold": "Rakan Emas",
+      "silver": "Rakan Perak",
+      "bronze": "Rakan Gangsa"
+    },
+    "distanceHaram": "{m}m dari Al-Haram",
+    "freeCancellation": "Pembatalan Percuma",
+    "perNight": "/ malam",
+    "book": "Tempah Sekarang",
+    "perks": {
+      "earlyCheckIn": "Daftar Masuk Awal",
+      "lateCheckOut": "Daftar Keluar Lewat",
+      "dedicatedConcierge": "Concierge Khusus",
+      "zamzamWaterDelivery": "Air Zamzam",
+      "haramViewPriority": "Keutamaan Pemandangan Haram",
+      "haramShuttleService": "Bas Ulang-alik Al-Haram",
+      "groupBookingDiscount": "Diskaun Kumpulan",
+      "pilgrimLoungeAccess": "Lounge Jemaah",
+      "privatePrayerRoom": "Bilik Sembahyang Peribadi",
+      "hajjGroupCoordinator": "Penyelaras Haji"
+    }
   }
 }
