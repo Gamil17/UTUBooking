@@ -51,6 +51,35 @@
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       }
+    },
+
+    "ga4": {
+      "command": "npx",
+      "args": ["-y", "@pepeaburtov/mcp-google-analytics"],
+      "env": {
+        "GA4_PROPERTY_ID": "${GA4_PROPERTY_ID}",
+        "GOOGLE_APPLICATION_CREDENTIALS": "${GOOGLE_APPLICATION_CREDENTIALS}"
+      }
+    },
+
+    "gsc": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-google-search-console"],
+      "env": {
+        "GSC_CLIENT_ID": "${GSC_CLIENT_ID}",
+        "GSC_CLIENT_SECRET": "${GSC_CLIENT_SECRET}",
+        "GSC_REFRESH_TOKEN": "${GSC_REFRESH_TOKEN}",
+        "GSC_SITE_URL": "https://utubooking.com"
+      }
+    },
+
+    "dataforseo": {
+      "command": "npx",
+      "args": ["-y", "@dataforseo/mcp-server"],
+      "env": {
+        "DATAFORSEO_LOGIN": "${DATAFORSEO_LOGIN}",
+        "DATAFORSEO_PASSWORD": "${DATAFORSEO_PASSWORD}"
+      }
     }
   }
 }
