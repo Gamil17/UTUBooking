@@ -24,6 +24,42 @@
 
 ---
 
+## Master Quick Reference — All SOPs
+
+| SOP ID | Title | Owner | Frequency |
+|--------|-------|-------|-----------|
+| SOP-GBL-001 | Daily AI Operations Briefing | CEO | Every morning |
+| SOP-GBL-002 | Weekly Business Report | CEO / Finance AI | Every Monday |
+| SOP-GBL-003 | New Feature Development Workflow | CEO / Dev AI | Per feature |
+| SOP-GBL-004 | Payment Failure Response | CEO / Dev AI | Within 15 min of alert |
+| SOP-GBL-005 | CLAUDE.md Brain Update | CEO | Per phase + quarterly |
+| SOP-PH1-4-001 | Hotel Search & Booking Ops | CS AI / Platform | Every booking |
+| SOP-PH1-4-002 | Hajj & Umrah Package Ops | Product AI + CS AI | Hajj season + Umrah year-round |
+| SOP-PH1-4-003 | Monthly Financial Reconciliation | Finance AI + CEO | 1st of month |
+| SOP-PH5-7-001 | New Country Market Entry Checklist | CEO + Legal AI | Before each new country |
+| SOP-PH5-7-002 | Turkey Launch SOP | CEO + Dev AI | Phase 5 launch |
+| SOP-PH5-7-003 | Indonesia + Malaysia Launch | CEO + Dev AI | Phase 5 launch |
+| SOP-PH5-7-004 | Pakistan + India Launch | CEO + Dev AI + Legal AI | Phase 6 launch |
+| SOP-PH5-7-005 | Iran Feasibility Gate | CEO + OFAC Lawyer | Phase 7 — legal gate only |
+| SOP-PH8-12-001 | GDPR Compliance Operations | CEO + Legal AI | Ongoing — all EU/UK users |
+| SOP-PH8-12-002 | United States Operations | CEO + Legal AI | Ongoing — all US users |
+| SOP-PH8-12-003 | Brazil LGPD Operations | CEO + Legal AI | Ongoing — all Brazilian users |
+| SOP-MKT-001 | Daily Content Generation | Marketing AI | Every morning |
+| SOP-MKT-002 | Weekly SEO Content | Marketing AI | Every Wednesday |
+| SOP-MKT-003 | Seasonal Campaign (Ramadan/Hajj) | Marketing AI + CEO | 6–8 weeks before season |
+| SOP-SLS-001 | Lead Qualification & Proposal | Sales AI + CEO | Within 4 hours of new lead |
+| SOP-SLS-002 | B2B Partner Onboarding | Sales AI + CEO | Per new B2B partner |
+| SOP-DEV-001 | Code Review Process | Dev AI + Devs | Every Pull Request |
+| SOP-DEV-002 | Hotfix Deployment | Dev AI + CEO | Production incidents only |
+| SOP-DEV-003 | Database Backup Verification | Dev AI | Weekly |
+| SOP-CS-001 | Customer Support Response | CS AI | < 2 hours SLA |
+| SOP-CS-002 | Cancellation & Refund Process | CS AI + Finance AI | Within 24 hours of request |
+| SOP-EMG-001 | Platform Outage Response | CEO + Dev AI | When uptime < 99% / 5 min |
+| SOP-EMG-002 | Data Breach Response | CEO + Legal AI | Immediately on detection |
+| SOP-EMG-003 | Claude AI Agent Malfunction | CEO | When AI output is problematic |
+
+---
+
 # SECTION 1 — Platform-Wide SOPs
 
 ---
@@ -2367,6 +2403,59 @@ Any ❌: create GitHub issue + notify Dev Agent.
 
 ---
 
+## PHASES 8–12 — GLOBAL EXPANSION
+### Global Expansion SOPs
+**Europe · United States · Canada · South America**
+
+---
+
+## PH8-12 001 · GDPR Compliance Operations (Europe)
+
+**Owner:** CEO + Legal Agent (AI) &nbsp;|&nbsp; **Frequency:** Ongoing — all EU/UK users
+
+> **GDPR applies to ALL European users from the moment Phase 8 launches. These procedures are non-negotiable legal obligations — not best practices.**
+
+| GDPR Procedure | Trigger | Time Limit | Claude Prompt |
+|----------------|---------|------------|---------------|
+| Data Erasure Request | User submits deletion request via app | 30 days (GDPR law) | `Process GDPR erasure for user_id [X]. Cascade delete all 6 AWS regions. Log with timestamp.` |
+| Data Portability Request | User requests data export | 30 days | `Export all user data for user_id [X] as JSON. All tables, all regions. Signed download link.` |
+| Data Breach Notification | Security incident detected | 72 hours to notify ICO/DPA | `URGENT: Assess data breach scope. Identify affected users. Draft notification to ICO.` |
+| New DPA Agreement | New third-party processor added | Before first data processing | `Generate DPA checklist for new processor [Name]. Verify against GDPR Article 28.` |
+| Cookie Consent Update | New analytics/marketing tool added | Before tool activated | `Update cookie consent categories. Add [tool] to analytics category. Verify no pre-ticked boxes.` |
+| Right to Object | User objects to marketing | Immediately | `Mark user_id [X] as opted-out of all marketing. Remove from all lists. Log.` |
+
+---
+
+## PH8-12 002 · United States Operations SOP (Phase 10)
+
+**Owner:** CEO + Legal Agent (AI) &nbsp;|&nbsp; **Frequency:** Ongoing — all US users
+
+| Procedure | Details |
+|-----------|---------|
+| CCPA Opt-Out Processing | User clicks "Do Not Sell My Information". Deadline: 15 business days. Claude prompt: `Process CCPA opt-out for user_id [X].` |
+| California Seller of Travel | CST number displayed on site. Renewal: annual. Store certificate in `legal/usa/california/`. |
+| IATA Ticket Sales | Verify IATA accreditation active. If expired: suspend flight ticket sales until renewed. |
+| DOT Compliance | All flight prices shown as ALL-IN (taxes included). No hidden fees at checkout. Monthly audit. |
+| US Halal Feature Ops | Halal hotel filter updates: quarterly review of `halal_amenities` data for US properties. |
+| Muslim American Content | Monthly: Claude Marketing Agent generates 2 US Muslim community blog posts + 4 social posts. |
+
+---
+
+## PH8-12 003 · Brazil LGPD Compliance Operations (Phase 12)
+
+**Owner:** CEO + Legal Agent (AI) &nbsp;|&nbsp; **Frequency:** Ongoing — all Brazilian users
+
+| Procedure | Details |
+|-----------|---------|
+| LGPD Consent Logging | All Brazilian user consents stored in `consent_logs` table. Monthly audit: confirm 100% coverage. |
+| ANPD Registration | DPO registered with ANPD (anpd.gov.br). Annual renewal. Certificate in `legal/brazil/`. |
+| Erasure Requests | LGPD erasure: 15 business days. Same workflow as GDPR but route to AWS sa-east-1. |
+| Pix Reconciliation | Daily: reconcile Pix transactions vs Stripe Brazil dashboard. Instant payments = instant reconciliation. |
+| ICMS (Brazilian VAT) | ~17% ICMS on digital services. Monthly calculation per state. State-specific rates — use RFB data. |
+| Portuguese Content | Monthly: Claude Marketing Agent generates 4 pt-BR blog posts + WhatsApp broadcast for Umrah season. |
+
+---
+
 ## PHASE 8 — IMPLEMENTED & LIVE
 ### Western Europe + United Kingdom SOPs
 **Germany · France · Netherlands · Belgium · Spain · Italy · Poland · Switzerland · United Kingdom**
@@ -3333,7 +3422,44 @@ Target: 100% pass rate. Any failing check not resolved within 48h = escalate to 
 
 ---
 
-## MKT-001 · Content Calendar Management
+## Marketing Department SOPs
+
+> All marketing activities run through the AMEC Marketing Agent (Claude AI). The agent operates autonomously for content creation and scheduling; **human approval required before publishing or spending.**
+
+---
+
+## MKT-001 · Daily Content Generation
+
+**Owner:** Marketing Agent (AI) &nbsp;|&nbsp; **Frequency:** Every morning, 7 days/week
+
+### Daily Marketing Prompt
+
+```
+You are the AMEC Marketing Agent. Read marketing/CLAUDE.md.
+
+Today's content tasks:
+1. LinkedIn post: construction tech or travel trend relevant to our active markets.
+   Tone: professional. 200–250 words. Include relevant hashtags.
+2. Instagram caption: Hajj/Umrah inspiration or halal travel destination.
+   Tone: warm, inspirational. 80–100 words. 5 hashtags.
+3. WhatsApp broadcast message (KSA channel): today's best hotel deal in Makkah.
+   Tone: direct, value-focused. Under 60 words. Include SAR price.
+
+Generate all 3 in English. Then generate Arabic versions of each.
+Save drafts to marketing/drafts/[today-date]/. Do not publish.
+Flag any piece that references a real price or specific offer for human verification.
+```
+
+### Approval Before Publishing
+
+1. Review all 6 pieces (3 EN + 3 AR) in `marketing/drafts/`
+2. Check: no incorrect prices, no unverified claims, appropriate Islamic tone
+3. Approve: type `Approved — schedule for posting` in Claude Code
+4. Claude schedules via Buffer/Hootsuite API or posts directly via platform APIs
+
+---
+
+## MKT-001a · Weekly Content Calendar Management
 
 **Owner:** Marketing Agent &nbsp;|&nbsp; **Frequency:** Weekly (Monday)
 
@@ -3381,7 +3507,27 @@ Post calendar summary to #marketing in Slack for team review.
 
 ---
 
-## MKT-002 · Campaign Launch Workflow
+## MKT-002 · Weekly SEO Content Production
+
+**Owner:** Marketing Agent (AI) &nbsp;|&nbsp; **Frequency:** Every Wednesday
+
+| | |
+|--|--|
+| **Output** | 2 blog posts per week — one English, one Arabic. 800–1,200 words each. |
+| **Topics** | Rotate: Hajj/Umrah tips, hotel reviews near Haram, flight guides, Muslim travel destinations. |
+| **SEO targets** | Research current search trends in active markets. Claude uses web search tool for keyword data. |
+| **Publication** | Draft to Notion → CEO review → publish to UTUBooking.com blog → share on social. |
+
+### Claude Prompt
+
+```
+Generate a 1,000-word SEO blog post about [topic] targeting [market].
+Keyword focus: [keyword]. Include FAQ section at end.
+```
+
+---
+
+## MKT-002a · Campaign Launch Workflow
 
 **Owner:** Marketing Agent + CEO &nbsp;|&nbsp; **Frequency:** Per campaign (Ramadan, Hajj, off-season sale)
 
@@ -3409,7 +3555,27 @@ Budget tracker created in finance/CLAUDE.md expense log.
 
 ---
 
-## MKT-003 · WhatsApp Broadcast (Brazil)
+## MKT-003 · Ramadan + Hajj Season Campaign
+
+**Owner:** Marketing Agent (AI) + CEO &nbsp;|&nbsp; **Frequency:** Ramadan: 6 weeks before start · Hajj: 8 weeks before
+
+### Seasonal Campaign Launch Checklist
+
+| | Checklist Item |
+|--|----------------|
+| ☐ | **8 weeks before Hajj:** Launch "Early Bird Hajj Packages" — 10% discount for early bookings |
+| ☐ | **6 weeks before Ramadan:** Umrah campaign — target KSA, UAE, Egypt, Turkey, Indonesia, Malaysia |
+| ☐ | Campaign assets: landing page + email sequence (5 emails) + social (14 posts) + WhatsApp |
+| ☐ | All assets in English + Arabic + active market languages (TR, ID, MS) |
+| ☐ | Claude Marketing Agent generates ALL assets in one session |
+| ☐ | Review all pricing claims with Finance Agent before any campaign goes live |
+| ☐ | Track: click-through rate, booking conversion rate, revenue attributed to campaign |
+
+> See **MKT-003b** for the detailed per-market Claude prompt (cultural tone, email sequence, WhatsApp templates).
+
+---
+
+## MKT-003a · WhatsApp Broadcast (Brazil)
 
 **Owner:** Marketing Agent &nbsp;|&nbsp; **Frequency:** Max 2× per week (WhatsApp policy limit)
 
@@ -3444,7 +3610,7 @@ Log: send count, delivery rate, opt-out count. Save to Notion > Marketing > What
 
 ---
 
-## MKT-004 · Ramadan Campaign Activation
+## MKT-003b · Ramadan Campaign Activation — Detailed Prompt
 
 **Owner:** Marketing Agent &nbsp;|&nbsp; **Frequency:** Annual — 6 weeks before Ramadan
 
@@ -3476,7 +3642,74 @@ All content: flag for native speaker review. Save to Notion > Marketing > Ramada
 
 ---
 
-## SAL-001 · B2B Lead Qualification
+## Sales Department SOPs
+
+---
+
+## SLS-001 · New Lead Qualification & Proposal Generation
+
+**Owner:** Sales Agent (AI) + CEO &nbsp;|&nbsp; **Frequency:** Within 4 hours of new lead
+
+### Lead Qualification Process
+
+1. New lead enters HubSpot via website form, LinkedIn, or referral
+2. Claude Sales Agent scores lead automatically: company size + budget signals + market + travel volume
+3. If score ≥ 7/10: generate proposal immediately
+
+### Proposal Generation Prompt
+
+```
+Read sales/CLAUDE.md. New lead received:
+  Company: [name]
+  Country: [country]
+  Needs: [hotel/flight/car/hajj packages]
+  Group size: [number]
+  Budget range: [budget]
+
+Generate a full business proposal in [language].
+Include: UTUBooking platform overview, relevant features for their needs,
+pricing tiers (use finance/CLAUDE.md for current rates),
+implementation timeline, next steps.
+Format: professional PDF-ready document.
+Do NOT include any discounts without CEO approval.
+Save to sales/proposals/[company-name]-[date].md
+```
+
+### Follow-Up Sequence
+
+| Day | Action |
+|-----|--------|
+| Day 1 | Send proposal + brief intro email |
+| Day 3 | Follow-up call or WhatsApp (Arabic for Gulf clients) |
+| Day 7 | Value-add email — case study from similar client |
+| Day 14 | Final follow-up — offer to schedule live demo |
+| Day 21 | Move to "Nurture" in HubSpot if no response |
+
+---
+
+## SLS-002 · B2B White-Label Partnership Onboarding
+
+**Owner:** Sales Agent (AI) + CEO &nbsp;|&nbsp; **Frequency:** Per new B2B partner
+
+| | |
+|--|--|
+| **Eligible partners** | Travel agencies, hotel chains, banks with travel portals, super-apps (e.g. Careem) |
+| **Onboarding time** | 2–4 weeks from signed contract to live white-label instance |
+| **Technical setup** | Claude Dev Agent creates white-label config: partner branding, pricing markup, API keys |
+| **Commercial terms** | Revenue share: 70% UTUBooking / 30% partner (standard). Negotiable above USD 50K/year volume. |
+| **Support SLA** | B2B partners get dedicated support channel + 4-hour response SLA |
+
+### Claude Prompt
+
+```
+Set up white-label instance for [Partner].
+Config: branding=[brand], markup=[X%], markets=[list].
+Generate API documentation.
+```
+
+---
+
+## SAL-001 · B2B Lead Qualification (Detailed Daily Review)
 
 **Owner:** Sales Agent &nbsp;|&nbsp; **Frequency:** Daily (HubSpot review)
 
@@ -3567,6 +3800,58 @@ Weekly HubSpot pipeline hygiene — [DATE].
 Weekly summary: pipeline total value / deals by stage / WoW change.
 Post to #sales in Slack.
 ```
+
+---
+
+## Customer Success Department SOPs
+
+> The AMEC CS Agent handles all first-line support in English, Arabic, and all active market languages. Human escalation only for complex cases.
+
+---
+
+## CS-001 · Customer Support Response
+
+**Owner:** CS Agent (AI) &nbsp;|&nbsp; **Frequency:** < 2-hour response SLA
+
+### Support Tiers
+
+| Tier | Handled by | Scope | SLA |
+|------|-----------|-------|-----|
+| **Tier 1** | AI only | Booking lookup, cancellation requests, invoice copies, FAQ, hotel information | < 2 hours |
+| **Tier 2** | AI + human review | Payment disputes, booking modifications, complaints, refund requests > SAR 500 | < 4 hours |
+| **Tier 3** | Human only | Legal threats, data requests (GDPR/LGPD), media inquiries, partner complaints | — |
+
+### Languages
+
+CS Agent responds in: EN · AR · TR · ID · MS · UR · HI · FA · FR · DE · ES · PT-BR
+
+### Claude Prompt
+
+```
+Handle support ticket #[ID]. Read ticket content.
+Respond in [language]. Maintain professional, empathetic tone.
+If refund needed > SAR 500, escalate to CEO.
+```
+
+| **CSAT target** | ≥ 85% customer satisfaction. Survey sent after every resolved ticket. |
+|--|--|
+
+---
+
+## CS-002 · Booking Cancellation & Refund Process
+
+**Owner:** CS Agent (AI) + Finance Agent &nbsp;|&nbsp; **Frequency:** Within 24 hours of request
+
+### Refund Decision Matrix
+
+| Cancellation Timing | Refund Amount | Processing Time |
+|---------------------|---------------|-----------------|
+| > 72 hours before check-in | Full refund | 3–5 business days |
+| 48–72 hours before check-in | 75% refund | 3–5 business days |
+| 24–48 hours before check-in | 50% refund | 5–7 business days |
+| < 24 hours before check-in | 0% refund (unless force majeure) | N/A |
+| Airline tickets | Airline cancellation policy applies — varies by fare class | Per airline timeline |
+| Hajj packages | Special policy: full refund if Hajj visa denied. 50% otherwise. | 5–10 business days |
 
 ---
 
@@ -3711,7 +3996,93 @@ Output: daily FX risk table. Action if any currency moves > 5% in 24h: notify CE
 
 ---
 
-## DEV-001 · Feature Development Workflow
+## Development Department SOPs
+
+---
+
+## DEV-001 · Code Review Process
+
+**Owner:** Dev Agent (AI) + Outsourced Developers &nbsp;|&nbsp; **Frequency:** Every Pull Request
+
+### Automated Review Prompt (run on every PR)
+
+```
+Review this Pull Request for UTUBooking.
+
+Code Review Checklist:
+1. SECURITY: Any hardcoded secrets, API keys, or passwords? OWASP Top 10 violations?
+2. PAYMENTS: Does any payment code bypass PaymentAbstractionLayer? If so, REJECT.
+3. USER DATA: Is user data written to the correct regional database per data residency rules?
+4. i18n: Are all new user-facing strings using t() translation function? No hardcoded English?
+5. TESTS: Do new functions have corresponding Jest tests? Coverage acceptable?
+6. PERFORMANCE: Any N+1 queries? Missing Redis cache on expensive operations?
+7. DOCUMENTATION: New API endpoints have Swagger/OpenAPI docs?
+
+Output: APPROVE / REQUEST CHANGES with specific line-by-line comments.
+For any CRITICAL issues (security, payment, data breach risk): BLOCK merge immediately.
+```
+
+### Review Outcomes
+
+| Outcome | Criteria | Action |
+|---------|----------|--------|
+| **APPROVE** | All 7 checklist items pass. Test coverage ≥ 80%. No critical issues. | Merge allowed |
+| **REQUEST CHANGES** | 1–3 non-critical issues. | Developer must address before re-review |
+| **BLOCK MERGE** | Any security issue, payment bypass, or data residency violation. | Escalate to CEO |
+
+> **Human review required** for all PRs touching: auth service, payment service, user data schema, API keys.
+
+---
+
+## DEV-002 · Hotfix Deployment Process
+
+**Owner:** Dev Agent (AI) + CEO &nbsp;|&nbsp; **Frequency:** Production incidents only
+
+### Hotfix Protocol
+
+1. Incident detected → classify severity: **P1** (site down) · **P2** (major feature broken) · **P3** (minor bug)
+2. P1/P2 only: create hotfix branch → fix → test → deploy to staging first
+3. Staging test passes → CEO approval → deploy to production
+4. Target resolution: P1 < 30 min · P2 < 2 hours · P3 next sprint
+
+### Hotfix Branch Workflow
+
+```bash
+git checkout main && git pull
+git checkout -b hotfix/[issue-description]
+# Claude Code fixes the issue
+# Run tests: npm test
+git commit -m "hotfix: [description] — fixes #[issue-number]"
+git push origin hotfix/[issue-description]
+# Create PR → review → merge → auto-deploy
+```
+
+---
+
+## DEV-003 · Database Backup & Recovery Verification
+
+**Owner:** Dev Agent (AI) &nbsp;|&nbsp; **Frequency:** Weekly backup verification (every Monday)
+
+| | |
+|--|--|
+| **Backup frequency** | Automated: PostgreSQL every 6 hours via AWS RDS. Redis snapshots every hour. |
+| **Retention** | 30 days for daily backups. 12 months for monthly snapshots. |
+| **All regions** | Verify backups running in ALL 7 regions: Bahrain · Istanbul · Singapore · Mumbai · Frankfurt · US-East · São Paulo |
+| **Weekly test restore** | Every Monday: restore a random backup to test instance. Verify data integrity. |
+| **Escalation** | If ANY region backup is older than 12 hours: PagerDuty P1 alert to CEO immediately. |
+
+### Claude Prompt
+
+```
+Run database backup verification.
+Check all 7 regions have completed backups in last 6 hours.
+Run test restore on oldest backup.
+Report status.
+```
+
+---
+
+## DEV-001a · Feature Development Workflow
 
 **Owner:** Dev Agent &nbsp;|&nbsp; **Frequency:** Per feature / sprint
 
@@ -4020,7 +4391,48 @@ Document: Notion > Compliance > KVKK Requests > [user_id].
 
 ---
 
-## EMG-001 · Payment Gateway Down
+## EMG-001 · Platform Outage Response
+
+**Owner:** CEO + Dev Agent (AI) &nbsp;|&nbsp; **Trigger:** Site uptime < 99% over any 5-minute window
+
+### Immediate Actions — First 5 Minutes
+
+1. Confirm outage: check `status.utubooking.com` + AWS Console + Grafana dashboards
+2. Post status update: *"We are investigating a technical issue. Updates every 15 min."* — status page + Slack `#incidents`
+3. Identify scope: which AWS region(s)? Which services? How many users affected?
+4. Activate Claude Code for rapid diagnosis
+
+### Emergency Diagnosis Prompt
+
+```
+EMERGENCY: Platform outage detected.
+Check AWS health dashboard for all 7 regions.
+Check CloudWatch alarms — what triggered first?
+Check recent GitHub deployments — any deploy in last 2 hours?
+Check Kafka queue depth — any backlog?
+Give me root cause hypothesis in 3 minutes.
+```
+
+### Recovery Decision Tree
+
+| Root Cause | Action |
+|------------|--------|
+| Recent bad deploy | `git revert HEAD && git push` → auto-redeploy |
+| AWS region failure | Activate failover: switch DNS to secondary region |
+| Database overload | Scale up RDS instance + flush Redis cache |
+| Third-party API outage (Amadeus/Hotelbeds) | Serve cached data + show maintenance notice |
+| DDoS attack | Activate AWS Shield + WAF rules + rate limiting |
+
+### Post-Outage Actions (Within 24 Hours)
+
+1. Generate post-mortem report: timeline, root cause, resolution, prevention
+2. Notify all affected users by email with explanation and compensation (credit if > 1 hour outage)
+3. Review monitoring rules — add alert to catch this pattern earlier next time
+4. Log in Notion: Incidents page + GitHub issue for engineering follow-up
+
+---
+
+## EMG-001a · Payment Gateway Down
 
 **Owner:** Dev Agent (on-call) &nbsp;|&nbsp; **Trigger:** Gateway error rate > 10% for 5+ minutes, OR PagerDuty alert
 
@@ -4071,7 +4483,41 @@ Create ops/incidents/[DATE]-[gateway]-outage.md:
 
 ---
 
-## EMG-002 · AWS Region Outage or Degradation
+## EMG-002 · Data Breach Response
+
+**Owner:** CEO + Legal Agent (AI) &nbsp;|&nbsp; **Trigger:** Immediately on detection
+
+> ### CRITICAL — Legal Deadlines Apply
+> | Regulation | Jurisdiction | Deadline |
+> |------------|-------------|----------|
+> | GDPR | EU / UK | Notify supervisory authority within **72 hours** of becoming aware |
+> | LGPD | Brazil | Notify ANPD within **72 hours** (regulatory guidance) |
+> | DPDP Act | India | Notify Data Protection Board within **72 hours** |
+> | CCPA | California | Notify affected users **"expeditiously"** |
+
+### Response Steps
+
+| Step | Window | Action |
+|------|--------|--------|
+| **STEP 1** | 0–1 hour | Contain the breach. Isolate affected systems. Revoke compromised credentials. |
+| **STEP 2** | 1–6 hours | Assess scope: which users? which data? which regions? |
+| **STEP 3** | 6–24 hours | Prepare regulatory notification. Claude Legal Agent drafts — CEO reviews. |
+| **STEP 4** | 24–72 hours | Notify regulators. Notify affected users. Set up remediation. |
+| **STEP 5** | Post-breach | Security audit, patch vulnerabilities, update incident log. |
+
+### Claude Legal Agent Prompt
+
+```
+Draft GDPR breach notification to ICO for the following incident: [describe].
+Include: nature, categories, approximate number of affected users,
+likely consequences, measures taken.
+```
+
+> See **EMG-002b** for the full technical containment + multi-jurisdiction notification steps.
+
+---
+
+## EMG-002a · AWS Region Outage or Degradation
 
 **Owner:** Dev Agent (on-call) &nbsp;|&nbsp; **Trigger:** CloudWatch composite alarm `utu-sla-breach` fires, or Route53 health check fails
 
@@ -4120,7 +4566,7 @@ Detected: [TIME].
 
 ---
 
-## EMG-003 · Data Breach Response
+## EMG-002b · Data Breach Response — Detailed Technical Steps
 
 **Owner:** CEO + Compliance Agent + Legal Agent &nbsp;|&nbsp; **Trigger:** Security incident, abnormal data access, or employee report
 
@@ -4177,6 +4623,22 @@ ONGOING:
 11. Legal counsel before any public statement.
 12. Post-incident report to board within 7 days.
 ```
+
+---
+
+## EMG-003 · Claude AI Agent Malfunction Response
+
+**Owner:** CEO &nbsp;|&nbsp; **Trigger:** AI outputs are incorrect, harmful, or out of character
+
+> Occasionally Claude AI may produce incorrect, outdated, or inappropriate outputs. This SOP covers rapid diagnosis and recovery.
+
+| Symptom | Diagnosis | Fix |
+|---------|-----------|-----|
+| **Wrong market info** | Claude gives wrong pricing, legal info, or market data | Check `CLAUDE.md` files for outdated info — update immediately |
+| **Poor quality output** | Outputs are generic, not UTUBooking-specific | `CLAUDE.md` context is missing or too vague — add more specifics |
+| **Repetitive errors** | Same mistake keeps recurring | Add explicit correction rule to the relevant `CLAUDE.md` file |
+| **Agent confusion** | Claude mixing up markets, currencies, or requirements | Review department `CLAUDE.md` hierarchy — check for conflicting rules |
+| **Nuclear option** | Agent is fundamentally broken | `git checkout [last-stable-tag] .claude/` — restore from last known good AI brain |
 
 ---
 
