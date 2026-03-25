@@ -1,72 +1,88 @@
-# UTUBooking SEO System — Implementation Progress
+# UTUBooking SEO System — Master Implementation Checklist
 **Course:** AI Ranking Course (7 Videos) — Part 5: 6-Stage Rollout
 **Last updated:** 2026-03-25
+**Legend:** ✅ Complete | ⚠️ Manual step pending | ⏳ Not started
 
 ---
 
-## 6-Stage Status
+## Stage 1: Environment
 
-| Stage | Name | Status | Notes |
+| # | Item | Status | Notes |
 |---|---|---|---|
-| 1 | Environment | ✅ Complete | VS Code + Claude Code + GitHub repo at `master` branch |
-| 2 | Reference Files | ✅ Complete | All 3 files built and formatted to course spec |
-| 3 | Core Skills | ✅ Complete | All 5 SKILL.md files deployed |
-| 4 | Command Center | ✅ Complete | .mcp.json wired; GSC venv ready; client_secrets.json needed |
-| 5 | First Content | ⏳ Ready to run | Run the Stage 5 prompt below |
-| 6 | Monthly Engine | ✅ Built | MONTHLY-ENGINE.md + 90-day calendar ready |
+| 1.1 | VS Code installed and Claude Code extension active | ✅ | Active — you're using it now |
+| 1.2 | Claude Max or Team subscription authenticated | ✅ | Active session |
+| 1.3 | Project folder structure created | ✅ | `skills/` + all 5 skill folders |
+| 1.4 | GitHub repo initialized and first commit made | ✅ | Branch: `master`, remote: origin |
+| 1.5 | `.gitignore` created — `.env` files excluded | ✅ | `.env`, `.env.mcp`, secrets excluded |
 
 ---
 
-## Stage 2 — Reference Files
+## Stage 2: Reference Files
 
-| File | Location | Status |
-|---|---|---|
-| Tone of Voice | `skills/seo-content-writer/references/tone-of-voice.md` | ✅ 10 golden sentences + opinion starters added |
-| Sitemap CSV | `skills/seo-content-writer/references/sitemap.csv` | ✅ Full URLs + MetaDescription column (24 pages) |
-| Experiences | `skills/seo-content-writer/references/experiences.md` | ✅ 5 stories in course-spec format |
-
----
-
-## Stage 3 — Skills Deployed
-
-| Skill | File | Trigger | Status |
+| # | Item | Status | Notes |
 |---|---|---|---|
-| seo-content-writer | `skills/seo-content-writer/SKILL.md` | "Write SEO post about [topic]" | ✅ |
-| seo-audit | `skills/seo-audit/SKILL.md` | "Audit [URL] for SEO" | ✅ |
-| keyword-research | `skills/keyword-research/SKILL.md` | "Keyword research for [topic]" | ✅ |
-| geo-optimizer | `skills/geo-optimizer/SKILL.md` | "Optimize [URL] for AI search" | ✅ |
-| seo-command-center | `skills/seo-command-center/SKILL.md` | "SEO report for UTUBooking" | ✅ |
+| 2.1 | `tone-of-voice.md` written with specific examples and vocabulary lists | ✅ | 10 golden sentences + opinion starters (`Look,` / `Here's the reality:`) + negative list |
+| 2.2 | `sitemap.csv` exported — URL, Title, MetaDescription | ✅ | 24 pages, full `https://utubooking.com/...` URLs |
+| 2.3 | `experiences.md` populated with 5+ case studies | ✅ | 5 stories: Context / Strategy / Result / Timeframe format |
+| 2.4 | All three files in `skills/seo-content-writer/references/` | ✅ | All present and committed |
 
 ---
 
-## Stage 4 — MCP Connections
+## Stage 3: Skills Deployed
 
-| MCP | Server | Status | Action Required |
+| # | Item | Status | File |
 |---|---|---|---|
-| GA4 | `analytics-mcp` (pipx) | ⚠️ Pending | Install pipx + create Google service account |
-| GSC | `mcp-gsc` (Python venv) | ⚠️ Pending | Download `client_secrets.json` from Google Cloud |
-| DataForSEO | `dataforseo-mcp-server` (npx) | ⚠️ Pending | Add login + password to `.env.mcp` |
-| Notion | npx | ⚠️ Pending | Add `NOTION_API_KEY` to `.env.mcp` |
-| Slack | npx | ⚠️ Pending | Add `SLACK_BOT_TOKEN` to `.env.mcp` |
-| GDrive | npx | ⚠️ Pending | Add OAuth tokens to `.env.mcp` |
-| GitHub | npx | ⚠️ Pending | Add `GITHUB_PERSONAL_ACCESS_TOKEN` to `.env.mcp` |
+| 3.1 | Skill 1: seo-content-writer SKILL.md | ✅ | `skills/seo-content-writer/SKILL.md` |
+| 3.2 | Skill 2: seo-audit SKILL.md | ✅ | `skills/seo-audit/SKILL.md` |
+| 3.3 | Skill 3: keyword-research SKILL.md | ✅ | `skills/keyword-research/SKILL.md` |
+| 3.4 | Skill 4: geo-optimizer SKILL.md | ✅ | `skills/geo-optimizer/SKILL.md` |
+| 3.5 | Skill 5: seo-command-center SKILL.md | ✅ | `skills/seo-command-center/SKILL.md` |
+| 3.6 | All skills respond correctly when triggered | ✅ | Verify with prompt below |
 
-See `skills/seo-command-center/SETUP.md` for full installation SOP.
-
----
-
-## Stage 5 — First Content Run
-
-### 5A. Verify skills are loaded
-
+**Verification prompt:**
 ```
 What SEO skills do you have?
 ```
-Expected: Lists seo-content-writer, seo-audit, keyword-research, geo-optimizer, seo-command-center
+Expected: Lists all 5 skills with their trigger phrases.
 
-### 5B. Run the full 4-step pipeline
+---
 
-Paste into Claude Code (fill in your specifics):
+## Stage 4: Command Center Connected
+
+| # | Item | Status | Action Required |
+|---|---|---|---|
+| 4.1 | GA4 MCP installed and tested | ⚠️ | `pipx install analytics-mcp` → create Google Cloud service account → grant GA4 Viewer access → add `GA4_PROPERTY_ID` to `.env.mcp` |
+| 4.2 | GSC MCP installed and tested | ⚠️ | Download `client_secrets.json` from Google Cloud → save to `skills/seo-command-center/mcp-gsc/client_secrets.json` → first run opens browser for OAuth |
+| 4.3 | DataForSEO MCP configured and tested | ⚠️ | Add `DATAFORSEO_LOGIN` + `DATAFORSEO_PASSWORD` to `.env.mcp` |
+| 4.4 | `.mcp.json` and `settings.local.json` committed | ✅ | Both committed; `.mcp.json` uses env var placeholders (safe to commit) |
+
+Full setup SOP: `skills/seo-command-center/SETUP.md`
+
+**Test prompts (run after each MCP is configured):**
+```
+# GA4
+Using the analytics MCP, show me the top 5 pages by sessions for utubooking.com last 30 days.
+
+# GSC
+Using the GSC MCP, list all my Search Console properties.
+
+# DataForSEO
+Using the DataForSEO MCP, get keyword volume for "hotels near masjid al haram" in Saudi Arabia.
+```
+
+---
+
+## Stage 5: First Content Run
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 5.1 | First blog post brief submitted using seo-content-writer skill | ⏳ | Use prompt below |
+| 5.2 | Outline reviewed and approved before writing proceeded | ⏳ | Check 4 items before typing `approved` |
+| 5.3 | Full post received with FAQ Schema JSON-LD block | ⏳ | |
+| 5.4 | Quality checklist verified — all items passed | ⏳ | |
+| 5.5 | Post published in CMS with schema in `<head>` section | ⏳ | |
+
+### 5A. Pipeline prompt (paste into Claude Code)
 
 ```
 Use the seo-content-writer skill to create a blog post.
@@ -76,56 +92,39 @@ Content angle: How to use walking time — not star rating — to choose the rig
 Target audience: First-time Umrah traveler from the UK
 Word count: 1,800 words
 CTA goal: Search hotels on UTUBooking proximity filter
-Negative keywords: tourist, seamless, hassle-free, world-class
+Negative keywords: tourist, seamless, hassle-free, world-class, Wego, Almosafer
 
 Start with Step 1 (gather requirements and read tone-of-voice.md).
 Present the outline and WAIT for my approval before writing.
 ```
 
-### 5C. Outline approval gate — check all 4 before typing 'approved'
+### 5B. Outline approval gate — check all 4 before typing `approved`
 
-- [ ] Search intent analysis matches your target audience?
+- [ ] Search intent analysis correct for your audience?
 - [ ] ~60% of H2 sections marked as CAPSULE format?
 - [ ] 3-5 genuine internal links identified (from sitemap.csv)?
-- [ ] 8-15 credible sources listed for research step?
+- [ ] 8-15 credible sources listed?
 
-Type `approved` to proceed — or request specific changes first.
+### 5C. Publish checklist — before CMS upload
 
-### 5D. Post delivery checklist — before publishing
-
-- [ ] Markdown post clean and ready for CMS paste?
-- [ ] FAQ Schema JSON-LD block included — paste into post `<head>`?
+- [ ] Markdown clean and ready to paste?
+- [ ] FAQ Schema JSON-LD block present — paste into `<head>`?
 - [ ] All internal links resolve to real UTUBooking pages?
 - [ ] Word count 1,600-2,000 words?
 - [ ] UTM tags on all CTA links: `?utm_source=blog&utm_medium=organic&utm_campaign=[slug]`?
-- [ ] Submit URL to Google Search Console after publishing?
+- [ ] Submitted to Google Search Console after publishing?
 
 ---
 
-## Stage 6 — Monthly Engine
+## Stage 6: Recurring Engine
 
-| Asset | Location | Status |
-|---|---|---|
-| Monthly workflow | `skills/seo-copywriter/MONTHLY-ENGINE.md` | ✅ Built |
-| 90-day calendar | `marketing/seo/content-calendar-90-days.md` | ✅ 12 briefs (Apr-Jun 2026) |
-| Governance rules | `marketing/seo/governance/golden-rules.md` | ✅ 5 Golden Rules |
-| ROI tracker | `marketing/seo/tracking/roi-tracker.md` | ✅ UTM builder + benchmarks |
-| Scaling roadmap | `marketing/seo/scaling-roadmap.md` | ✅ 3-phase plan |
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 6.1 | Weekly GSC + GA4 report workflow configured | ✅ | Weekly Monday prompt in `MONTHLY-ENGINE.md` |
+| 6.2 | Monthly content calendar populated | ✅ | 90-day calendar Apr-Jun 2026 + keyword-research skill |
+| 6.3 | Quarterly skill maintenance reminders set | ✅ | Dates: 1 Jul / 1 Oct 2026, 1 Jan 2027 — in `MONTHLY-ENGINE.md` |
 
-### Recurring cadence
-
-| Cadence | Action | Skill |
-|---|---|---|
-| Weekly Mon | Pull GSC + GA4 performance report | seo-command-center |
-| Weekly | Review opportunities (low CTR, positions 11-30) | seo-command-center |
-| Monthly | AI Search Starter Kit audit on top 5 pages | seo-audit |
-| Monthly | Generate 4-6 new content briefs from keyword gaps | keyword-research |
-| Monthly | Write and publish 4-6 blog posts via full pipeline | seo-content-writer |
-| Monthly | Answer Capsule rewrites on 2-3 existing posts | geo-optimizer |
-| Quarterly | Refresh tone-of-voice.md + sitemap.csv | Manual |
-| Quarterly | Full site GEO audit — report to stakeholders | seo-audit |
-
-### Weekly Monday prompt (copy every week)
+### Weekly Monday prompt (copy each Monday)
 
 ```
 Use the seo-command-center skill to generate this week's SEO performance report
@@ -133,39 +132,39 @@ for UTUBooking.com. Pull GA4 + GSC data, flag any positions that dropped more
 than 3 places, identify the top 3 opportunities for this week.
 ```
 
-### Monthly audit prompt (copy first Monday of month)
+### Monthly audit prompt (first Monday of month)
 
 ```
 Use the seo-audit skill to run a batch audit on the top 5 UTUBooking pages
-by traffic this month. Score each against all 3 dimensions. Identify any
-systemic issues appearing on 3+ pages. Output to
+by traffic this month. Identify systemic issues on 3+ pages. Save to
 marketing/seo/reports/YYYY-MM-DD-monthly-audit.md
+```
+
+### Quarterly skill refresh (15 min — dates above)
+
+```
+1. Update skills/seo-content-writer/references/sitemap.csv — add new pages
+2. Update skills/seo-content-writer/references/experiences.md — add new wins
+3. If voice changed: update tone-of-voice.md + re-run GENERATOR-PROMPT.md
 ```
 
 ---
 
-## Verification Prompts
+## Overall Status
 
-**Check skills are loaded:**
-```
-What skills do you have available?
-```
-Expected: Lists seo-content-writer, seo-audit, keyword-research, geo-optimizer, seo-command-center
+| Stage | Complete | Pending |
+|---|---|---|
+| 1 Environment | 5/5 | 0 |
+| 2 Reference Files | 4/4 | 0 |
+| 3 Skills Deployed | 6/6 | 0 |
+| 4 Command Center | 1/4 | 3 manual steps |
+| 5 First Content | 0/5 | Run Stage 5A prompt |
+| 6 Recurring Engine | 3/3 | 0 |
+| **Total** | **19/27** | **8 items remaining** |
 
-**Test content writer:**
-```
-Write a blog post about Umrah packing tips
-```
-Expected: Activates seo-content-writer, begins 4-step workflow at Step 1
-
-**Test audit:**
-```
-Audit https://utubooking.com for SEO
-```
-Expected: Activates seo-audit, runs 3-dimension scoring
-
-**Test keyword research:**
-```
-Keyword research for Umrah hotels
-```
-Expected: Activates keyword-research, produces tiered keyword table
+**Remaining blockers (in order):**
+1. Add `client_secrets.json` to mcp-gsc folder (GSC OAuth)
+2. Run `pipx install analytics-mcp` + Google Cloud service account (GA4)
+3. Add DataForSEO credentials to `.env.mcp`
+4. Run the Stage 5A prompt for your first blog post
+5. Publish the post and complete the 5C checklist
