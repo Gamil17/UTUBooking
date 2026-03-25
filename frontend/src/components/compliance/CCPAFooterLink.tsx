@@ -10,9 +10,21 @@
  * UTUBooking will meet these thresholds at scale — include the link
  * before CA launch as a proactive compliance measure.
  *
+ * Also displays the California Seller of Travel (CST) registration number,
+ * required under California Business & Professions Code §17550.
+ * Registration: California Attorney General / Seller of Travel Program.
+ * Replace CST_NUMBER below once the registration certificate is issued.
+ *
  * This is a server component (no 'use client') — rendered once, no interactivity.
  * Only shown when countryCode === 'US'.
  */
+
+/**
+ * California Seller of Travel registration number.
+ * TODO: Replace with actual number once issued by the CA AG office.
+ * Apply at: oag.ca.gov/travel
+ */
+const CST_NUMBER = process.env.NEXT_PUBLIC_CA_CST_NUMBER ?? '2000000-40';
 
 interface Props {
   countryCode?: string;
@@ -22,21 +34,27 @@ export default function CCPAFooterLink({ countryCode }: Props) {
   if (countryCode !== 'US') return null;
 
   return (
-    <div className="text-center text-xs text-gray-400 py-2 border-t border-gray-100">
-      <a
-        href="/privacy#ccpa"
-        className="hover:text-gray-600 underline"
-        aria-label="Do Not Sell or Share My Personal Information — California Privacy Rights"
-      >
-        Do Not Sell or Share My Personal Information
-      </a>
-      {' · '}
-      <a
-        href="/privacy#ccpa"
-        className="hover:text-gray-600 underline"
-      >
-        California Privacy Rights
-      </a>
+    <div className="text-center text-xs text-gray-400 py-2 border-t border-gray-100 space-y-1">
+      <div>
+        <a
+          href="/privacy/ccpa-opt-out"
+          className="hover:text-gray-600 underline"
+          aria-label="Do Not Sell or Share My Personal Information — California Privacy Rights"
+        >
+          Do Not Sell or Share My Personal Information
+        </a>
+        {' · '}
+        <a
+          href="/privacy#ccpa"
+          className="hover:text-gray-600 underline"
+        >
+          California Privacy Rights
+        </a>
+      </div>
+      <div aria-label={`California Seller of Travel Registration Number ${CST_NUMBER}`}>
+        California Seller of Travel Reg. No.{' '}
+        <span className="font-medium text-gray-500">{CST_NUMBER}</span>
+      </div>
     </div>
   );
 }
