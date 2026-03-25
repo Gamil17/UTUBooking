@@ -1,0 +1,26 @@
+url,title,category,priority
+/,UTUBooking Home,core,high
+/hotels/makkah,Hotels in Makkah,hotels,high
+/hotels/makkah/masjid-al-haram,Hotels Near Masjid Al-Haram,hotels,high
+/hotels/madinah,Hotels in Madinah,hotels,high
+/hotels/riyadh,Hotels in Riyadh,hotels,medium
+/hotels/jeddah,Hotels in Jeddah,hotels,medium
+/hotels/dubai,Hotels in Dubai,hotels,medium
+/hotels?filter=halal,Halal-Certified Hotels,hotels,medium
+/hajj-packages,Hajj Packages,packages,high
+/umrah-packages,Umrah Packages,packages,high
+/flights/jeddah-jed,Flights to Jeddah,flights,high
+/flights/riyadh-ruh,Flights to Riyadh,flights,medium
+/flights/saudi-arabia,Flights to Saudi Arabia,flights,high
+/car-rental/saudi-arabia,Car Rental Saudi Arabia,car-rental,high
+/car-rental/makkah,Car Rental Makkah,car-rental,medium
+/car-rental/madinah,Car Rental Madinah,car-rental,medium
+/car-rental/riyadh,Car Rental Riyadh,car-rental,medium
+/car-rental/jeddah,Car Rental Jeddah,car-rental,medium
+/us/umrah-packages,Umrah Packages USA,packages,medium
+/about,About UTUBooking,brand,low
+/blog,Blog,content,medium
+/ar/hotels/makkah/masjid-al-haram,فنادق قريبة من المسجد الحرام,hotels-ar,high
+/ar/hajj-packages,باقات الحج,packages-ar,high
+/ar/umrah-packages,باقات العمرة,packages-ar,high
+/ar/flights/jeddah-jed,رحلات إلى جدة,flights-ar,high
