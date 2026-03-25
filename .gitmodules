@@ -1,0 +1,3 @@
+[submodule "skills/seo-command-center/mcp-gsc"]
+	path = skills/seo-command-center/mcp-gsc
+	url = https://github.com/AminForou/mcp-gsc.git

@@ -44,3 +44,9 @@ cdk.out/
 
 # Reports (generated — don't track)
 iran-isolation-report.txt
+
+# MCP server local files
+skills/seo-command-center/mcp-gsc/venv/
+skills/seo-command-center/mcp-gsc/token.json
+skills/seo-command-center/mcp-gsc/client_secrets.json
+skills/seo-command-center/mcp-gsc/.venv/

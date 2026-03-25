@@ -8,20 +8,20 @@
       }
     },
     "gsc": {
-      "command": "python3",
-      "args": ["-m", "mcp_server_gsc"],
+      "command": "D:\\0660 Claude Code for Business Run Your Entire Company With AI Team\\01.1 UTUBooking App\\skills\\seo-command-center\\mcp-gsc\\venv\\Scripts\\python.exe",
+      "args": [
+        "D:\\0660 Claude Code for Business Run Your Entire Company With AI Team\\01.1 UTUBooking App\\skills\\seo-command-center\\mcp-gsc\\gsc_server.py"
+      ],
       "env": {
-        "GSC_CLIENT_ID": "${GSC_CLIENT_ID}",
-        "GSC_CLIENT_SECRET": "${GSC_CLIENT_SECRET}",
-        "GSC_REFRESH_TOKEN": "${GSC_REFRESH_TOKEN}",
-        "GSC_SITE_URL": "https://utubooking.com"
+        "GSC_OAUTH_CLIENT_SECRETS_FILE": "D:\\0660 Claude Code for Business Run Your Entire Company With AI Team\\01.1 UTUBooking App\\skills\\seo-command-center\\mcp-gsc\\client_secrets.json",
+        "GSC_DATA_STATE": "all"
       }
     },
     "dataforseo": {
       "command": "npx",
-      "args": ["-y", "@dataforseo/mcp-server"],
+      "args": ["-y", "dataforseo-mcp-server"],
       "env": {
-        "DATAFORSEO_LOGIN": "${DATAFORSEO_LOGIN}",
+        "DATAFORSEO_USERNAME": "${DATAFORSEO_LOGIN}",
         "DATAFORSEO_PASSWORD": "${DATAFORSEO_PASSWORD}"
       }
     },
