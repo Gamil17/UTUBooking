@@ -27,6 +27,7 @@ const INTL_LOCALE: Record<Locale, string> = {
   // EU/Global (Phase 8–12)
   de: 'de-DE',
   'en-GB': 'en-GB',
+  'en-US': 'en-US',  // Phase 10 US launch
   it: 'it-IT',
   nl: 'nl-NL',
   pl: 'pl-PL',
@@ -122,6 +123,7 @@ const DISTANCE_UNIT_M: Record<Locale, string> = {
   // EU/Global (Phase 8–12) — all metric
   de: 'm',
   'en-GB': 'm',
+  'en-US': 'm',
   it: 'm',
   nl: 'm',
   pl: 'm',
@@ -143,6 +145,7 @@ const DISTANCE_UNIT_KM: Record<Locale, string> = {
   // EU/Global (Phase 8–12) — all metric
   de: 'km',
   'en-GB': 'km',
+  'en-US': 'km',
   it: 'km',
   nl: 'km',
   pl: 'km',
@@ -151,11 +154,59 @@ const DISTANCE_UNIT_KM: Record<Locale, string> = {
   'es-419': 'km',
 };
 
+// ── Country → currency map for Phase 4 MEANA markets ─────────────────────────
+/**
+ * Maps ISO-3166-1 alpha-2 country codes to their settlement currency.
+ * Used by white-label tenants and country-detected sessions where the
+ * locale code alone (e.g. 'ar') cannot disambiguate the correct currency
+ * (Arabic is used across SA/AE/JO/KW/BH/MA/TN, each with a different CCY).
+ *
+ * Usage:
+ *   const currency = COUNTRY_CURRENCY[countryCode] ?? 'USD';
+ *   formatPrice(amount, locale, { currency });
+ */
+export const COUNTRY_CURRENCY: Record<string, string> = {
+  // Phase 1–3 (existing)
+  SA: 'SAR',   // Saudi Arabia — Saudi Riyal
+  AE: 'AED',   // UAE — UAE Dirham
+  EG: 'EGP',   // Egypt — Egyptian Pound
+  TR: 'TRY',   // Turkey
+  ID: 'IDR',   // Indonesia
+  MY: 'MYR',   // Malaysia
+  PK: 'PKR',   // Pakistan
+  IN: 'INR',   // India
+  BD: 'BDT',   // Bangladesh
+  GB: 'GBP',   // United Kingdom
+  DE: 'EUR',   // Germany
+  FR: 'EUR',   // France
+  NL: 'EUR',   // Netherlands
+  IT: 'EUR',   // Italy
+  ES: 'EUR',   // Spain
+  PL: 'PLN',   // Poland
+  CH: 'CHF',   // Switzerland
+  US: 'USD',   // United States
+  CA: 'CAD',   // Canada
+  BR: 'BRL',   // Brazil
+  // Phase 4 MEANA expansion
+  JO: 'JOD',   // Jordan — Jordanian Dinar (3 decimal places)
+  KW: 'KWD',   // Kuwait — Kuwaiti Dinar (3 decimal places, highest-value GCC CCY)
+  BH: 'BHD',   // Bahrain — Bahraini Dinar (3 decimal places)
+  MA: 'MAD',   // Morocco — Moroccan Dirham (2 decimal places)
+  TN: 'TND',   // Tunisia — Tunisian Dinar (3 decimal places)
+  QA: 'QAR',   // Qatar — Qatari Riyal
+  OM: 'OMR',   // Oman — Omani Rial (3 decimal places)
+};
+
 // ── Helper: sensible fraction digit defaults per currency ─────────────────────
 function defaultFractionDigits(currency: string): number {
   // Zero-decimal currencies
-  const zeroDecimal = ['IDR', 'IRR', 'PKR', 'INR'];
+  const zeroDecimal = ['IDR', 'IRR'];
   if (zeroDecimal.includes(currency)) return 0;
-  // Standard 2-decimal currencies
+  // Three-decimal Gulf + MEANA currencies
+  // KWD, BHD, JOD, OMR use 1000 sub-units (fils/millimes)
+  // TND uses 1000 millimes
+  const threeDecimal = ['KWD', 'BHD', 'JOD', 'OMR', 'TND'];
+  if (threeDecimal.includes(currency)) return 3;
+  // Standard 2-decimal currencies (SAR, AED, MAD, USD, EUR, GBP, etc.)
   return 2;
 }

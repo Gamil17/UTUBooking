@@ -77,6 +77,13 @@ export const LOCALE_CURRENCY: Record<Locale, string> = {
   'es-419': 'USD', // Mixed LATAM — USD as display default; override per country via tenant config
 };
 
+// ── Phase 4: Country → Currency map ──────────────────────────────────────────
+// 'ar' locale alone cannot distinguish SA/AE/JO/KW/BH/MA/TN — each has a
+// different currency. Use this map when you have a country code (from IP geo,
+// user profile, or white-label tenant config) to pick the right currency.
+// Re-exported from formatting.ts for convenience; source of truth is there.
+export { COUNTRY_CURRENCY } from '@/utils/formatting';
+
 // Locale display names (for language picker UI)
 export const LOCALE_NAMES: Record<Locale, string> = {
   en:       'English',
