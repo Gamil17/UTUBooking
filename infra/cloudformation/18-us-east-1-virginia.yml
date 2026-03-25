@@ -1,0 +1,580 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  UTUBooking Phase 10 — US Region (us-east-1 / Virginia)
+  Serves: US users (CCPA compliance — California Consumer Privacy Act).
+  Includes CloudFront CDN distribution for North America latency optimization.
+  Full primary RDS — US data stays in us-east-1.
+  Canada (CA) is routed to ca-central-1 (Stack 20) for PIPEDA compliance.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues: [prod, staging]
+
+  DBMasterPassword:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/us/db/master-password
+    NoEcho: true
+
+  DBMasterUsername:
+    Type: String
+    Default: utu_user
+
+  ECRRepository:
+    Type: String
+    Default: "123456789.dkr.ecr.me-south-1.amazonaws.com/utu-booking"
+
+  ImageTag:
+    Type: String
+    Default: latest
+
+  CertificateArn:
+    Type: String
+    Description: ACM certificate for api-us.utubooking.com (us-east-1)
+
+  CloudFrontCertificateArn:
+    Type: String
+    Description: ACM certificate in us-east-1 for CloudFront (MUST be in us-east-1)
+
+  DBInstanceClass:
+    Type: String
+    Default: db.r7g.xlarge
+    AllowedValues: [db.r7g.large, db.r7g.xlarge, db.r7g.2xlarge]
+
+Mappings:
+  AZs:
+    us-east-1:
+      AZ1: us-east-1a
+      AZ2: us-east-1b
+      AZ3: us-east-1c
+
+Resources:
+
+  # ── VPC — 10.6.0.0/16 ───────────────────────────────────────────────────────
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.6.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - {Key: Name,            Value: utu-us-east-1-vpc}
+        - {Key: Region,          Value: us-east-1}
+        - {Key: DataJurisdiction,Value: CCPA-US}
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.6.1.0/24
+      AvailabilityZone: us-east-1a
+      MapPublicIpOnLaunch: true
+      Tags: [{Key: Name, Value: utu-us-public-1}]
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.6.2.0/24
+      AvailabilityZone: us-east-1b
+      MapPublicIpOnLaunch: true
+      Tags: [{Key: Name, Value: utu-us-public-2}]
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.6.10.0/24
+      AvailabilityZone: us-east-1a
+      Tags: [{Key: Name, Value: utu-us-private-1}]
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.6.11.0/24
+      AvailabilityZone: us-east-1b
+      Tags: [{Key: Name, Value: utu-us-private-2}]
+
+  NatEIP:
+    Type: AWS::EC2::EIP
+    Properties: {Domain: vpc}
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref VPC}
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PublicSubnet1, RouteTableId: !Ref PublicRouteTable}
+
+  PublicSubnet2RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PublicSubnet2, RouteTableId: !Ref PublicRouteTable}
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref VPC}
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateSubnet1RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PrivateSubnet1, RouteTableId: !Ref PrivateRouteTable}
+
+  PrivateSubnet2RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PrivateSubnet2, RouteTableId: !Ref PrivateRouteTable}
+
+  # ── ALB ─────────────────────────────────────────────────────────────────────
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: US ALB — HTTPS/HTTP ingress
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0}
+        - {IpProtocol: tcp, FromPort: 80,  ToPort: 80,  CidrIp: 0.0.0.0/0}
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: utu-us-alb
+      Scheme: internet-facing
+      Type: application
+      Subnets: [!Ref PublicSubnet1, !Ref PublicSubnet2]
+      SecurityGroups: [!Ref ALBSecurityGroup]
+      LoadBalancerAttributes:
+        - {Key: idle_timeout.timeout_seconds, Value: "60"}
+        - {Key: routing.http2.enabled, Value: "true"}
+      Tags:
+        - {Key: Region,          Value: us-east-1}
+        - {Key: DataJurisdiction,Value: CCPA-US}
+
+  ALBListenerHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: "404"
+            ContentType: application/json
+            MessageBody: '{"error":"Not found"}'
+
+  ALBListenerHTTP:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig: {Protocol: HTTPS, Port: "443", StatusCode: HTTP_301}
+
+  # ── CloudFront CDN — US + North America latency optimization ─────────────────
+  # Caches: hotel search results, static assets, Hajj content
+  # Does NOT cache: auth, bookings, payment — pass-through to ALB
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: UTUBooking US CDN — North America edge
+        Enabled: true
+        HttpVersion: http2and3
+        PriceClass: PriceClass_100   # US + Canada + EU edges only
+        Aliases:
+          - us.utubooking.com
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CloudFrontCertificateArn
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        DefaultCacheBehavior:
+          # Default: pass through to ALB (auth, bookings, payments)
+          ViewerProtocolPolicy: redirect-to-https
+          TargetOriginId: utu-us-alb
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad  # CachingDisabled (AWS managed)
+          OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac  # AllViewerExceptHostHeader
+          AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
+          CachedMethods: [GET, HEAD, OPTIONS]
+          Compress: true
+        CacheBehaviors:
+          # Hotel search results — cache 5 min (prices change frequently)
+          - PathPattern: /api/v1/hotels/search*
+            ViewerProtocolPolicy: redirect-to-https
+            TargetOriginId: utu-us-alb
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # CachingOptimized
+            DefaultTTL: 300
+            MaxTTL: 300
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+          # Static assets — cache 1 year
+          - PathPattern: /_next/static/*
+            ViewerProtocolPolicy: redirect-to-https
+            TargetOriginId: utu-us-alb
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+            DefaultTTL: 31536000
+            MaxTTL: 31536000
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+        Origins:
+          - Id: utu-us-alb
+            DomainName: !GetAtt ALB.DNSName
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: [TLSv1.2]
+        Logging:
+          Bucket: !Sub utu-us-logs-${AWS::AccountId}.s3.amazonaws.com
+          Prefix: cloudfront/
+      Tags:
+        - {Key: Region, Value: us-east-1}
+
+  # ── S3 bucket for CloudFront logs ────────────────────────────────────────────
+  LogsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub utu-us-logs-${AWS::AccountId}
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-logs-90d
+            Status: Enabled
+            ExpirationInDays: 90
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  # ── ECS Cluster ─────────────────────────────────────────────────────────────
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: utu-us-east-1
+      ClusterSettings:
+        - {Name: containerInsights, Value: enabled}
+      CapacityProviders: [FARGATE, FARGATE_SPOT]
+      DefaultCapacityProviderStrategy:
+        - {CapacityProvider: FARGATE,      Weight: 1, Base: 2}
+        - {CapacityProvider: FARGATE_SPOT, Weight: 3}
+
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: US ECS tasks
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 3000, ToPort: 3099, SourceSecurityGroupId: !Ref ALBSecurityGroup}
+
+  # ── ElastiCache Redis ────────────────────────────────────────────────────────
+  RedisSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: US Redis subnets
+      SubnetIds: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: US Redis — ECS access only
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 6379, ToPort: 6379, SourceSecurityGroupId: !Ref ECSSecurityGroup}
+
+  RedisCluster:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupDescription: UTUBooking US Redis
+      ReplicationGroupId: utu-us-redis
+      NumNodeGroups: 3
+      ReplicasPerNodeGroup: 2
+      CacheNodeType: cache.r7g.large
+      Engine: redis
+      EngineVersion: "7.1"
+      AtRestEncryptionEnabled: true
+      TransitEncryptionEnabled: true
+      AutomaticFailoverEnabled: true
+      MultiAZEnabled: true
+      CacheSubnetGroupName: !Ref RedisSubnetGroup
+      SecurityGroupIds: [!Ref RedisSecurityGroup]
+      SnapshotRetentionLimit: 7
+      Tags:
+        - {Key: Region, Value: us-east-1}
+
+  # ── RDS Primary ──────────────────────────────────────────────────────────────
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: US RDS subnets
+      SubnetIds: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: US RDS — ECS only on 5432
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 5432, ToPort: 5432, SourceSecurityGroupId: !Ref ECSSecurityGroup}
+
+  RDSParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Family: postgres16
+      Description: UTUBooking US PostgreSQL 16
+      Parameters:
+        shared_preload_libraries: pg_stat_statements
+        pg_stat_statements.track: all
+        log_min_duration_statement: "1000"
+        max_connections: "300"
+        work_mem: "32MB"
+
+  RDSPrimary:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-us-primary-${Environment}
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: postgres
+      EngineVersion: "16"
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBName: utu_booking
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      DBParameterGroupName: !Ref RDSParameterGroup
+      VPCSecurityGroups: [!GetAtt RDSSecurityGroup.GroupId]
+      MultiAZ: true
+      StorageType: gp3
+      AllocatedStorage: "200"
+      MaxAllocatedStorage: 1000
+      StorageEncrypted: true
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      EnableCloudwatchLogsExports: [postgresql, upgrade]
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: "07:00-08:00"    # 3–4 AM EST (off-peak US)
+      DeletionProtection: true
+      Tags:
+        - {Key: Region,          Value: us-east-1}
+        - {Key: DataJurisdiction,Value: CCPA-US}
+        - {Key: Role,            Value: Primary}
+
+  RDSReadReplica:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub utu-db-us-replica-${Environment}
+      DBInstanceClass: !Ref DBInstanceClass
+      SourceDBInstanceIdentifier: !Ref RDSPrimary
+      AvailabilityZone: us-east-1b
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      VPCSecurityGroups: [!GetAtt RDSSecurityGroup.GroupId]
+      StorageEncrypted: true
+      EnablePerformanceInsights: true
+      Tags:
+        - {Key: Region, Value: us-east-1}
+        - {Key: Role,   Value: ReadReplica}
+
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: utu-us-ecs-execution-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ecs-tasks.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/utu-us
+      RetentionInDays: 30
+
+  HotelTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: utu-us-hotel
+      Port: 3003
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: ip
+      HealthCheckPath: /health
+
+  HotelListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ALBListenerHTTPS
+      Priority: 10
+      Conditions: [{Field: path-pattern, Values: [/api/v1/hotels/*]}]
+      Actions:  [{Type: forward, TargetGroupArn: !Ref HotelTargetGroup}]
+
+  HotelTaskDef:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: utu-us-hotel
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      Cpu: "512"
+      Memory: "1024"
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: hotel
+          Image: !Sub ${ECRRepository}/hotel-service:${ImageTag}
+          PortMappings: [{ContainerPort: 3003}]
+          Environment:
+            - {Name: NODE_ENV,          Value: production}
+            - {Name: REGION,            Value: us-east-1}
+            - {Name: REDIS_CLUSTER_URLS,Value: !Sub "${RedisCluster.PrimaryEndPoint.Address}:6379"}
+            - {Name: DATABASE_URL,      Value: !Sub "postgresql://${DBMasterUsername}:$(DB_PASS)@${RDSPrimary.Endpoint.Address}:5432/utu_booking"}
+            - {Name: READ_DATABASE_URL, Value: !Sub "postgresql://${DBMasterUsername}:$(DB_PASS)@${RDSReadReplica.Endpoint.Address}:5432/utu_booking"}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: us-east-1
+              awslogs-stream-prefix: hotel
+
+  HotelService:
+    Type: AWS::ECS::Service
+    DependsOn: HotelListenerRule
+    Properties:
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref HotelTaskDef
+      DesiredCount: 2
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+          SecurityGroups: [!Ref ECSSecurityGroup]
+      LoadBalancers:
+        - ContainerName: hotel
+          ContainerPort: 3003
+          TargetGroupArn: !Ref HotelTargetGroup
+
+  HotelScaling:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 20
+      MinCapacity: 2
+      ResourceId: !Sub service/${ECSCluster}/utu-us-hotel
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  HotelScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: utu-us-hotel-cpu
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref HotelScaling
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: 60.0
+        ScaleOutCooldown: 60
+        ScaleInCooldown: 300
+
+  HealthListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ALBListenerHTTPS
+      Priority: 1
+      Conditions: [{Field: path-pattern, Values: [/health]}]
+      Actions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: "200"
+            ContentType: application/json
+            MessageBody: '{"status":"ok","region":"us-east-1","jurisdiction":"CCPA-US"}'
+
+  AlarmALB5xx:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-us-alb-5xx-rate
+      MetricName: HTTPCode_ELB_5XX_Count
+      Namespace: AWS/ApplicationELB
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 3
+      Threshold: 100
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !GetAtt ALB.LoadBalancerFullName
+      AlarmActions:
+        - !Sub arn:aws:sns:us-east-1:${AWS::AccountId}:utu-us-alerts
+      TreatMissingData: notBreaching
+
+Outputs:
+  ALBDNS:
+    Value: !GetAtt ALB.DNSName
+    Export: {Name: utu-us-alb-dns}
+
+  ALBHostedZoneId:
+    Value: !GetAtt ALB.CanonicalHostedZoneID
+    Export: {Name: utu-us-alb-hosted-zone}
+
+  CloudFrontDomain:
+    Value: !GetAtt CloudFrontDistribution.DomainName
+    Description: CloudFront distribution — point CNAME us.utubooking.com here
+    Export: {Name: utu-us-cloudfront-domain}
+
+  CloudFrontDistributionId:
+    Value: !Ref CloudFrontDistribution
+    Export: {Name: utu-us-cloudfront-id}
+
+  RDSPrimaryEndpoint:
+    Value: !GetAtt RDSPrimary.Endpoint.Address
+    Description: Set as DATABASE_URL_US_EAST in backend/.env
+    Export: {Name: utu-us-rds-primary}
+
+  RDSReadEndpoint:
+    Value: !GetAtt RDSReadReplica.Endpoint.Address
+    Description: Set as READ_DB_URL_US_EAST in backend/.env
+    Export: {Name: utu-us-rds-read}
+
+  RedisEndpoint:
+    Value: !GetAtt RedisCluster.PrimaryEndPoint.Address
+    Export: {Name: utu-us-redis-endpoint}
+
+  DeployCommand:
+    Value: !Sub >-
+      aws cloudformation deploy
+      --region us-east-1
+      --stack-name utu-us-${Environment}
+      --template-file infra/cloudformation/18-us-east-1-virginia.yml
+      --capabilities CAPABILITY_NAMED_IAM
+      --parameter-overrides Environment=${Environment} CertificateArn=<ACM_ARN_US> CloudFrontCertificateArn=<CF_ACM_ARN>

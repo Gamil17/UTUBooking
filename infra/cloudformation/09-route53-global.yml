@@ -1,8 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  UTUBooking Phase 4 — Route53 Global Traffic Routing (updated)
-  Latency routing (primary) + Geoproximity (North Africa → EU-West)
-  Regions: Bahrain (me-south-1), Riyadh (me-central-1), EU-West (eu-west-1)
+  UTUBooking Phase 8-12 — Route53 Global Traffic Routing (updated)
+  Latency routing (primary) + Geoproximity overlay
+  Regions: Bahrain, Riyadh, EU-West (Ireland), London (UK), Frankfurt (EU),
+           US-East (Virginia), São Paulo (LATAM), Montreal (Canada)
   SLA target: 99.95% — health checks every 10s during Hajj peak
 
 Parameters:
@@ -10,6 +11,7 @@ Parameters:
     Type: String
     Description: Route53 Hosted Zone ID for utubooking.com
 
+  # ── Middle East ──────────────────────────────────────────────────────────────
   BahrainALBDNS:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /utu/bahrain/alb-dns
@@ -34,6 +36,62 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /utu/eu/alb-hosted-zone
 
+  # ── Phase 8: UK + EU Mainland ────────────────────────────────────────────────
+  LondonALBDNS:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/london/alb-dns
+    Description: eu-west-2 ALB DNS (stack 16)
+
+  LondonALBHostedZone:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/london/alb-hosted-zone
+
+  FrankfurtALBDNS:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/frankfurt/alb-dns
+    Description: eu-central-1 ALB DNS (stack 17)
+
+  FrankfurtALBHostedZone:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/frankfurt/alb-hosted-zone
+
+  # ── Phase 10: North America ──────────────────────────────────────────────────
+  USEastALBDNS:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/us-east/alb-dns
+    Description: us-east-1 ALB DNS (stack 18)
+
+  USEastALBHostedZone:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/us-east/alb-hosted-zone
+
+  USEastCloudFrontDNS:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/us-east/cloudfront-dns
+    Description: >
+      us-east-1 CloudFront distribution domain (e.g. dxxxx.cloudfront.net).
+      Used for api-us pinned subdomain so static assets benefit from CDN.
+
+  MontrealALBDNS:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/montreal/alb-dns
+    Description: ca-central-1 ALB DNS (stack 20)
+
+  MontrealALBHostedZone:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/montreal/alb-hosted-zone
+
+  # ── Phase 12: South America ──────────────────────────────────────────────────
+  SaoPauloALBDNS:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/sao-paulo/alb-dns
+    Description: sa-east-1 ALB DNS (stack 19)
+
+  SaoPauloALBHostedZone:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /utu/sao-paulo/alb-hosted-zone
+
+  # ── Hajj mode ───────────────────────────────────────────────────────────────
   HajjMode:
     Type: String
     Default: "false"
@@ -47,7 +105,9 @@ Conditions:
 
 Resources:
 
-  # ── Health Checks ──────────────────────────────────────────────────────────
+  # ══════════════════════════════════════════════════════════════════════════════
+  # HEALTH CHECKS
+  # ══════════════════════════════════════════════════════════════════════════════
 
   HealthCheckBahrain:
     Type: AWS::Route53::HealthCheck
@@ -100,7 +160,92 @@ Resources:
         - {Key: Region, Value: eu-west-1}
         - {Key: Name, Value: utu-eu-west-health}
 
-  # Calculated: at least 1 of 2 primary regions must be healthy
+  HealthCheckLondon:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        FullyQualifiedDomainName: !Ref LondonALBDNS
+        ResourcePath: /health
+        Port: 443
+        RequestInterval: !If [IsHajjMode, 10, 30]
+        FailureThreshold: 3
+        EnableSNI: true
+        Regions: [eu-west-1, eu-west-2, eu-central-1]
+        MeasureLatency: true
+      HealthCheckTags:
+        - {Key: Region, Value: eu-west-2}
+        - {Key: Name, Value: utu-london-health}
+
+  HealthCheckFrankfurt:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        FullyQualifiedDomainName: !Ref FrankfurtALBDNS
+        ResourcePath: /health
+        Port: 443
+        RequestInterval: !If [IsHajjMode, 10, 30]
+        FailureThreshold: 3
+        EnableSNI: true
+        Regions: [eu-west-1, eu-central-1, us-east-1]
+        MeasureLatency: true
+      HealthCheckTags:
+        - {Key: Region, Value: eu-central-1}
+        - {Key: Name, Value: utu-frankfurt-health}
+
+  HealthCheckUSEast:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        FullyQualifiedDomainName: !Ref USEastALBDNS
+        ResourcePath: /health
+        Port: 443
+        RequestInterval: !If [IsHajjMode, 10, 30]
+        FailureThreshold: 3
+        EnableSNI: true
+        Regions: [us-east-1, us-west-2, eu-west-1]
+        MeasureLatency: true
+      HealthCheckTags:
+        - {Key: Region, Value: us-east-1}
+        - {Key: Name, Value: utu-us-east-health}
+
+  HealthCheckMontreal:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        FullyQualifiedDomainName: !Ref MontrealALBDNS
+        ResourcePath: /health
+        Port: 443
+        RequestInterval: !If [IsHajjMode, 10, 30]
+        FailureThreshold: 3
+        EnableSNI: true
+        Regions: [ca-central-1, us-east-1, us-west-2]
+        MeasureLatency: true
+      HealthCheckTags:
+        - {Key: Region, Value: ca-central-1}
+        - {Key: Name, Value: utu-montreal-health}
+
+  HealthCheckSaoPaulo:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        FullyQualifiedDomainName: !Ref SaoPauloALBDNS
+        ResourcePath: /health
+        Port: 443
+        RequestInterval: !If [IsHajjMode, 10, 30]
+        FailureThreshold: 3
+        EnableSNI: true
+        Regions: [sa-east-1, us-east-1, eu-west-1]
+        MeasureLatency: true
+      HealthCheckTags:
+        - {Key: Region, Value: sa-east-1}
+        - {Key: Name, Value: utu-sao-paulo-health}
+
+  # Calculated: at least 1 of 2 Middle East primaries must be healthy (P1 alert)
   HealthCheckBothPrimaries:
     Type: AWS::Route53::HealthCheck
     Properties:
@@ -113,7 +258,10 @@ Resources:
       HealthCheckTags:
         - {Key: Name, Value: utu-both-primaries}
 
-  # ── api.utubooking.com — Latency Routing ──────────────────────────────────
+  # ══════════════════════════════════════════════════════════════════════════════
+  # api.utubooking.com — LATENCY ROUTING
+  # Route53 sends each user to the region with the lowest measured latency.
+  # ══════════════════════════════════════════════════════════════════════════════
 
   DNSApiBahrain:
     Type: AWS::Route53::RecordSet
@@ -157,10 +305,84 @@ Resources:
         HostedZoneId: !Ref EUWestALBHostedZone
         EvaluateTargetHealth: true
 
-  # ── Phase 4: Geoproximity Routing ─────────────────────────────────────────
-  # Overlay on top of latency routing — geoproximity takes precedence when
-  # a bias pushes a region's effective radius to cover the user's location.
-  # GCC users → Bahrain, KSA users → Riyadh, N.Africa users → EU-West
+  DNSApiLondon:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: london-latency
+      Region: eu-west-2
+      HealthCheckId: !Ref HealthCheckLondon
+      AliasTarget:
+        DNSName: !Ref LondonALBDNS
+        HostedZoneId: !Ref LondonALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiFrankfurt:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: frankfurt-latency
+      Region: eu-central-1
+      HealthCheckId: !Ref HealthCheckFrankfurt
+      AliasTarget:
+        DNSName: !Ref FrankfurtALBDNS
+        HostedZoneId: !Ref FrankfurtALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiUSEast:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: us-east-latency
+      Region: us-east-1
+      HealthCheckId: !Ref HealthCheckUSEast
+      AliasTarget:
+        # Point latency routing to the ALB (not CloudFront) so Route53 can
+        # measure real regional latency. CloudFront is used for the pinned
+        # api-us subdomain where CDN caching is desired.
+        DNSName: !Ref USEastALBDNS
+        HostedZoneId: !Ref USEastALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiMontreal:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: montreal-latency
+      Region: ca-central-1
+      HealthCheckId: !Ref HealthCheckMontreal
+      AliasTarget:
+        DNSName: !Ref MontrealALBDNS
+        HostedZoneId: !Ref MontrealALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiSaoPaulo:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: sao-paulo-latency
+      Region: sa-east-1
+      HealthCheckId: !Ref HealthCheckSaoPaulo
+      AliasTarget:
+        DNSName: !Ref SaoPauloALBDNS
+        HostedZoneId: !Ref SaoPauloALBHostedZone
+        EvaluateTargetHealth: true
+
+  # ══════════════════════════════════════════════════════════════════════════════
+  # api.utubooking.com — GEOPROXIMITY ROUTING (overlay)
+  # Geoproximity takes precedence when a bias expands a region's effective radius
+  # to cover the user's geographic location. Biases are tuned per market size.
+  # ══════════════════════════════════════════════════════════════════════════════
 
   DNSApiGeoBahrain:
     Type: AWS::Route53::RecordSet
@@ -171,7 +393,7 @@ Resources:
       SetIdentifier: bahrain-geo
       GeoProximityLocation:
         AWSRegion: me-south-1
-        Bias: 10
+        Bias: 10    # GCC countries — Bahrain is closest for UAE/QAT/BHR/OMN/KWT
       HealthCheckId: !Ref HealthCheckBahrain
       AliasTarget:
         DNSName: !Ref BahrainALBDNS
@@ -187,7 +409,7 @@ Resources:
       SetIdentifier: riyadh-geo
       GeoProximityLocation:
         AWSRegion: me-central-1
-        Bias: 20    # Strongest — KSA always prefers Riyadh
+        Bias: 20    # Strongest — KSA users always prefer Riyadh (lowest latency)
       HealthCheckId: !Ref HealthCheckRiyadh
       AliasTarget:
         DNSName: !Ref RiyadhALBDNS
@@ -203,14 +425,98 @@ Resources:
       SetIdentifier: eu-west-geo
       GeoProximityLocation:
         AWSRegion: eu-west-1
-        Bias: 15    # N.Africa (MAR, DZA, TUN, LBY, EGY) covered by EU-West radius
+        Bias: 15    # N.Africa (MAR, DZA, TUN, LBY, EGY) pulled into EU-West radius
       HealthCheckId: !Ref HealthCheckEUWest
       AliasTarget:
         DNSName: !Ref EUWestALBDNS
         HostedZoneId: !Ref EUWestALBHostedZone
         EvaluateTargetHealth: true
 
-  # ── Pinned subdomains ─────────────────────────────────────────────────────
+  DNSApiGeoLondon:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: london-geo
+      GeoProximityLocation:
+        AWSRegion: eu-west-2
+        Bias: 5     # GB users — slight boost ensures UK traffic stays in UK (GDPR data residency)
+      HealthCheckId: !Ref HealthCheckLondon
+      AliasTarget:
+        DNSName: !Ref LondonALBDNS
+        HostedZoneId: !Ref LondonALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiGeoFrankfurt:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: frankfurt-geo
+      GeoProximityLocation:
+        AWSRegion: eu-central-1
+        Bias: 0     # EU + TR — natural gravity; no boost needed vs London/EU-West
+      HealthCheckId: !Ref HealthCheckFrankfurt
+      AliasTarget:
+        DNSName: !Ref FrankfurtALBDNS
+        HostedZoneId: !Ref FrankfurtALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiGeoUSEast:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: us-east-geo
+      GeoProximityLocation:
+        AWSRegion: us-east-1
+        Bias: 0     # US — east coast primary; western US users may prefer this until us-west is added
+      HealthCheckId: !Ref HealthCheckUSEast
+      AliasTarget:
+        DNSName: !Ref USEastALBDNS
+        HostedZoneId: !Ref USEastALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiGeoMontreal:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: montreal-geo
+      GeoProximityLocation:
+        AWSRegion: ca-central-1
+        Bias: 5     # Canada — slight boost keeps Canadian traffic in Canada (PIPEDA/Quebec Law 25)
+      HealthCheckId: !Ref HealthCheckMontreal
+      AliasTarget:
+        DNSName: !Ref MontrealALBDNS
+        HostedZoneId: !Ref MontrealALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiGeoSaoPaulo:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api.utubooking.com.
+      Type: A
+      SetIdentifier: sao-paulo-geo
+      GeoProximityLocation:
+        AWSRegion: sa-east-1
+        Bias: 10    # LATAM — larger bias to pull Argentine/Chilean/Colombian users to BR
+      HealthCheckId: !Ref HealthCheckSaoPaulo
+      AliasTarget:
+        DNSName: !Ref SaoPauloALBDNS
+        HostedZoneId: !Ref SaoPauloALBHostedZone
+        EvaluateTargetHealth: true
+
+  # ══════════════════════════════════════════════════════════════════════════════
+  # PINNED SUBDOMAINS
+  # Used by: white-label tenants pinned to a specific region, internal tooling,
+  # GDPR data-residency enforcement where tenants must not cross jurisdictions.
+  # ══════════════════════════════════════════════════════════════════════════════
 
   DNSApiKSA:
     Type: AWS::Route53::RecordSet
@@ -230,11 +536,71 @@ Resources:
       Name: api-eu.utubooking.com.
       Type: A
       AliasTarget:
-        DNSName: !Ref EUWestALBDNS
+        DNSName: !Ref EUWestALBDNS    # eu-west-1 (Ireland) — N.Africa/Gulf diaspora
         HostedZoneId: !Ref EUWestALBHostedZone
         EvaluateTargetHealth: true
 
-  # ── CloudWatch Alarms ─────────────────────────────────────────────────────
+  DNSApiUK:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api-uk.utubooking.com.
+      Type: A
+      AliasTarget:
+        DNSName: !Ref LondonALBDNS
+        HostedZoneId: !Ref LondonALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiEUCentral:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api-eu-central.utubooking.com.
+      Type: A
+      AliasTarget:
+        DNSName: !Ref FrankfurtALBDNS
+        HostedZoneId: !Ref FrankfurtALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiUS:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api-us.utubooking.com.
+      Type: A
+      AliasTarget:
+        # CloudFront distribution — hotel search cached 5 min, static 1 year.
+        # CloudFront hosted zone ID is fixed across all distributions.
+        DNSName: !Ref USEastCloudFrontDNS
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false   # CloudFront does not support EvaluateTargetHealth=true
+
+  DNSApiCA:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api-ca.utubooking.com.
+      Type: A
+      AliasTarget:
+        DNSName: !Ref MontrealALBDNS
+        HostedZoneId: !Ref MontrealALBHostedZone
+        EvaluateTargetHealth: true
+
+  DNSApiLATAM:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: api-latam.utubooking.com.
+      Type: A
+      AliasTarget:
+        DNSName: !Ref SaoPauloALBDNS
+        HostedZoneId: !Ref SaoPauloALBHostedZone
+        EvaluateTargetHealth: true
+
+  # ══════════════════════════════════════════════════════════════════════════════
+  # CLOUDWATCH ALARMS
+  # All route to SNS topics — utu-global-alerts (Slack) and utu-p1-pagerduty.
+  # ══════════════════════════════════════════════════════════════════════════════
 
   AlarmBahrainUnhealthy:
     Type: AWS::CloudWatch::Alarm
@@ -290,10 +656,101 @@ Resources:
         - !Sub arn:aws:sns:us-east-1:${AWS::AccountId}:utu-global-alerts
       TreatMissingData: breaching
 
+  AlarmLondonUnhealthy:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-london-unhealthy
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref HealthCheckLondon
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Sub arn:aws:sns:us-east-1:${AWS::AccountId}:utu-global-alerts
+      TreatMissingData: breaching
+
+  AlarmFrankfurtUnhealthy:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-frankfurt-unhealthy
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref HealthCheckFrankfurt
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Sub arn:aws:sns:us-east-1:${AWS::AccountId}:utu-global-alerts
+      TreatMissingData: breaching
+
+  AlarmUSEastUnhealthy:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-us-east-unhealthy
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref HealthCheckUSEast
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Sub arn:aws:sns:us-east-1:${AWS::AccountId}:utu-global-alerts
+      TreatMissingData: breaching
+
+  AlarmMontrealUnhealthy:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-montreal-unhealthy
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref HealthCheckMontreal
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Sub arn:aws:sns:us-east-1:${AWS::AccountId}:utu-global-alerts
+      TreatMissingData: breaching
+
+  AlarmSaoPauloUnhealthy:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: utu-sao-paulo-unhealthy
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref HealthCheckSaoPaulo
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Sub arn:aws:sns:us-east-1:${AWS::AccountId}:utu-global-alerts
+      TreatMissingData: breaching
+
+  # P1: both ME primaries down simultaneously → PagerDuty
   AlarmAllPrimariesDown:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: utu-ALL-regions-down-P1
+      AlarmName: utu-ALL-ME-regions-down-P1
       Namespace: AWS/Route53
       MetricName: HealthCheckStatus
       Dimensions:
@@ -309,6 +766,7 @@ Resources:
       TreatMissingData: breaching
 
 Outputs:
+  # ── Health Check IDs (exported for CF 14 SLA composite alarm) ──────────────
   HealthCheckBahrainId:
     Value: !Ref HealthCheckBahrain
     Export: {Name: utu-health-check-bahrain}
@@ -320,3 +778,52 @@ Outputs:
   HealthCheckEUWestId:
     Value: !Ref HealthCheckEUWest
     Export: {Name: utu-health-check-eu-west}
+
+  HealthCheckLondonId:
+    Value: !Ref HealthCheckLondon
+    Export: {Name: utu-health-check-london}
+
+  HealthCheckFrankfurtId:
+    Value: !Ref HealthCheckFrankfurt
+    Export: {Name: utu-health-check-frankfurt}
+
+  HealthCheckUSEastId:
+    Value: !Ref HealthCheckUSEast
+    Export: {Name: utu-health-check-us-east}
+
+  HealthCheckMontrealId:
+    Value: !Ref HealthCheckMontreal
+    Export: {Name: utu-health-check-montreal}
+
+  HealthCheckSaoPauloId:
+    Value: !Ref HealthCheckSaoPaulo
+    Export: {Name: utu-health-check-sao-paulo}
+
+  HealthCheckBothPrimariesId:
+    Value: !Ref HealthCheckBothPrimaries
+    Export: {Name: utu-health-check-both-primaries}
+
+  # ── Pinned subdomain summary ───────────────────────────────────────────────
+  PinnedSubdomains:
+    Description: >
+      Pinned regional subdomains. Use these in white-label tenant configs
+      when GDPR/PIPEDA/LGPD data-residency requires a fixed region.
+    Value: !Sub |
+      api-ksa.utubooking.com       → me-central-1 (Riyadh)
+      api-eu.utubooking.com        → eu-west-1    (Ireland / N.Africa)
+      api-uk.utubooking.com        → eu-west-2    (London  / UK GDPR)
+      api-eu-central.utubooking.com → eu-central-1 (Frankfurt / GDPR + KVKK)
+      api-us.utubooking.com        → us-east-1    (Virginia via CloudFront / CCPA)
+      api-ca.utubooking.com        → ca-central-1 (Montreal / PIPEDA + Qc Law 25)
+      api-latam.utubooking.com     → sa-east-1    (São Paulo / LGPD)
+
+  DeployCommand:
+    Description: Update existing stack (all parameters already in SSM)
+    Value: !Sub |
+      aws cloudformation deploy \
+        --stack-name utu-route53-global \
+        --template-file infra/cloudformation/09-route53-global.yml \
+        --parameter-overrides \
+          HostedZoneId=<YOUR_HOSTED_ZONE_ID> \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --region us-east-1
