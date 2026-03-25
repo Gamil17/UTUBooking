@@ -5,6 +5,33 @@
 - Social: LinkedIn (professional), Instagram (visual), WhatsApp (Arabic)
 - NEVER publish content — all drafts require human approval
 
+## SEO Copywriter Skill — Always-On Rules
+
+- Skill location: `skills/seo-copywriter/SKILL.md`
+- Trigger: "Write SEO blog post about [topic]" or "SEO: [topic]"
+- Output folder: `marketing/seo/drafts/` (EN) and `marketing/seo/drafts/` (AR)
+- Master keywords: `skills/seo-copywriter/keywords/target-keywords.md`
+- Monthly target: 4 EN posts + 2 AR posts
+- ROI tracker: `marketing/seo/tracking/roi-tracker.md`
+- Governance: `marketing/seo/governance/golden-rules.md`
+
+### 5 Golden Rules (non-negotiable)
+1. NEVER publish without human review — Claude drafts, human approves
+2. Fact-check ALL statistics — click every source link before publishing
+3. Arabic content requires native Gulf Arabic speaker review before CMS upload
+4. Review and update SKILL.md at the start of every quarter
+5. If post quality drops, run `git diff` on SKILL.md before continuing
+
+### UTM Tagging Rule
+ALL blog CTAs must include UTM parameters:
+`?utm_source=blog&utm_medium=organic&utm_campaign=[post-slug]&utm_content=[intro|mid|conclusion|faq]`
+
+### Quarterly SKILL.md Review Prompt
+Run this at the start of each quarter:
+"Read skills/seo-copywriter/SKILL.md and list sections that may be outdated.
+Check: new markets launched, new UTUBooking pages for internal linking,
+new competitor activity, seasonal keyword updates. Suggest specific edits."
+
 ## Phase 5 Markets (Added March 2027)
 
 ### Turkey (TR)
