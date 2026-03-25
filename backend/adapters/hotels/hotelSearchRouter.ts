@@ -16,6 +16,10 @@
  */
 
 import { searchHotels as searchHotelsBC, BookingComError } from './bookingCom';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { overlayPartnerData } = require('../../hotel-service/src/services/partnership.service') as {
+  overlayPartnerData: (offers: HotelOffer[]) => Promise<HotelOffer[]>;
+};
 // hotelbeds.js is CommonJS — use require + type cast
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const hotelbeds = require('../hotelbeds.js') as {
@@ -53,6 +57,10 @@ export interface HotelOffer {
   availability:     boolean;
   source:           'hotelbeds' | 'bookingcom';
   reviewScore?:     number | null;
+  // Direct partnership fields — set by partnership.service overlayPartnerData()
+  isDirectPartner?: boolean;
+  commissionRate?:  number;          // e.g. 15.0 = 15%
+  partnerTier?:     'bronze' | 'silver' | 'gold' | 'platinum';
 }
 
 export interface SearchParams {
@@ -155,12 +163,14 @@ export async function searchHotelsRouted(params: SearchParams): Promise<HotelOff
   } = params;
 
   // 1 — Haram: always Hotelbeds only (best Makkah/Madinah inventory)
+  //     After fetch, overlay direct-partnership metadata so UI can badge partner hotels.
   if (_isHaramDestination(destination, isHajj, isUmrah)) {
-    return hotelbeds.searchHotels(destination, checkIn, checkOut, guests, {
+    const haramOffers = await hotelbeds.searchHotels(destination, checkIn, checkOut, guests, {
       stars, priceMin, priceMax,
       currency: currency ?? 'SAR',
       isHajj, isUmrah,
     });
+    return overlayPartnerData(haramOffers);
   }
 
   // 2 — EU + UK: Booking.com primary, Hotelbeds fallback

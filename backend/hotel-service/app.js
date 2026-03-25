@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const hotelsRouter = require('./src/routes/hotels.router');
+const partnershipsRouter = require('./src/routes/partnerships.router');
 const errorHandler = require('./src/middleware/errorHandler');
 
 const app = express();
@@ -10,6 +11,7 @@ app.use(express.json());
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'hotel-service' }));
 
 app.use('/api/v1/hotels', hotelsRouter);
+app.use('/api/v1/partnerships', partnershipsRouter);
 
 app.use(errorHandler);
 

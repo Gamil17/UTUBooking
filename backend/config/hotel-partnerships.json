@@ -1,0 +1,107 @@
+{
+  "_comment": "Direct hotel partnership registry — Phase 2 seed data (Makkah flagships).",
+  "_note": "This file mirrors the hotel_partnerships DB table for local dev / offline use. Production reads from the DB. Hotelbeds hotel codes must match exactly what the Hotelbeds API returns in hotel.code.",
+  "_fields": {
+    "hotelbedsCode": "Used to match live search results from Hotelbeds adapter",
+    "commissionRate": "Percentage (e.g. 15.0 = 15%). Overrides GDS commission if higher",
+    "tier": "bronze | silver | gold | platinum — determines display badge + priority sort",
+    "perks": "Amenity flags injected into HotelOffer.halalAmenities when partner match found",
+    "distanceHaramM": "Haversine metres from Al-Masjid Al-Haram (21.4225°N, 39.8262°E)"
+  },
+  "partners": [
+    {
+      "referenceCode": "PART-2026-MKK-001",
+      "nameEn": "Swissotel Makkah",
+      "nameAr": "سويس أوتيل مكة",
+      "hotelbedsCode": "SWISSOTEL_MKK",
+      "amadeusCode": null,
+      "bookingComPropertyId": null,
+      "city": "Makkah",
+      "countryCode": "SA",
+      "distanceHaramM": 200,
+      "stars": 5,
+      "commissionRate": 15.0,
+      "tier": "gold",
+      "status": "active",
+      "contractStart": "2026-03-25",
+      "contractEnd": "2027-03-25",
+      "autoRenew": true,
+      "contact": {
+        "name": "Ahmed Al-Rashidi",
+        "email": "ahmed.alrashidi@swissotel-makkah.com",
+        "phone": "+966-12-000-0001"
+      },
+      "perks": {
+        "earlyCheckIn": true,
+        "lateCheckOut": true,
+        "dedicatedConcierge": true,
+        "zamzamWaterDelivery": true,
+        "haramViewPriority": true
+      },
+      "notes": "Phase 2 flagship. Tower facing Al-Masjid Al-Haram. Commission review at 6-month mark."
+    },
+    {
+      "referenceCode": "PART-2026-MKK-002",
+      "nameEn": "Hilton Makkah Convention Hotel",
+      "nameAr": "هيلتون مكة للمؤتمرات",
+      "hotelbedsCode": "HILTON_MKK",
+      "amadeusCode": null,
+      "bookingComPropertyId": null,
+      "city": "Makkah",
+      "countryCode": "SA",
+      "distanceHaramM": 350,
+      "stars": 5,
+      "commissionRate": 13.5,
+      "tier": "gold",
+      "status": "active",
+      "contractStart": "2026-03-25",
+      "contractEnd": "2027-03-25",
+      "autoRenew": true,
+      "contact": {
+        "name": "Sara Al-Otaibi",
+        "email": "sarah.alotaibi@hilton.com",
+        "phone": "+966-12-000-0002"
+      },
+      "perks": {
+        "earlyCheckIn": true,
+        "haramShuttleService": true,
+        "groupBookingDiscount": true,
+        "pilgrimLoungeAccess": true
+      },
+      "notes": "Phase 2 flagship. Strong group/corporate booking history. Hajj block allocation Q4 2026."
+    },
+    {
+      "referenceCode": "PART-2026-MKK-003",
+      "nameEn": "Dar Al Tawhid Intercontinental Makkah",
+      "nameAr": "دار التوحيد إنتركونتيننتال مكة",
+      "hotelbedsCode": "DARTAWHID_MKK",
+      "amadeusCode": null,
+      "bookingComPropertyId": null,
+      "city": "Makkah",
+      "countryCode": "SA",
+      "distanceHaramM": 50,
+      "stars": 5,
+      "commissionRate": 14.0,
+      "tier": "platinum",
+      "status": "active",
+      "contractStart": "2026-03-25",
+      "contractEnd": "2027-03-25",
+      "autoRenew": true,
+      "contact": {
+        "name": "Mohammed Al-Zahrani",
+        "email": "m.alzahrani@ihg.com",
+        "phone": "+966-12-000-0003"
+      },
+      "perks": {
+        "earlyCheckIn": true,
+        "lateCheckOut": true,
+        "dedicatedConcierge": true,
+        "zamzamWaterDelivery": true,
+        "haramViewPriority": true,
+        "privatePrayerRoom": true,
+        "hajjGroupCoordinator": true
+      },
+      "notes": "Platinum tier. Closest property to Al-Haram (50m). Priority inventory for Hajj/Umrah."
+    }
+  ]
+}
