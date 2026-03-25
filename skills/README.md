@@ -1,5 +1,5 @@
 # UTUBooking Skills Index
-**Version:** 1.4.0 "SEO Command Center" (pending tag)
+**Version:** 1.5.0 "Marketing Skills Suite" (pending tag)
 **Last updated:** 2026-03-25
 
 All Claude skills for UTUBooking.com. Each skill is a persistent instruction file
@@ -57,13 +57,34 @@ Key files:
 
 ---
 
-## Business Operations Skills
+## Marketing Skills Suite (Ryan Doser Method — Part 4)
+
+### Foundation Skills (run these on every output)
+
+| Skill | File | Trigger |
+|---|---|---|
+| Anti-Slop Filter | `anti-slop.md` | "Run anti-slop on this content" |
+| Skill Creator | `skill-creator/SKILL.md` | "Create a new skill for [task]" |
+| Content Reviewer | `marketing/content-reviewer.md` | "Review this content before publishing" |
+
+### Content Creation Skills
+
+| Skill | File | Trigger |
+|---|---|---|
+| Social Post Kit | `social-post-kit.md` | "Create social posts for [topic]" |
+| LinkedIn Post Writer | `marketing/linkedin-post-writer.md` | "Write a LinkedIn post about [topic]" |
+| Email Newsletter Writer | `marketing/email-newsletter-writer.md` | "Write a newsletter about [topic]" |
+| Email CTAs | `marketing/email-ctas.md` | "Write email CTA for [campaign]" |
+| Content Repurpose | `marketing/content-repurpose.md` | "Repurpose this post for social/email" |
+| Short-Form Video Script | `marketing/short-form-video-script.md` | "Write a Reel/TikTok script about [topic]" |
+| Paid Ads | `marketing/paid-ads.md` | "Write Google/Meta ads for [campaign]" |
+
+### Business Operations Skills
 
 | Skill | File | Purpose |
 |---|---|---|
 | Proposal Generator | `proposal-generator.md` | Generate client proposals |
 | Weekly Report | `weekly-report.md` | Weekly ops summary |
-| Social Post Kit | `social-post-kit.md` | LinkedIn / Instagram / WhatsApp posts |
 
 ### Agent Skills (9 agents)
 `agents/`: orchestrator, dev, marketing, sales, hr, finance, product, cs, legal
@@ -95,3 +116,4 @@ Key files:
 | v1.2.0 | Global Ummah | Phase 8-12 + compliance |
 | v1.3.0 | Content Engine | SEO Copywriter Skill + 90-day calendar |
 | v1.4.0 | SEO Command Center | All 5 AI Ranking skills + GA4/GSC/DataForSEO |
+| v1.5.0 | Marketing Skills Suite | 9 marketing skills: anti-slop, skill-creator, LinkedIn, email, ads, video, repurpose, CTA, reviewer |
