@@ -1,7 +1,30 @@
 # UTUBooking SEO Monthly Content Engine
-**Version:** 1.0 — March 2026
+**Version:** 1.1 — March 2026
 **Target output:** 4 EN posts + 2 AR posts per month
 **Human time investment:** ~3 hours/month
+
+---
+
+## Recurring Cadence (Course Part 5 — Stage 6)
+
+| Cadence | Action | Skill |
+|---|---|---|
+| Weekly Mon | Pull GSC + GA4 performance report | seo-command-center |
+| Weekly | Review opportunities (low CTR, positions 11-30) | seo-command-center |
+| Monthly | AI Search Starter Kit audit on top 5 pages | seo-audit |
+| Monthly | Generate 4-6 new content briefs from keyword gaps | keyword-research |
+| Monthly | Write and publish 4-6 blog posts via full pipeline | seo-content-writer |
+| Monthly | Answer Capsule rewrites on 2-3 existing posts | geo-optimizer |
+| Quarterly | Refresh tone-of-voice.md + sitemap.csv | Manual |
+| Quarterly | Full site GEO audit — report to stakeholders | seo-audit |
+
+### Weekly Monday prompt (copy each Monday)
+
+```
+Use the seo-command-center skill to generate this week's SEO performance report
+for UTUBooking.com. Pull GA4 + GSC data, flag any positions that dropped more
+than 3 places, and identify the top 3 opportunities for this week.
+```
 
 ---
 
