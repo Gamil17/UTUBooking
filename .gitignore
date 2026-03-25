@@ -50,3 +50,6 @@ skills/seo-command-center/mcp-gsc/venv/
 skills/seo-command-center/mcp-gsc/token.json
 skills/seo-command-center/mcp-gsc/client_secrets.json
 skills/seo-command-center/mcp-gsc/.venv/
+
+# API keys
+APIs.env

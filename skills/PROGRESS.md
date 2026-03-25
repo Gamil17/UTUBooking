@@ -7,16 +7,98 @@
 
 # MARKETING SKILLS SYSTEM (Ryan Doser — 10X Marketing)
 
-## Stage 1: Environment
+## v1.0 Implementation Plan (6 Stages) — UTUBooking Adapted
+
+### Stage 1: Environment
 
 | # | Item | Status | Notes |
 |---|---|---|---|
 | 1.1 | VS Code + Claude Code extension | ✅ | Active |
 | 1.2 | Claude Max subscription authenticated | ✅ | Active session |
-| 1.3 | Folder structure (Marketing/, Skills/) | ✅ | `marketing/` + `skills/` + all subfolders |
-| 1.4 | YouTube/ folder | ⏳ | Not needed yet — create when video content starts |
-| 1.5 | GitHub repo initialized and committed | ✅ | Branch: `master` |
-| 1.6 | .gitignore — .env and credentials excluded | ✅ | Active |
+| 1.3 | Folder structure (marketing/, skills/, blog-drafts/, social/, email/) | ✅ | All present |
+| 1.4 | YouTube/ folder | ⏳ | Create when video content starts |
+| 1.5 | GitHub repo initialized | ✅ | Branch: `master` |
+| 1.6 | `.gitignore` — `.env`, `APIs.env`, credentials excluded | ✅ | Updated |
+| 1.7 | `APIs.env` file created with `OPENROUTER_API_KEY` | ⚠️ | Copy `APIs.env.example` → `APIs.env`, add key from openrouter.ai |
+
+### Stage 2: Core Files
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 2.1 | `CLAUDE.md` — business context, YouTube/blog, standing rules | ✅ | AI CMO Mode section complete |
+| 2.2 | Style profile — 10 voice examples + banned phrases | ✅ | `skills/seo-content-writer/references/tone-of-voice.md` |
+| 2.3 | `APIs.env` populated with OpenRouter key | ⚠️ | Get key at openrouter.ai/settings/keys |
+| 2.4 | Test: ask "What do you know about my business?" — accurate? | ⏳ | Run in new Claude Code session |
+| 2.5 | Test: ask "Write a LinkedIn post about the proximity filter" — sounds right? | ⏳ | |
+
+### Stage 3: Deploy the 6 Real Skills
+
+| # | Skill | File | Status |
+|---|---|---|---|
+| 3.1 | SEO Blog Post Writer | `skills/seo-content-writer/SKILL.md` | ✅ (UTUBooking: original content, not YouTube→WP) |
+| 3.2 | Skill Creator | `skills/skill-creator/SKILL.md` | ✅ v1.2.0 spec |
+| 3.3 | anti-slop | `skills/anti-slop.md` | ✅ 4-part system + slop word list |
+| 3.4 | Auto-Improve | `skills/auto-improve.md` | ✅ passive, user-invocable: false |
+| 3.5 | Crosscheck | `skills/crosscheck.md` | ✅ GPT+Gemini via OpenRouter |
+| 3.6 | MCP Setup | `skills/mcp-setup.md` | ✅ CLI commands + troubleshooting |
+| 3.7 | Verify: ask "What skills do you have?" | ⏳ | All 6+ should be listed with descriptions |
+
+### Stage 4: CMS Publishing Setup (UTUBooking — Next.js, not WordPress)
+
+> **UTUBooking adaptation:** Ryan Doser uses WordPress MCP. UTUBooking uses Next.js.
+> The publishing workflow is: `marketing/blog-drafts/[slug].md` → editorial review → CMS upload.
+> WordPress MCP steps do not apply.
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 4.1 | Blog draft output folder set up | ✅ | `marketing/blog-drafts/` ready |
+| 4.2 | Blog draft naming convention established | ✅ | `YYYY-MM-DD-[keyword-slug]-EN.md` |
+| 4.3 | `meta.json` template for each post | ⏳ | Create: `{title, meta_desc, word_count, primary_keyword, status}` |
+| 4.4 | CMS upload workflow documented | ⏳ | Define: markdown → which CMS → who publishes |
+| 4.5 | WordPress MCP (if separate WP blog exists) | ⏳ | Run `claude mcp add --transport http wordpress <url> --header "Authorization: Bearer <token>"` |
+
+### Stage 5: MCP Connections
+
+| # | MCP | Status | Action |
+|---|---|---|---|
+| 5.1 | OpenRouter — Crosscheck + image gen | ⚠️ | Add `OPENROUTER_API_KEY` to `APIs.env` |
+| 5.2 | GA4 | ⚠️ | `pipx install analytics-mcp` + Google Cloud service account |
+| 5.3 | GSC | ⚠️ | Drop `client_secrets.json` in `skills/seo-command-center/mcp-gsc/` |
+| 5.4 | DataForSEO | ⚠️ | Add credentials to `.env.mcp` |
+| 5.5 | Verify all: `claude mcp list` | ⏳ | Run after each MCP is configured |
+
+Full SOP: `skills/seo-command-center/SETUP.md`
+
+### Stage 6: First Blog Post (UTUBooking Adapted)
+
+UTUBooking's posts are original pilgrimage content — not YouTube repurposing.
+Use the 4-step pipeline below (no Blotato, no WordPress auto-publish).
+
+**Pipeline prompt:**
+```
+Use the seo-content-writer skill to create a blog post.
+
+Primary keyword: hotels near Masjid Al-Haram
+Content angle: How to use walking time — not star rating — to choose the right hotel
+Target audience: First-time Umrah traveler from the UK
+Word count: 1,200 words (maximum — no fluff past 1,200)
+CTA goal: Search hotels on UTUBooking proximity filter
+Negative keywords: tourist, seamless, hassle-free, world-class, Wego, Almosafer
+
+Start with Step 1. Present outline — WAIT for approval before writing.
+After writing: run anti-slop.md. Save to marketing/blog-drafts/[slug]-EN.md
+```
+
+**Post-delivery checklist:**
+- [ ] Intro is 1-2 sentences. Primary keyword in sentence 1, bolded once.
+- [ ] ZERO em dashes, ZERO emojis, ZERO semicolons, ZERO slop words
+- [ ] Word count does not exceed 1,200 words
+- [ ] FAQ section present with 3+ questions
+- [ ] 3-5 internal links from `sitemap.csv`
+- [ ] FAQ Schema JSON-LD block delivered
+- [ ] All external links verified working
+- [ ] File saved to `marketing/blog-drafts/[YYYY-MM-DD]-[slug]-EN.md`
+- [ ] `meta.json` saved alongside: title, meta desc (max 155 chars), word count
 
 ## Stage 2: Core Foundation
 
