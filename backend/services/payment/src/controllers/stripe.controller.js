@@ -1,7 +1,7 @@
 const repo   = require('../db/payment.repo');
 const stripe = require('../gateways/stripe.gateway');
 const audit  = require('../services/audit.service');
-const { stripeInitiateSchema, validate } = require('../validators/payment.validator');
+const { stripeInitiateSchema, stripeElementSchema, validate } = require('../validators/payment.validator');
 const FRONTEND_URL        = process.env.FRONTEND_URL ?? 'http://frontend:3000';
 const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
 
@@ -187,4 +187,76 @@ async function webhook(req, res, next) {
   }
 }
 
-module.exports = { initiate, webhook };
+// ─── POST /api/payments/stripe/element/initiate ──────────────────────────────
+// Payment Element flow for European markets.
+// Returns clientSecret for Stripe.js `Elements` provider + `PaymentElement` mount.
+// Frontend must call stripe.confirmPayment({ elements, confirmParams: { return_url } }).
+
+async function initiateElement(req, res, next) {
+  try {
+    const { error, value } = validate(stripeElementSchema, req.body);
+    if (error) {
+      return res.status(400).json({
+        error:   'VALIDATION_ERROR',
+        details: error.details.map((d) => d.message),
+      });
+    }
+
+    const { bookingId, amount, currency, description, countryCode } = value;
+
+    const payment = await repo.createPayment({
+      bookingId,
+      amount,
+      currency,
+      method: 'stripe_element', // real method resolved from webhook (sepa_debit, ideal, etc.)
+    });
+
+    await audit.log({
+      paymentId: payment.id, bookingId, event: 'element_initiate',
+      gateway: 'stripe', amount, currency, status: 'pending',
+      meta: { countryCode },
+    });
+
+    let intent;
+    try {
+      intent = await stripe.createPaymentElementIntent({
+        amount, currency, bookingId, description, countryCode,
+      });
+    } catch (err) {
+      await repo.updatePayment(payment.id, {
+        status:          'failed',
+        gateway_payload: { error: err.message },
+      });
+      await audit.log({
+        paymentId: payment.id, bookingId, event: 'element_initiate_failed',
+        gateway: 'stripe', amount, currency, status: 'failed',
+        meta: { error: err.message },
+      });
+      return next(err);
+    }
+
+    await repo.updatePayment(payment.id, {
+      gateway_ref:     intent.paymentIntentId,
+      gateway_payload: { id: intent.paymentIntentId, status: intent.status },
+    });
+
+    await audit.log({
+      paymentId: payment.id, bookingId, event: 'element_initiate_success',
+      gateway: 'stripe', amount, currency, status: 'pending',
+      meta: { paymentIntentId: intent.paymentIntentId, countryCode },
+    });
+
+    return res.status(201).json({
+      paymentId:       payment.id,
+      paymentIntentId: intent.paymentIntentId,
+      clientSecret:    intent.clientSecret,
+      status:          'pending',
+      // Frontend: pass clientSecret to Stripe Elements provider, mount PaymentElement,
+      // then call stripe.confirmPayment({ elements, confirmParams: { return_url } })
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { initiate, initiateElement, webhook };

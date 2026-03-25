@@ -22,11 +22,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 // ─── createPaymentIntent ──────────────────────────────────────────────────────
 
 /**
- * Creates a Stripe PaymentIntent for a booking.
- * Returns { paymentIntentId, clientSecret } — pass clientSecret to the frontend.
+ * Creates a Stripe PaymentIntent (card-only legacy flow).
+ * Used by existing GCC/MENA markets where card is the only method.
  *
  * @param {object} params
- * @param {number} params.amount      — SAR amount (e.g. 1250.00)
+ * @param {number} params.amount      — amount in currency units (e.g. 1250.00 SAR)
  * @param {string} params.currency    — ISO currency code (default: 'SAR')
  * @param {string} params.bookingId   — stored in Stripe metadata for reconciliation
  * @param {string} params.description — shown on Stripe dashboard
@@ -42,6 +42,71 @@ async function createPaymentIntent({ amount, currency = 'SAR', bookingId, descri
     description,
     metadata:             { bookingId },
     // 3DS handled automatically by Stripe when using PaymentIntents + stripe.js
+  });
+
+  return {
+    paymentIntentId: intent.id,
+    clientSecret:    intent.client_secret,
+    status:          intent.status,
+    raw:             intent,
+  };
+}
+
+// ─── createPaymentElementIntent ───────────────────────────────────────────────
+
+/**
+ * Creates a Stripe PaymentIntent for the Stripe Payment Element (EU flow).
+ *
+ * Key difference from createPaymentIntent():
+ *   - Uses `automatic_payment_methods: { enabled: true }` instead of
+ *     `payment_method_types: ['card']`.
+ *   - Stripe automatically surfaces the right local methods based on
+ *     the currency and the customer's browser locale:
+ *       EUR + NL  → iDEAL, SEPA Debit
+ *       EUR + BE  → Bancontact, SEPA
+ *       GBP       → Klarna, Apple Pay, Google Pay
+ *       PLN       → BLIK, card
+ *       CHF       → TWINT (if enabled in Dashboard), card
+ *
+ * Frontend flow:
+ *   1. Call this endpoint → receive clientSecret
+ *   2. Create Stripe.js `Elements` with clientSecret + appearance
+ *   3. Mount `PaymentElement` (auto UI)
+ *   4. Call `stripe.confirmPayment({ elements, confirmParams: { return_url } })`
+ *   5. Stripe handles redirect (iDEAL, Bancontact, Sofort) or in-page (card, BLIK)
+ *   6. On return_url load, call stripe.retrievePaymentIntent(clientSecret) to confirm
+ *   7. Webhook fires `payment_intent.succeeded` as normal
+ *
+ * Dashboard prerequisites — enable these in Stripe Dashboard → Settings → Payment Methods:
+ *   SEPA Direct Debit · iDEAL · Bancontact · Klarna · BLIK
+ *   Apple Pay · Google Pay (ensure GBP + EUR wallets added)
+ *   [Giropay: discontinued June 2024 — do not enable]
+ *   [Sofort: Stripe deprecated — replaced by Klarna bank-pay]
+ *
+ * @param {object} params
+ * @param {number} params.amount      — amount in currency minor units (pence, cents, etc.)
+ *                                      or decimal (gateway converts)
+ * @param {string} params.currency    — ISO currency code (EUR, GBP, PLN, CHF, etc.)
+ * @param {string} params.bookingId
+ * @param {string} params.description
+ * @param {string} [params.countryCode] — optional, stored in metadata for analytics
+ *
+ * @returns {{ paymentIntentId, clientSecret, status, raw }}
+ */
+async function createPaymentElementIntent({
+  amount,
+  currency = 'EUR',
+  bookingId,
+  description,
+  countryCode,
+}) {
+  const intent = await stripe.paymentIntents.create({
+    amount:                   Math.round(parseFloat(amount) * 100),
+    currency:                 currency.toLowerCase(),
+    automatic_payment_methods: { enabled: true },
+    capture_method:           'automatic',
+    description,
+    metadata:                 { bookingId, countryCode: countryCode ?? '' },
   });
 
   return {
@@ -85,4 +150,4 @@ function mapStatus(stripeStatus) {
   return map[stripeStatus] || 'pending';
 }
 
-module.exports = { createPaymentIntent, constructWebhookEvent, mapStatus };
+module.exports = { createPaymentIntent, createPaymentElementIntent, constructWebhookEvent, mapStatus };

@@ -12,6 +12,9 @@ const razorpayCtrl  = require('../controllers/razorpay.controller');
 const twintCtrl     = require('../controllers/twint.controller');
 const paypalCtrl    = require('../controllers/paypal.controller');
 const affirmCtrl    = require('../controllers/affirm.controller');
+const interacCtrl      = require('../controllers/interac.controller');
+const pixCtrl          = require('../controllers/pix.controller');
+const mercadopagoCtrl  = require('../controllers/mercadopago.controller');
 const {
   stcpayWebhookAuth,
   moyasarWebhookAuth,
@@ -118,6 +121,42 @@ router.post('/affirm/webhook',
   express.raw({ type: 'application/json', limit: '64kb' }),
   rawBodyCapture,
   affirmCtrl.webhook);
+
+// ─── Interac Online (Canada — CAD, via Bambora/Worldline) ────────────────────
+// Webhook is form-urlencoded POST from Bambora (no HMAC on standard plans).
+// Verify authenticity by re-fetching the transaction from Bambora API.
+// returnFromBank is a GET redirect — customer lands here from Interac bank portal.
+router.post('/interac/initiate',           interacCtrl.initiate);
+router.get('/interac/return',              interacCtrl.returnFromBank);
+router.post('/interac/callback',
+  express.urlencoded({ extended: false }),
+  interacCtrl.webhook);
+
+// ─── Pix (Brazil — BRL, primary) ─────────────────────────────────────────────
+// Pix is instant — frontend polls /status every 3s after showing QR code.
+// Shared Stripe webhook handles both Pix + Boleto (same Stripe account).
+router.post('/pix/initiate',             pixCtrl.inititatePix);
+router.get('/pix/status/:intentId',      pixCtrl.pixStatus);
+router.post('/pix/webhook',
+  express.raw({ type: 'application/json', limit: '64kb' }),
+  rawBodyCapture,
+  pixCtrl.pixWebhook);
+
+// ─── Boleto Bancário (Brazil — BRL, fallback for unbanked) ───────────────────
+// Boleto expires in 3 days. Frontend shows countdown timer.
+// Stripe webhook (above) handles Boleto events — no separate webhook route.
+router.post('/boleto/initiate',          pixCtrl.initiateBoleto);
+
+// ─── MercadoPago (LATAM — AR/CO/CL/UY/MX/PE) ─────────────────────────────────
+// Redirect-based Checkout Pro. Covers local methods per country.
+// No HMAC webhook signature — verify by re-fetching payment from MP API.
+router.post('/mercadopago/initiate',     mercadopagoCtrl.initiate);
+router.get('/mercadopago/success',       mercadopagoCtrl.success);
+router.get('/mercadopago/failure',       mercadopagoCtrl.failure);
+router.get('/mercadopago/pending',       mercadopagoCtrl.pending);
+router.post('/mercadopago/webhook',
+  express.urlencoded({ extended: false }),
+  mercadopagoCtrl.webhook);
 
 // ─── Status lookup ────────────────────────────────────────────────────────────
 router.get('/:bookingId', async (req, res, next) => {

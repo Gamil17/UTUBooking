@@ -49,7 +49,7 @@ export const GATEWAY_BY_COUNTRY: Record<string, string> = {
 
   // ── North America (Phase 10) ───────────────────────────────────────────────
   US: 'stripe',    // USA — Stripe primary (Cards, Apple Pay, Google Pay); PayPal + Affirm BNPL secondary
-  CA: 'stripe',    // Canada — Stripe Card, Interac (PIPEDA + Quebec Law 25)
+  CA: 'interac',   // Canada — Interac Online primary (via Bambora); Stripe card fallback for non-Interac
 
   // ── Oceania ────────────────────────────────────────────────────────────────
   AU: 'stripe',    // Australia — Stripe Card, Apple Pay, Google Pay
@@ -103,12 +103,15 @@ export const GATEWAY_BY_COUNTRY: Record<string, string> = {
   CH: 'twint',     // Switzerland — TWINT primary, Stripe card fallback
 
   // ── South America (Phase 12) ───────────────────────────────────────────────
-  BR: 'stripe',    // Brazil — Stripe (PIX available via Stripe for BRL)
-  AR: 'stripe',    // Argentina
-  CO: 'stripe',    // Colombia
-  CL: 'stripe',    // Chile
-  PE: 'stripe',    // Peru
-  MX: 'stripe',    // Mexico
+  // Pix is mandatory in Brazil — 80%+ of transactions. Boleto is fallback for unbanked.
+  // MercadoPago covers all LATAM via single integration (cards + local methods per country).
+  BR: 'pix',          // Brazil — Pix QR primary (instant, via Stripe); Boleto + card fallback
+  AR: 'mercadopago',  // Argentina — PSP, Rapipago, Pago Fácil, cuotas via MercadoPago
+  CO: 'mercadopago',  // Colombia — PSE, Efecty, cards via MercadoPago
+  CL: 'mercadopago',  // Chile — WebPay, Khipu, Multicaja via MercadoPago
+  PE: 'mercadopago',  // Peru — PagoEfectivo, cards via MercadoPago
+  UY: 'mercadopago',  // Uruguay — Abitab, Redpagos, cards via MercadoPago
+  MX: 'mercadopago',  // Mexico — OXXO, SPEI, cards via MercadoPago
 };
 
 /**
@@ -240,6 +243,26 @@ export const GATEWAY_CONFIG: Record<string, {
     webhook: 'https://api.utubooking.com/api/payments/affirm/webhook',
     timeout: 30000,
   },
+  interac: {
+    fee: 0,    minAmount: 1,   maxAmount: 50000,  // CAD; Bambora charges per-transaction flat fee (not %)
+    webhook: 'https://api.utubooking.com/api/payments/interac/callback',
+    timeout: 30000,
+  },
+  pix: {
+    fee: 0,    minAmount: 1,   maxAmount: 100000, // BRL; Pix has no merchant fee from Bacen; Stripe charges 1.49% + R$0.40
+    webhook: 'https://api.utubooking.com/api/payments/pix/webhook',
+    timeout: 30000,
+  },
+  boleto: {
+    fee: 1.49, minAmount: 3,   maxAmount: 50000,  // BRL; Stripe Boleto fee; min R$3
+    webhook: 'https://api.utubooking.com/api/payments/pix/webhook', // shared Stripe webhook
+    timeout: 30000,
+  },
+  mercadopago: {
+    fee: 4.99, minAmount: 1,   maxAmount: 500000, // varies by country; 4.99% average across LATAM
+    webhook: 'https://api.utubooking.com/api/payments/mercadopago/webhook',
+    timeout: 35000,
+  },
 };
 
 export function validateAmountForGateway(
@@ -269,6 +292,14 @@ const SECONDARY_GATEWAYS: Record<string, string[]> = {
   PK: ['easypaisa'],   // Easypaisa secondary (Telenor users)
   CH: ['stripe'],      // Stripe card for non-TWINT users
   US: ['paypal', 'affirm'],  // PayPal (wallet users) + Affirm BNPL (bookings ≥ $200)
+  CA: ['stripe'],            // Stripe card for credit/debit card users who don't use Interac Online
+  BR: ['boleto', 'stripe'], // Boleto for unbanked (~15%); Stripe card as last resort
+  AR: ['stripe'],           // Stripe card fallback for MercadoPago failures
+  CO: ['stripe'],
+  CL: ['stripe'],
+  MX: ['stripe'],
+  PE: ['stripe'],
+  UY: ['stripe'],
 };
 
 export function getAvailableGateways(countryCode: string): string[] {
