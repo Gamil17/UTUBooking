@@ -202,6 +202,26 @@ Action needed: native Gulf Arabic speaker review before CMS upload"
 
 ---
 
+## Skill Refresh (Quarterly — Part 6)
+
+Run every 3 months to keep the seo-content-writer skill current:
+
+1. **Update sitemap.csv** — add any new UTUBooking pages published since last refresh
+   File: `skills/seo-content-writer/references/sitemap.csv`
+
+2. **Update experiences.md** — add any new customer wins or platform performance data
+   File: `skills/seo-content-writer/references/experiences.md`
+
+3. **Update tone-of-voice.md** — only if brand voice guidance has changed
+   File: `skills/seo-content-writer/references/tone-of-voice.md`
+
+4. **Re-run skill generator** (if major changes) — see `skills/seo-content-writer/GENERATOR-PROMPT.md`
+   for the pre-filled Claude Desktop prompt
+
+Next refresh dates: **1 Jul 2026** → **1 Oct 2026** → **1 Jan 2027**
+
+---
+
 ## Keyword Pipeline Refresh (Quarterly)
 
 At the start of each quarter, run this Claude prompt to refresh the keyword list:
