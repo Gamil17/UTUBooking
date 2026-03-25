@@ -1,0 +1,49 @@
+{
+  "_instructions": "Copy this block into a <script type='application/ld+json'> tag in the page <head>. Replace all [PLACEHOLDER] values. Remove this _instructions field before use.",
+  "_arabic_note": "For Arabic posts: translate 'name' and 'text' fields only. Never translate @context, @type, or key names.",
+
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "[Q1: verbatim People Also Ask question or voice search query]",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "[A1: 40-80 word answer. Self-contained. Include primary keyword or close variant. Factual and direct. No HTML tags in this field.]"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "[Q2]",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "[A2: 40-80 words.]"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "[Q3]",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "[A3: 40-80 words.]"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "[Q4]",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "[A4: 40-80 words.]"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "[Q5: booking or UTUBooking-specific question]",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "[A5: 40-80 words. Natural UTUBooking mention.]"
+      }
+    }
+  ]
+}
