@@ -1,7 +1,89 @@
-# UTUBooking SEO System — Master Implementation Checklist
-**Course:** AI Ranking Course (7 Videos) — Part 5: 6-Stage Rollout
+# UTUBooking — Master Implementation Checklist
+**Covers:** AI Ranking Course (7 Videos) + 10X Marketing with Claude Code (6 Stages)
 **Last updated:** 2026-03-25
 **Legend:** ✅ Complete | ⚠️ Manual step pending | ⏳ Not started
+
+---
+
+# MARKETING SKILLS SYSTEM (Ryan Doser — 10X Marketing)
+
+## Stage 1: Environment
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 1.1 | VS Code + Claude Code extension | ✅ | Active |
+| 1.2 | Claude Max subscription authenticated | ✅ | Active session |
+| 1.3 | Folder structure (Marketing/, Skills/) | ✅ | `marketing/` + `skills/` + all subfolders |
+| 1.4 | YouTube/ folder | ⏳ | Not needed yet — create when video content starts |
+| 1.5 | GitHub repo initialized and committed | ✅ | Branch: `master` |
+| 1.6 | .gitignore — .env and credentials excluded | ✅ | Active |
+
+## Stage 2: Core Foundation
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 2.1 | CLAUDE.md with business context, audience, priorities, rules | ✅ | AI CMO Mode section added |
+| 2.2 | Style profile with 10 voice examples + banned phrases | ✅ | `skills/seo-content-writer/references/tone-of-voice.md` |
+| 2.3 | anti-slop.md deployed with Tier 1 + Tier 2 lists | ✅ | `skills/anti-slop.md` — UTUBooking bans added |
+| 2.4 | CLAUDE.md tested — Claude describes business from memory | ⏳ | Test: ask "Who are you and what's your mission?" |
+| 2.5 | Style profile tested — LinkedIn post sounds right | ⏳ | Test: "Write a LinkedIn post about the proximity filter" |
+
+## Stage 3: First 3 Skills
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 3.1 | LinkedIn Post Writer deployed and tested | ✅ | `skills/marketing/linkedin-post-writer.md` |
+| 3.2 | Email Newsletter Writer — Phase 1 pauses for approval | ✅ | `skills/marketing/email-newsletter-writer.md` |
+| 3.3 | YouTube SEO Packaging — 3 title variants generated | ✅ | `skills/marketing/youtube-seo-packaging.md` |
+| 3.4 | At least one skill patched after a mistake | ⏳ | Happens naturally in use — note when it occurs |
+
+## Stage 4: Full Library
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 4.1 | skill-creator installed in Skills/ | ✅ | `skills/skill-creator/SKILL.md` (full Anthropic spec) |
+| 4.2 | All 12 marketing skills deployed | ✅ | See Skills table below |
+| 4.3 | 'List all skills' test passes | ⏳ | Verify: ask "What skills do you have?" |
+| 4.4 | At least 1 new skill built from scratch via skill creator | ⏳ | Use: "Create a new skill for [task]" |
+
+### All 12 Marketing Skills — Deployment Status
+
+| # | Skill | File | Status |
+|---|---|---|---|
+| 1 | Style Profile | `seo-content-writer/references/tone-of-voice.md` | ✅ 10 golden sentences |
+| 2 | Anti-Slop | `anti-slop.md` | ✅ Tier 1/2 + UTUBooking bans |
+| 3 | LinkedIn Post Writer | `marketing/linkedin-post-writer.md` | ✅ |
+| 4 | Email Newsletter Writer | `marketing/email-newsletter-writer.md` | ✅ 2-phase with approval gate |
+| 5 | YouTube SEO Packaging | `marketing/youtube-seo-packaging.md` | ✅ UTUBooking video angles |
+| 6 | SEO Blog Post | `seo-content-writer/SKILL.md` | ✅ 4-step + Answer Capsule |
+| 7 | Content Repurpose | `marketing/content-repurpose.md` | ✅ LinkedIn+IG+WhatsApp+email |
+| 8 | YouTube Thumbnail | — | ⏳ Not needed — skip until video production starts |
+| 9 | Paid Ads | `marketing/paid-ads.md` | ✅ Google+Meta, 3 variants |
+| 10 | Short-Form Video Script | `marketing/short-form-video-script.md` | ✅ Reels/TikTok/Shorts |
+| 11 | Email CTAs | `marketing/email-ctas.md` | ✅ 3 variants + scoring |
+| 12 | SEO Audit | `seo-audit/SKILL.md` | ✅ 42-point AI Search Starter Kit |
+| + | Content Reviewer | `marketing/content-reviewer.md` | ✅ 15-point checklist |
+| + | Skill Creator | `skill-creator/SKILL.md` | ✅ Anthropic best practices |
+
+## Stage 5: AI CMO System
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 5.1 | CLAUDE.md updated with current campaigns and projects | ✅ | AI CMO Mode added; active campaigns listed |
+| 5.2 | HANDOVER.md workflow established | ✅ | `marketing/HANDOVER.md` — paste start block each session |
+| 5.3 | Sub-agent parallel workflow tested | ⏳ | Use Power Prompt 1 from `marketing/workflows/ai-cmo-power-prompt.md` |
+| 5.4 | Voice dictation set up | ⏳ | Windows alternative to Super Whisper: Windows Speech Recognition or PowerToys |
+
+## Stage 6: Data Connections
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 6.1 | GA4 MCP installed and tested | ⚠️ | `pipx install analytics-mcp` + Google Cloud service account |
+| 6.2 | GSC MCP installed and tested | ⚠️ | Drop `client_secrets.json` in `mcp-gsc/` folder |
+| 6.3 | DataForSEO MCP configured and tested | ⚠️ | Add login + password to `.env.mcp` |
+| 6.4 | Full AI CMO prompt tested | ⏳ | Use Power Prompt 1 after MCPs are live |
+
+---
 
 ---
 
