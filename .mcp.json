@@ -1,20 +1,60 @@
 {
+  "_readme": "Project-level MCP configuration for UTUBooking SEO Command Center. Copy .env.mcp.example → .env.mcp and fill all tokens before use.",
   "mcpServers": {
-    "filesystem": {
-      "command": "mcp-server-filesystem",
-      "args": ["."]
+    "analytics": {
+      "command": "${HOME}/.local/bin/analytics-mcp",
+      "env": {
+        "GA4_PROPERTY_ID": "${GA4_PROPERTY_ID}"
+      }
     },
-    "github": {
-      "command": "mcp-server-github"
+    "gsc": {
+      "command": "python3",
+      "args": ["-m", "mcp_server_gsc"],
+      "env": {
+        "GSC_CLIENT_ID": "${GSC_CLIENT_ID}",
+        "GSC_CLIENT_SECRET": "${GSC_CLIENT_SECRET}",
+        "GSC_REFRESH_TOKEN": "${GSC_REFRESH_TOKEN}",
+        "GSC_SITE_URL": "https://utubooking.com"
+      }
+    },
+    "dataforseo": {
+      "command": "npx",
+      "args": ["-y", "@dataforseo/mcp-server"],
+      "env": {
+        "DATAFORSEO_LOGIN": "${DATAFORSEO_LOGIN}",
+        "DATAFORSEO_PASSWORD": "${DATAFORSEO_PASSWORD}"
+      }
     },
     "notion": {
-      "command": "notion-mcp-server"
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "env": {
+        "NOTION_API_KEY": "${NOTION_API_KEY}"
+      }
     },
     "slack": {
-      "command": "mcp-server-slack"
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}",
+        "SLACK_TEAM_ID": "${SLACK_TEAM_ID}"
+      }
     },
-    "hubspot": {
-      "command": "hubspot-mcp-server"
+    "gdrive": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gdrive"],
+      "env": {
+        "GDRIVE_CLIENT_ID": "${GDRIVE_CLIENT_ID}",
+        "GDRIVE_CLIENT_SECRET": "${GDRIVE_CLIENT_SECRET}",
+        "GDRIVE_REFRESH_TOKEN": "${GDRIVE_REFRESH_TOKEN}"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
     }
   }
 }
