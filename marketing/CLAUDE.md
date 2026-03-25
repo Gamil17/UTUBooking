@@ -110,6 +110,73 @@
 - Currency: PLN (zł)
 - NEVER publish in Polish without native speaker review
 
+## Phase 12 — Latin American Markets (Added Q1 2029)
+
+### Brazil (BR)
+- Platform: WhatsApp (PRIMARY — 99% of Brazilians use it), Instagram, TikTok
+- Tone: warm, personal, conversational — Brazilians value warmth and relationships
+- Key content: Pacotes Umrah, Hotéis Halal, Passagens para Meca, Ramadan packages
+- Arab Brazilian community: culturally assimilated — content in Portuguese, NOT Arabic
+- WhatsApp Business API: set up broadcast lists for Hajj/Umrah season campaigns
+- Payment callouts: always mention Pix (instant) + Boleto (parcelado) in CTAs
+- NEVER publish in Portuguese without native Brazilian speaker review
+
+### Argentina (AR)
+- Platform: WhatsApp, Instagram, Twitter/X (Argentina has very high Twitter usage)
+- Tone: Argentine Spanish — use vos form (not tú), local expressions OK
+- Economic context: ARS inflation is very high — always show USD equivalent price
+- Key content: Paquetes Umrah, Hoteles Halal, cuotas sin interés (installments)
+- Payment callouts: highlight cuotas (MercadoPago installments) — Argentines expect them
+- NEVER publish in Argentine Spanish without vos/tú tone review
+
+### Colombia (CO)
+- Platform: WhatsApp, Instagram, TikTok
+- Tone: friendly, community-focused Colombian Spanish
+- Key content: Paquetes Hajj/Umrah desde Bogotá, hoteles cerca de La Meca
+- Payment callouts: PSE (bank transfer) + Efecty (cash) — not all Colombians have credit cards
+- NEVER publish in Colombian Spanish without native speaker review
+
+### Chile (CL)
+- Platform: Instagram, TikTok, WhatsApp
+- Tone: neutral Latin American Spanish — Chileans understand standard es-419 well
+- Key content: Paquetes Umra desde Santiago, Hoteles Halal, Vuelos a La Meca
+- Payment callouts: WebPay (Transbank) is Chile's dominant online payment — always mention it
+- Currency: show CLP + USD equivalent (CLP is stable but large denomination)
+- NEVER publish without Chilean Spanish review (distinct vocabulary from other LATAM markets)
+
+### Mexico (MX)
+- Platform: WhatsApp, TikTok (very high MX youth penetration), Instagram, Facebook
+- Tone: warm, aspirational Mexican Spanish — avoid slang that doesn't translate across LATAM
+- Key content: Paquetes Umra desde CDMX/GDL/MTY, hoteles halal, Ramadán
+- Payment callouts: OXXO Pay is critical — large unbanked population pays cash at OXXO stores
+- Target: Mexican Muslim community (small but growing) + Arab-Mexican community (Lebanese origin)
+- NEVER assume Mexican content works for other LATAM markets — localise separately
+
+### Peru (PE)
+- Platform: WhatsApp, Facebook (still strong in PE), TikTok
+- Tone: respectful, community-focused Peruvian Spanish
+- Key content: Paquetes Umra desde Lima, hoteles próximos al Haram
+- Currency: show PEN + USD equivalent
+- NEVER publish in Peruvian Spanish without native speaker review
+
+### Uruguay (UY)
+- Platform: WhatsApp, Instagram, Twitter/X
+- Tone: neutral River Plate Spanish (similar to Argentine but more formal)
+- Key content: Paquetes Umra desde Montevideo, hoteles halal
+- Note: very small Muslim population — target Arab-Uruguayan diaspora specifically
+- Currency: show UYU + USD equivalent
+
+## LATAM-Wide Content Rules
+- WhatsApp is the primary channel across ALL LATAM markets — prioritise WhatsApp Business API
+- TikTok is the primary discovery platform for under-35 audience across LATAM
+- es-419 locale covers AR/CO/CL/MX/PE/UY — use it for shared campaigns, localise CTAs per country
+- pt-BR is Brazil-only — NEVER use es-419 strings for Brazilian audience
+- MercadoPago is the LATAM super-app for payments — mention it prominently in checkout messaging
+- Halal content framing: LATAM Muslim communities are often small and dispersed — emphasise community and belonging, not just religious compliance
+- Ramadan campaigns: major conversion opportunity; start 6 weeks before Ramadan in all LATAM markets
+- LGPD (Brazil): all Brazilian WhatsApp broadcasts require prior opt-in consent — never cold-message BR users
+- NEVER translate EU/UK or US content directly for LATAM — cultural context is completely different
+
 ## EU-Wide Content Rules
 - GDPR: NEVER use personal data for retargeting without explicit consent (no pre-ticked boxes)
 - Cookie banners: all EU/UK landing pages must show GDPR consent banner before any analytics fire
