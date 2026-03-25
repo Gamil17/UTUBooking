@@ -81,14 +81,92 @@ Local (if applicable):
 15. LocalBusiness schema
 
 ## OUTPUT FORMAT
-Present results as:
+
+### Scorecard
 | Category | Score | Max | % | Grade |
+|---|---|---|---|---|
 | General/Site-Wide | X | 12 | X% | A/B/C/D/F |
 | Blog Posts | X | 15 | X% | ... |
 | Service/Product Pages | X | 15 | X% | ... |
-| OVERALL GEO SCORE | X | 42 | X% | ... |
+| **OVERALL GEO SCORE** | **X** | **42** | **X%** | **...** |
 
-Grade scale: A=90%+, B=80%, C=70%, D=60%, F=below 60%
+Grade scale: A=90%+, B=80-89%, C=70-79%, D=60-69%, F=below 60%
 
-Then list: TOP 3 PRIORITY FIXES (highest impact, lowest effort first)
-Then list: WHAT IS WORKING WELL (strengths to preserve)
+### Per-Check Detail
+After the scorecard, list every check that FAILED with:
+- Check name
+- What was found
+- Exact fix required (specific, actionable)
+
+### Priority Action List (Impact vs Effort matrix)
+| Priority | Fix | Impact | Effort | Est. Time |
+|---|---|---|---|---|
+| 1 | [highest impact, lowest effort] | High | Low | [e.g. 30 min] |
+| 2 | ... | | | |
+| 3 | ... | | | |
+
+### TOP 3 QUICK WINS
+List the 3 fixes that will move the GEO score most, fastest.
+Format: "Add FAQPage schema to [URL] — adds 1pt Blog score immediately."
+
+### WHAT IS WORKING WELL
+List 3-5 strengths already in place. These must be preserved when making fixes.
+
+## BATCH AUDIT WORKFLOW (for 10-page audit)
+
+When asked to batch audit multiple pages, run this process:
+
+### Step 1 — Audit each page individually
+Score each URL against all 3 dimensions. Record scores in a batch table.
+
+### Step 2 — Identify systemic patterns
+After all pages are scored, look for checks that fail on 3+ pages.
+These are systemic issues — fix them site-wide before individual page optimization.
+
+### Step 3 — Present batch results
+| URL | General | Blog | Page | Total | Grade | Top Fix |
+|---|---|---|---|---|---|---|
+| /hotels/makkah | X/12 | X/15 | X/15 | X/42 | X | ... |
+| /umrah-packages | ... | ... | ... | ... | ... | ... |
+
+### Step 4 — Systemic fix list
+"These issues appear on 5+ pages — fix once, win everywhere:"
+1. [Issue] — affects [N] pages — fix: [specific action]
+2. ...
+
+### Step 5 — Individual page priority order
+Rank pages by: (lowest score) + (highest traffic from GSC).
+Fix lowest-scoring, highest-traffic pages first.
+
+## STANDARD AUDIT PROMPT (copy and use)
+
+```
+Use the seo-audit skill to audit this URL: [YOUR-URL]
+
+Please:
+1. Fetch and read the page content
+2. Score it against all 3 audit dimensions
+3. Present results in the AI Search Starter Kit format
+4. Identify the top 3 quick wins (highest impact, fastest to fix)
+5. Generate a priority action list sorted by effort vs impact
+```
+
+## UTUBooking TOP 10 PAGES — BATCH AUDIT TARGET LIST
+
+Run the standard audit prompt on each of these URLs in order:
+
+| Priority | URL | Page Type | Why Audit First |
+|---|---|---|---|
+| 1 | https://utubooking.com/ | Homepage | Highest traffic, General dimension |
+| 2 | https://utubooking.com/hotels/makkah/masjid-al-haram | Service page | Top conversion page |
+| 3 | https://utubooking.com/umrah-packages | Service page | Second top conversion |
+| 4 | https://utubooking.com/hajj-packages | Service page | Seasonal top earner |
+| 5 | https://utubooking.com/hotels/madinah | Service page | High intent |
+| 6 | https://utubooking.com/flights/jeddah-jed | Service page | High volume keyword |
+| 7 | https://utubooking.com/car-rental/saudi-arabia | Service page | Long-tail cluster |
+| 8 | https://utubooking.com/blog (first blog post) | Blog | Blog dimension |
+| 9 | https://utubooking.com/blog (second blog post) | Blog | Blog dimension |
+| 10 | https://utubooking.com/about | Brand page | E-E-A-T authority |
+
+After all 10 are scored, ask: "Shall I generate a consolidated fix plan
+prioritised by traffic x score gap?"
