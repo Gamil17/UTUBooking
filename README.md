@@ -1,4 +1,4 @@
-# UTUBooking.com — v1.2.0 "Global Ummah"
+# UTUBooking.com — v1.3.0 "Global Ummah"
 
 > Best travel booking platform for Gulf & Muslim World markets
 > Hajj · Umrah · Hotels · Flights · Car Rentals, **Powered by AMEC Solutions** .
@@ -9,7 +9,7 @@
 
 UTUBooking.com is a multi-market travel booking platform purpose-built for Muslim travelers. Starting from Saudi Arabia and the Gulf, the platform has expanded across 25+ markets covering the Muslim World, Europe, North America, and South America.
 
-**Current version:** `v1.2.0 "Global Ummah"` — 12 phases complete, 8 AWS regions live.
+**Current version:** `v1.3.0 "Global Ummah"` — 12 phases complete, 8 AWS regions live.
 
 ---
 
@@ -194,6 +194,7 @@ npm test -- --testPathPattern=payment   # payment gateway tests
 | v1.0.0 | Gulf Launch | 2026-01 | SA/AE/GCC core platform |
 | v1.1.0 | Muslim World | 2026-02 | TR/ID/MY/PK/IN expansion (Phases 5-7) |
 | v1.2.0 | Global Ummah | 2026-03 | EU/UK/US/CA/BR + full compliance (Phases 8-12) |
+| v1.3.0 | Global Ummah | 2026-03 | Powered by AMEC Solutions branding + version alignment |
 
 ---
 
