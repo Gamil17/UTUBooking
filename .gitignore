@@ -9,6 +9,7 @@ node_modules/
 .env.*.local
 *.env
 .env.mcp          # MCP server secrets (Notion, Slack, GDrive, GitHub tokens)
+credentials/      # Service account JSON keys — never commit
 
 # Build output
 .next/

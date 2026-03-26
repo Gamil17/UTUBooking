@@ -1,6 +1,6 @@
 {
   "name": "utu-backend",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "UTUBooking.com backend — migrations and shared tooling",
   "scripts": {
     "migrate:up":     "node-pg-migrate up   --migrations-dir migrations --database-url-var DATABASE_URL",

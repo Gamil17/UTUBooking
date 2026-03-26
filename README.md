@@ -1,7 +1,7 @@
 # UTUBooking.com — v1.2.0 "Global Ummah"
 
-> **AMEC Solutions** · Best travel booking platform for Gulf & Muslim World markets
-> Hajj · Umrah · Hotels · Flights · Car Rentals
+> Best travel booking platform for Gulf & Muslim World markets
+> Hajj · Umrah · Hotels · Flights · Car Rentals, **Powered by AMEC Solutions** .
 
 ---
 

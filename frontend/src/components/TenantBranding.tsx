@@ -29,7 +29,7 @@ export default function TenantBranding() {
 
       {!tenant.hidePlatformBranding && (
         <span className="text-xs text-gray-400">
-          Powered by UTUBooking
+          Powered by AMEC Solutions
         </span>
       )}
     </div>
