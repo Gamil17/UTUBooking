@@ -120,4 +120,20 @@ async function updateMehramData(bookingId, {
   return rows[0] ?? null;
 }
 
-module.exports = { createBooking, updateBookingStatus, getBookingById, listUserBookings, cancelBooking, updateMehramData };
+/**
+ * Fetch a single booking by human-readable reference number.
+ * Used by the PDF generation endpoint (service-to-service — no user auth).
+ */
+async function getBookingByRef(referenceNo) {
+  const { rows } = await pool.query(
+    `SELECT b.*, p.status AS payment_status, p.method AS payment_method
+     FROM bookings b
+     LEFT JOIN payments p ON p.booking_id = b.id
+     WHERE b.reference_no = $1
+     LIMIT 1`,
+    [referenceNo]
+  );
+  return rows[0] ?? null;
+}
+
+module.exports = { createBooking, updateBookingStatus, getBookingById, getBookingByRef, listUserBookings, cancelBooking, updateMehramData };

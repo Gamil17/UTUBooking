@@ -223,3 +223,139 @@ export const getFunnelMetrics = (period = '7d') =>
     '/pricing/metrics/funnel',
     { params: { period }, headers: adminHeader() },
   ).then((r) => r.data);
+
+// ─── Notification Service ─────────────────────────────────────────────────────
+
+const NOTIF = process.env.NEXT_PUBLIC_NOTIFICATION_SERVICE_URL ?? 'http://localhost:3002';
+
+const notifApi = axios.create({
+  baseURL: `${NOTIF}/api/admin/notifications`,
+  timeout: 20_000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+notifApi.interceptors.request.use((config) => {
+  config.headers['Authorization'] = `Bearer ${process.env.NEXT_PUBLIC_ADMIN_SECRET ?? ''}`;
+  return config;
+});
+
+export interface IncompleteBookingRow {
+  booking_id:    string;
+  reference_no:  string;
+  user_id:       string;
+  email:         string;
+  name_en:       string;
+  product_type:  string;
+  check_in:      string | null;
+  total_price:   number;
+  currency:      string;
+  email_count:   number;
+  last_sent_at:  string | null;
+  suppressed:    boolean;
+}
+
+export interface IncompleteBookingStats {
+  total_pending:    number;
+  recovery_active:  number;
+  suppressed:       number;
+  recovered_today:  number;
+}
+
+export interface EmailLogRow {
+  id:                  string;
+  recipient_email:     string;
+  email_type:          string;
+  email_category:      string;
+  booking_ref:         string | null;
+  sendgrid_message_id: string | null;
+  locale:              string;
+  subject:             string;
+  delivery_status:     string;
+  attempt_number:      number | null;
+  sent_at:             string;
+}
+
+export interface Campaign {
+  id:               string;
+  name:             string;
+  subject_en:       string;
+  subject_ar:       string | null;
+  status:           string;
+  scheduled_for:    string | null;
+  total_recipients: number | null;
+  sent_count:       number;
+  failed_count:     number;
+  opened_count:     number;
+  open_rate_pct?:   number;
+  created_at:       string;
+}
+
+export interface DealItem {
+  title_en:    string;
+  title_ar?:   string;
+  price:       number;
+  currency:    string;
+  destination: string;
+  cta_url:     string;
+}
+
+export const getIncompleteBookings = (page = 1, limit = 20) =>
+  notifApi.get<{ data: IncompleteBookingRow[]; stats: IncompleteBookingStats; page: number; limit: number }>(
+    '/incomplete-bookings',
+    { params: { page, limit } },
+  ).then((r) => r.data);
+
+export const triggerRecoveryEmail = (bookingId: string) =>
+  notifApi.post<{ queued: boolean; jobId: string }>(
+    '/trigger-recovery',
+    { bookingId },
+  ).then((r) => r.data);
+
+export const suppressBooking = (userId: string, bookingId: string | null, reason: string) =>
+  notifApi.post<{ data: object }>(
+    '/suppress',
+    { userId, bookingId, reason },
+  ).then((r) => r.data);
+
+export const liftSuppression = (suppressionId: string) =>
+  notifApi.post<{ data: object }>(
+    `/suppress/${suppressionId}/lift`,
+    {},
+  ).then((r) => r.data);
+
+export const getEmailLog = (
+  filters: { emailType?: string; deliveryStatus?: string; bookingRef?: string },
+  page = 1,
+  limit = 50,
+) =>
+  notifApi.get<{ data: EmailLogRow[]; page: number; limit: number }>(
+    '/email-log',
+    { params: { ...filters, page, limit } },
+  ).then((r) => r.data);
+
+export const getCampaigns = (page = 1, status?: string) =>
+  notifApi.get<{ data: Campaign[]; page: number; limit: number }>(
+    '/campaigns',
+    { params: { page, status } },
+  ).then((r) => r.data);
+
+export const createCampaign = (payload: {
+  name:          string;
+  subjectEn:     string;
+  subjectAr?:    string;
+  scheduledFor?: string;
+  dealItems?:    DealItem[];
+}) =>
+  notifApi.post<{ data: Campaign }>('/campaigns', payload).then((r) => r.data);
+
+export const sendCampaignNow = (campaignId: string) =>
+  notifApi.post<{ data: Campaign; queued: boolean }>(
+    `/campaigns/${campaignId}/send`,
+    {},
+  ).then((r) => r.data);
+
+export const deleteCampaign = (campaignId: string) =>
+  notifApi.delete<{ data: Campaign }>(`/campaigns/${campaignId}`).then((r) => r.data);
+
+export const getCampaignStats = (campaignId: string) =>
+  notifApi.get<{ data: Campaign }>(`/campaigns/${campaignId}/stats`).then((r) => r.data);

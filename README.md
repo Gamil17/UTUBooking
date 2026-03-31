@@ -1,4 +1,4 @@
-# UTUBooking.com — v1.3.0 "Global Ummah"
+# UTUBooking.com — v1.4.0 "Sales Engine"
 
 > Best travel booking platform for Gulf & Muslim World markets
 > Hajj · Umrah · Hotels · Flights · Car Rentals, **Powered by AMEC Solutions** .
@@ -9,7 +9,7 @@
 
 UTUBooking.com is a multi-market travel booking platform purpose-built for Muslim travelers. Starting from Saudi Arabia and the Gulf, the platform has expanded across 25+ markets covering the Muslim World, Europe, North America, and South America.
 
-**Current version:** `v1.3.0 "Global Ummah"` — 12 phases complete, 8 AWS regions live.
+**Current version:** `v1.4.0 "Sales Engine"` — 12 phases complete, 8 AWS regions live, full email automation.
 
 ---
 
@@ -82,6 +82,16 @@ UTUBooking.com is a multi-market travel booking platform purpose-built for Musli
 | IDR | Midtrans Snap | IndonesianPaymentSelector |
 | PKR | JazzCash · Easypaisa | PakistanPaymentSelector |
 
+### Email Automation (v1.4.0)
+- **Abandoned booking recovery** — daily emails for up to 7 days (Day 1: transactional; Day 2–7: marketing with CCPA/GDPR consent gate)
+- **Price change alerts** — notifies confirmed-booking customers when offer price changes >2%
+- **24-hour check-in reminder** — sent once per booking, 24–25h before check_in
+- **Monthly deal digest campaigns** — sales team creates + schedules, filtered by CCPA/GDPR opt-in
+- **Post-travel stop** — all flows halt after check_in date passes
+- **SendGrid** delivery + event webhook (delivered / bounce / open tracking)
+- **Admin dashboard** — Incomplete Bookings, Email Log, Campaign management at `/admin/notifications/`
+- **GDPR Art. 17 compliant** — email_log anonymised on erasure, never deleted
+
 ### Compliance
 - GDPR consent banner + erasure + data export (EU/UK)
 - CCPA "Do Not Sell" footer link (US)
@@ -106,12 +116,16 @@ frontend/          Next.js 14 app (App Router)
   locales/         i18n JSON (15 locales)
 
 backend/
-  services/auth/   JWT auth + GDPR/CCPA/LGPD/PIPEDA routers
-  services/flight/ Amadeus flight search
-  services/payment/ Payment microservice (all gateways)
-  adapters/hotels/ Hotel search router (Hotelbeds + Booking.com)
-  adapters/airlines/ Amadeus GDS adapters (TK, AC, GA, AK, OD, PC)
-  shared/          Shard router (getShardPool), auth middleware
+  services/auth/         JWT auth + GDPR/CCPA/LGPD/PIPEDA routers (port 3001)
+  services/notification/ Email automation — Bull queue, 4 processors, SendGrid (port 3002)
+  services/hotel/        Hotel availability + pricing (port 3003)
+  services/flight/       Amadeus flight search (port 3004)
+  services/car/          Car rental service (port 3005)
+  services/booking/      Booking lifecycle + PDF (port 3006)
+  services/payment/      Payment microservice — all gateways (port 3007)
+  adapters/hotels/       Hotel search router (Hotelbeds + Booking.com)
+  adapters/airlines/     Amadeus GDS adapters (TK, AC, GA, AK, OD, PC)
+  shared/                Shard router (getShardPool), auth middleware
 
 infra/cloudformation/
   09-route53-global.yml        Global DNS
@@ -140,6 +154,23 @@ Authorization: Bearer <ADMIN_API_SECRET>
 ```
 Probes all 8 regional API nodes in parallel. Returns latency, DB status, Redis status, and overall `healthy | degraded | outage`.
 
+### Email Automation Admin (v1.4.0)
+```
+GET    /api/admin/notifications/incomplete-bookings      Pending bookings + recovery email counts
+GET    /api/admin/notifications/email-log                Full email history (type/status/ref filters)
+POST   /api/admin/notifications/trigger-recovery         Manual immediate recovery send
+POST   /api/admin/notifications/suppress                 Suppress user/booking from emails
+POST   /api/admin/notifications/suppress/:id/lift        Lift a suppression
+GET    /api/admin/notifications/campaigns                Campaign list with open-rate stats
+POST   /api/admin/notifications/campaigns                Create draft campaign
+POST   /api/admin/notifications/campaigns/:id/send       Dispatch campaign immediately
+DELETE /api/admin/notifications/campaigns/:id            Cancel draft campaign
+
+POST /internal/trigger  { job }          x-internal-secret header  (ops/testing)
+POST /api/v1/notifications/webhook/sendgrid              SendGrid event webhook
+```
+All `/api/admin/notifications/*` endpoints: `Authorization: Bearer <ADMIN_SECRET>`
+
 ### AI Chat
 ```
 POST /api/chat   (SSE)
@@ -161,7 +192,8 @@ See `.env.example` (not committed). Key groups:
 | Booking.com | `BOOKINGCOM_USERNAME`, `BOOKINGCOM_PASSWORD`, `BOOKINGCOM_ENV` |
 | Redis | `REDIS_URL` |
 | DB (per region) | `DB_URL_GULF`, `DB_URL_LONDON`, `DB_URL_FRANKFURT`, `DB_URL_US`, `DB_URL_MONTREAL`, `DB_URL_SAO_PAULO`, `DB_URL_SINGAPORE`, `DB_URL_MUMBAI` |
-| Admin | `ADMIN_API_SECRET` |
+| Admin | `ADMIN_SECRET`, `INTERNAL_API_SECRET` |
+| SendGrid | `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`, `SENDGRID_WEBHOOK_SECRET` |
 | Compliance | `DPO_EMAIL`, `EU_DATA_CONTROLLER`, `EU_REPRESENTATIVE_EMAIL` |
 
 ---
@@ -170,13 +202,15 @@ See `.env.example` (not committed). Key groups:
 
 ```bash
 # Frontend
-cd frontend && npm install && npm run dev      # http://localhost:3000
+cd frontend && npm install && npm run dev                      # http://localhost:3000
 
-# Backend (payment service)
-cd backend/services/payment && npm install && npm start   # port 3002
+# Full stack (recommended)
+docker-compose up                                              # all services + nginx on :80
 
-# Backend (auth service)
-cd backend/services/auth && npm install && npm start      # port 3001
+# Individual services
+cd backend/services/auth         && npm install && npm start   # port 3001
+cd backend/services/notification && npm install && npm start   # port 3002
+cd backend/services/payment      && npm install && npm start   # port 3007
 ```
 
 **Before merging:**
@@ -194,7 +228,8 @@ npm test -- --testPathPattern=payment   # payment gateway tests
 | v1.0.0 | Gulf Launch | 2026-01 | SA/AE/GCC core platform |
 | v1.1.0 | Muslim World | 2026-02 | TR/ID/MY/PK/IN expansion (Phases 5-7) |
 | v1.2.0 | Global Ummah | 2026-03 | EU/UK/US/CA/BR + full compliance (Phases 8-12) |
-| v1.3.0 | Global Ummah | 2026-03 | Powered by AMEC Solutions branding + version alignment |
+| v1.3.0 | Global Ummah | 2026-03 | AMEC Solutions branding + version alignment |
+| v1.4.0 | Sales Engine | 2026-03 | Email automation — abandoned recovery, price alerts, reminders, campaigns |
 
 ---
 

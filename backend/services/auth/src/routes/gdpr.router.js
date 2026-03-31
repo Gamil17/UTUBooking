@@ -126,6 +126,15 @@ router.post('/erase', gdprRateLimit, async (req, res, next) => {
         [userId, email, reason?.trim() ?? null, ip, userAgent],
       );
 
+      // 6. Anonymise email_log — GDPR Art. 17 (email_log is append-only; never delete rows)
+      await client.query(
+        `UPDATE email_log
+         SET user_id         = NULL,
+             recipient_email = 'erased@deleted.invalid'
+         WHERE user_id = $1`,
+        [userId],
+      );
+
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK');

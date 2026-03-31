@@ -331,6 +331,38 @@ services:
       timeout: 5s
       retries: 5
 
+  notification-service:
+    image: node:22-alpine
+    <<: *service-defaults
+    env_file: ./backend/.env
+    environment:
+      <<: *common-env
+      PORT: 3002
+      # SENDGRID_API_KEY: set in backend/.env
+      # SENDGRID_FROM_EMAIL: set in backend/.env
+      # SENDGRID_WEBHOOK_SECRET: set in backend/.env
+      # INTERNAL_HOTEL_SERVICE_URL: set in backend/.env (default http://hotel-service:3003)
+      # INTERNAL_FLIGHT_SERVICE_URL: set in backend/.env (default http://flight-service:3004)
+      # INTERNAL_CAR_SERVICE_URL: set in backend/.env (default http://car-service:3005)
+    working_dir: /app
+    volumes:
+      - ./backend/services/notification:/app
+    command: sh -c "npm install && node server.js"
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ── API Gateway (nginx) ───────────────────────────────────────────────────────
 
   gateway:
@@ -351,6 +383,7 @@ services:
       - whitelabel-service
       - wallet-service
       - pricing-service
+      - notification-service
 
 # ── Volumes ───────────────────────────────────────────────────────────────────
 

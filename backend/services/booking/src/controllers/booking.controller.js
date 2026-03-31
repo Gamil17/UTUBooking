@@ -129,4 +129,20 @@ async function cancelBooking(req, res, next) {
   }
 }
 
-module.exports = { createBooking, listBookings, getBooking, cancelBooking };
+// ─── GET /api/v1/bookings/by-ref/:ref ────────────────────────────────────────
+// Service-to-service: protected by ADMIN_SECRET, not user JWT.
+// Used by the PDF generation route to look up a booking by referenceNo.
+
+async function getBookingByRef(req, res, next) {
+  try {
+    const booking = await repo.getBookingByRef(req.params.ref);
+    if (!booking) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Booking not found' });
+    }
+    return res.json(booking);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { createBooking, listBookings, getBooking, getBookingByRef, cancelBooking };

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>أكمل حجزك</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap');
+  body{margin:0;padding:0;background:#f4f6f8;font-family:'Tajawal','Noto Kufi Arabic',Arial,sans-serif;color:#1a1a2e;direction:rtl}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .header{background:#065f46;padding:32px 40px;text-align:center}
+  .header h1{color:#fff;font-size:22px;margin:12px 0 0;font-weight:700}
+  .body{padding:32px 40px;text-align:right}
+  .body h2{font-size:18px;margin:0 0 8px;color:#065f46}
+  .body p{font-size:15px;line-height:2;color:#374151;margin:0 0 16px}
+  .booking-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px 24px;margin:20px 0;direction:rtl}
+  .booking-box .label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;margin-bottom:2px}
+  .booking-box .value{font-size:15px;font-weight:700;color:#111827}
+  .booking-box .row{display:flex;justify-content:space-between;margin-bottom:10px}
+  .btn{display:inline-block;background:#065f46;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:700;margin:8px 0;direction:rtl}
+  .badge{display:inline-block;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:16px}
+  .footer{padding:24px 40px;border-top:1px solid #e5e7eb;text-align:center}
+  .footer p{font-size:12px;color:#9ca3af;margin:4px 0}
+  .footer a{color:#065f46;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>UTUBooking</h1>
+  </div>
+  <div class="body">
+    {{#if attempt_number}}
+    <div class="badge">تذكير {{attempt_number}} من 7</div>
+    {{/if}}
+    <h2>مرحباً {{user.name}}، حجزك في انتظارك</h2>
+    <p>بدأت حجزاً ولم تكمله. لا يزال خيارك متاحاً — أكمل الحجز الآن قبل أن تفوتك الفرصة.</p>
+
+    <div class="booking-box">
+      <div class="row">
+        <div>
+          <div class="label">الحجز</div>
+          <div class="value">{{booking.product_name}}</div>
+        </div>
+        <div style="text-align:left">
+          <div class="label">رقم المرجع</div>
+          <div class="value">{{booking.reference_no}}</div>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <div class="label">تاريخ الوصول</div>
+          <div class="value">{{fmtDate booking.check_in}}</div>
+        </div>
+        {{#if booking.check_out}}
+        <div style="text-align:left">
+          <div class="label">تاريخ المغادرة</div>
+          <div class="value">{{fmtDate booking.check_out}}</div>
+        </div>
+        {{/if}}
+      </div>
+      <div class="row">
+        <div>
+          <div class="label">الإجمالي</div>
+          <div class="value">{{fmtPrice booking.total_price booking.currency}}</div>
+        </div>
+      </div>
+    </div>
+
+    <p style="text-align:center">
+      <a class="btn" href="{{complete_booking_url}}">أكمل حجزي الآن</a>
+    </p>
+    <p style="font-size:13px;color:#6b7280;text-align:center">قد تتغير الأسعار والتوافر. أكمل الآن لتضمن سعرك الحالي.</p>
+  </div>
+  <div class="footer">
+    <p>UTUBooking &mdash; أفضل صفقات السفر للمسلمين حول العالم</p>
+    <p>
+      <a href="{{unsubscribe_url}}">إلغاء الاشتراك</a> &middot;
+      <a href="https://utubooking.com/privacy">سياسة الخصوصية</a>
+    </p>
+    <p>&copy; {{currentYear}} AMEC Solutions. جميع الحقوق محفوظة.</p>
+  </div>
+</div>
+</body>
+</html>

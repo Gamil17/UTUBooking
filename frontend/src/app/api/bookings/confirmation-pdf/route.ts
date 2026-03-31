@@ -17,19 +17,53 @@ import { generateBookingPDF, type BookingConfirmationData } from '@/components/c
 import { LOCALES, LOCALE_CURRENCY } from '@/i18n/config';
 import type { Locale } from '@/i18n/config';
 
-// ── Mock booking lookup — replace with real service call ──────────────────────
+const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL ?? 'http://booking-service:3006';
+const ADMIN_SECRET    = process.env.ADMIN_SECRET        ?? '';
+
+// ── Booking lookup via booking service ────────────────────────────────────────
 async function fetchBooking(ref: string, locale: Locale): Promise<BookingConfirmationData | null> {
-  // TODO: replace with actual booking service lookup
-  // e.g. const res = await fetch(`${process.env.INTERNAL_BOOKING_SERVICE_URL}/bookings/${ref}`)
+  if (ADMIN_SECRET) {
+    try {
+      const res = await fetch(
+        `${BOOKING_SERVICE}/api/v1/bookings/by-ref/${encodeURIComponent(ref)}`,
+        { headers: { Authorization: `Bearer ${ADMIN_SECRET}` }, cache: 'no-store' },
+      );
+      if (res.ok) {
+        const b    = await res.json();
+        const meta = (b.meta ?? {}) as Record<string, unknown>;
+        const cur  = (b.currency as string | undefined) ?? LOCALE_CURRENCY[locale];
+        const total = b.total_price != null
+          ? `${cur} ${Number(b.total_price).toLocaleString()}`
+          : `${cur} –`;
+        return {
+          bookingRef:  b.reference_no ?? ref,
+          guestName:   `${meta.firstName ?? ''} ${meta.lastName ?? ''}`.trim() || 'Guest',
+          hotelName:   (meta.name      as string | undefined)
+                    ?? (meta.from ? `${meta.from} → ${meta.to}` : 'Booking'),
+          checkIn:     (meta.checkIn    as string | undefined)
+                    ?? (meta.pickupDate as string | undefined)
+                    ?? (meta.depart     as string | undefined) ?? '',
+          checkOut:    (meta.checkOut    as string | undefined)
+                    ?? (meta.dropoffDate as string | undefined)
+                    ?? (meta.return      as string | undefined) ?? '',
+          nights:      Number(meta.nights ?? meta.days ?? 1),
+          totalAmount: total,
+          locale,
+        };
+      }
+    } catch { /* fall through to fallback */ }
+  }
+
+  // Fallback for local dev / booking service unavailable
   const currency = LOCALE_CURRENCY[locale];
   return {
     bookingRef:  ref,
-    guestName:   'Test Guest',
-    hotelName:   'Swissôtel Makkah',
-    checkIn:     '2026-05-26',
-    checkOut:    '2026-06-02',
-    nights:      7,
-    totalAmount: `${currency} 8,400`,
+    guestName:   'Guest',
+    hotelName:   'UTUBooking',
+    checkIn:     '',
+    checkOut:    '',
+    nights:      1,
+    totalAmount: `${currency} –`,
     locale,
   };
 }

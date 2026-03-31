@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>رحلتك غداً</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap');
+  body{margin:0;padding:0;background:#f4f6f8;font-family:'Tajawal','Noto Kufi Arabic',Arial,sans-serif;color:#1a1a2e;direction:rtl}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .header{background:#065f46;padding:32px 40px;text-align:center}
+  .header h1{color:#fff;font-size:22px;margin:0;font-weight:700}
+  .hero{background:#f0fdf4;padding:24px 40px;text-align:center;border-bottom:1px solid #d1fae5}
+  .hero .countdown{font-size:40px;font-weight:700;color:#065f46;line-height:1}
+  .hero .countdown-label{font-size:14px;color:#6b7280;margin-top:4px}
+  .body{padding:32px 40px;text-align:right}
+  .body h2{font-size:18px;margin:0 0 8px;color:#065f46}
+  .body p{font-size:15px;line-height:2;color:#374151;margin:0 0 16px}
+  .details-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:20px 24px;margin:20px 0;direction:rtl}
+  .detail-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:14px}
+  .detail-row:last-child{border-bottom:none;font-weight:700;color:#065f46}
+  .detail-row .lbl{color:#6b7280}
+  .btn{display:inline-block;background:#065f46;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:700;margin:8px 0}
+  .checklist{list-style:none;padding:0;margin:16px 0}
+  .checklist li{padding:6px 0;font-size:14px;color:#374151;padding-right:24px;position:relative;line-height:2}
+  .checklist li::before{content:"✓";position:absolute;right:0;color:#065f46;font-weight:700}
+  .footer{padding:24px 40px;border-top:1px solid #e5e7eb;text-align:center}
+  .footer p{font-size:12px;color:#9ca3af;margin:4px 0}
+  .footer a{color:#065f46;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>UTUBooking</h1>
+  </div>
+  <div class="hero">
+    <div class="countdown">24 ساعة</div>
+    <div class="countdown-label">حتى بداية رحلتك</div>
+  </div>
+  <div class="body">
+    <h2>مرحباً {{user.name}}، رحلتك على وشك البدء!</h2>
+    <p>تم تأكيد حجزك وهو جاهز. إليك تفاصيلك:</p>
+
+    <div class="details-box">
+      <div class="detail-row"><span class="lbl">الحجز</span><span>{{booking.product_name}}</span></div>
+      <div class="detail-row"><span class="lbl">المرجع</span><span>{{booking.reference_no}}</span></div>
+      <div class="detail-row"><span class="lbl">تاريخ الوصول</span><span>{{fmtDate booking.check_in}}</span></div>
+      {{#if booking.check_out}}
+      <div class="detail-row"><span class="lbl">تاريخ المغادرة</span><span>{{fmtDate booking.check_out}}</span></div>
+      {{/if}}
+      {{#if booking.address}}
+      <div class="detail-row"><span class="lbl">العنوان</span><span>{{booking.address}}</span></div>
+      {{/if}}
+      <div class="detail-row"><span class="lbl">إجمالي المدفوع</span><span>{{fmtPrice booking.total_price booking.currency}}</span></div>
+    </div>
+
+    <p><strong>قائمة التحقق قبل السفر:</strong></p>
+    <ul class="checklist">
+      <li>جواز السفر والوثائق الرسمية جاهزة</li>
+      <li>تأكيد الحجز محفوظ أو مطبوع</li>
+      <li>بيانات الطوارئ محفوظة</li>
+      {{#if booking.is_hajj_umrah}}<li>ملابس الإحرام في الحقيبة</li>{{/if}}
+    </ul>
+
+    <p style="text-align:center">
+      <a class="btn" href="{{view_booking_url}}">عرض تفاصيل الحجز</a>
+    </p>
+    <p style="font-size:13px;color:#6b7280;text-align:center">تحتاج مساعدة؟ <a href="{{support_url}}" style="color:#065f46">تواصل مع فريق الدعم</a></p>
+  </div>
+  <div class="footer">
+    <p>UTUBooking &mdash; أفضل صفقات السفر للمسلمين حول العالم</p>
+    <p><a href="https://utubooking.com/privacy">سياسة الخصوصية</a> &middot; <a href="https://utubooking.com/support">الدعم</a></p>
+    <p>&copy; {{currentYear}} AMEC Solutions. جميع الحقوق محفوظة.</p>
+  </div>
+</div>
+</body>
+</html>

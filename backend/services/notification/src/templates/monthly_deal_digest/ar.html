@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{campaign.subject}}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap');
+  body{margin:0;padding:0;background:#f4f6f8;font-family:'Tajawal','Noto Kufi Arabic',Arial,sans-serif;color:#1a1a2e;direction:rtl}
+  .wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .header{background:#065f46;padding:32px 40px;text-align:center}
+  .header h1{color:#fff;font-size:22px;margin:0;font-weight:700}
+  .header p{color:#a7f3d0;font-size:14px;margin:8px 0 0}
+  .body{padding:32px 40px;text-align:right}
+  .body h2{font-size:18px;margin:0 0 8px;color:#065f46}
+  .body p{font-size:15px;line-height:2;color:#374151;margin:0 0 24px}
+  .deal-card{border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:16px;direction:rtl}
+  .deal-card .deal-body{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+  .deal-card .deal-info .destination{font-size:13px;color:#6b7280;margin-bottom:2px}
+  .deal-card .deal-info .title{font-size:15px;font-weight:700;color:#111827}
+  .deal-card .deal-cta{text-align:left;flex-shrink:0}
+  .deal-card .deal-cta .price{font-size:18px;font-weight:700;color:#065f46}
+  .deal-card .deal-cta .price-label{font-size:11px;color:#6b7280}
+  .deal-card .deal-cta .btn{display:inline-block;background:#065f46;color:#fff;text-decoration:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700;margin-top:8px}
+  .footer{padding:24px 40px;border-top:1px solid #e5e7eb;text-align:center}
+  .footer p{font-size:12px;color:#9ca3af;margin:4px 0}
+  .footer a{color:#065f46;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>UTUBooking</h1>
+    <p>{{campaign.name}}</p>
+  </div>
+  <div class="body">
+    <h2>مرحباً {{user.name}}، أفضل عروض هذا الشهر</h2>
+    <p>اخترنا لك أفضل الأسعار للحج والعمرة والسفر في أرجاء العالم الإسلامي. التوافر محدود — احجز مبكراً.</p>
+
+    {{#each deals}}
+    <div class="deal-card">
+      <div class="deal-body">
+        <div class="deal-info">
+          <div class="destination">{{destination}}</div>
+          <div class="title">{{title_ar}}</div>
+        </div>
+        <div class="deal-cta">
+          <div class="price-label">يبدأ من</div>
+          <div class="price">{{currency}} {{price}}</div>
+          <a class="btn" href="{{cta_url}}">احجز الآن</a>
+        </div>
+      </div>
+    </div>
+    {{/each}}
+
+    <p style="font-size:13px;color:#6b7280;margin-top:24px">الأسعار للشخص الواحد/الليلة وخاضعة للتوافر. العرض ساري حتى نفاد المقاعد.</p>
+  </div>
+  <div class="footer">
+    <p>UTUBooking &mdash; أفضل صفقات السفر للمسلمين حول العالم</p>
+    <p>
+      <a href="{{unsubscribe_url}}">إلغاء الاشتراك</a> &middot;
+      <a href="https://utubooking.com/privacy">سياسة الخصوصية</a>
+    </p>
+    <p>&copy; {{currentYear}} AMEC Solutions. جميع الحقوق محفوظة.</p>
+  </div>
+</div>
+</body>
+</html>
