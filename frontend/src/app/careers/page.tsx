@@ -1,0 +1,93 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+export const metadata: Metadata = {
+  title: 'Careers — UTUBooking | AMEC Solutions',
+  description: 'Join the team building the best travel platform for Muslim travelers. Explore open roles at UTUBooking.com.',
+};
+
+export default async function CareersPage() {
+  const t = await getTranslations('careers');
+
+  const openings = [
+    { title: t('job1Title'), team: t('job1Team'), location: t('job1Location'), type: t('job1Type') },
+    { title: t('job2Title'), team: t('job2Team'), location: t('job2Location'), type: t('job2Type') },
+    { title: t('job3Title'), team: t('job3Team'), location: t('job3Location'), type: t('job3Type') },
+    { title: t('job4Title'), team: t('job4Team'), location: t('job4Location'), type: t('job4Type') },
+    { title: t('job5Title'), team: t('job5Team'), location: t('job5Location'), type: t('job5Type') },
+  ];
+
+  const perks = [
+    { icon: '🌍', title: t('perk1Title'), desc: t('perk1Desc') },
+    { icon: '🕌', title: t('perk2Title'), desc: t('perk2Desc') },
+    { icon: '📈', title: t('perk3Title'), desc: t('perk3Desc') },
+    { icon: '🏥', title: t('perk4Title'), desc: t('perk4Desc') },
+    { icon: '📅', title: t('perk5Title'), desc: t('perk5Desc') },
+    { icon: '🎓', title: t('perk6Title'), desc: t('perk6Desc') },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+
+      <section className="bg-emerald-900 py-16 px-4 text-center">
+        <p className="text-amber-300 text-xs font-semibold uppercase tracking-widest mb-3">{t('tagline')}</p>
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">{t('heroHeading')}</h1>
+        <p className="text-emerald-100 max-w-xl mx-auto">{t('heroDesc')}</p>
+      </section>
+
+      {/* Perks */}
+      <section className="bg-white py-14 px-4 border-b border-gray-100">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-xl font-bold text-gray-900 text-center mb-8">{t('perksHeading')}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+            {perks.map((p) => (
+              <div key={p.title} className="bg-slate-50 rounded-xl p-5 border border-gray-100">
+                <span className="text-2xl" aria-hidden="true">{p.icon}</span>
+                <h3 className="font-semibold text-gray-900 mt-2 mb-1">{p.title}</h3>
+                <p className="text-sm text-gray-500">{p.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Open roles */}
+      <section className="py-14 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">{t('openingsHeading')}</h2>
+          <div className="space-y-3">
+            {openings.map((role) => (
+              <div
+                key={role.title}
+                className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              >
+                <div>
+                  <h3 className="font-semibold text-gray-900">{role.title}</h3>
+                  <div className="flex flex-wrap gap-2 mt-1.5">
+                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full">{role.team}</span>
+                    <span className="text-xs text-gray-400">{role.location}</span>
+                    <span className="text-xs text-gray-400">{role.type}</span>
+                  </div>
+                </div>
+                <Link
+                  href="/contact"
+                  className="shrink-0 bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  {t('applyBtn')}
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-sm text-gray-500 mt-6 text-center">
+            {t('noFitText')}{' '}
+            <a href="mailto:careers@utubooking.com" className="text-emerald-700 underline">
+              careers@utubooking.com
+            </a>
+          </p>
+        </div>
+      </section>
+
+    </div>
+  );
+}

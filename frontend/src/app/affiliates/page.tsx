@@ -1,0 +1,126 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+export const metadata: Metadata = {
+  title: 'Affiliate Program — UTUBooking',
+  description: 'Earn commissions by referring travelers to UTUBooking.com. Join our affiliate program and grow your revenue.',
+};
+
+export default async function AffiliatesPage() {
+  const t = await getTranslations('affiliates');
+
+  const tiers = [
+    {
+      name: t('tier1Name'),
+      commission: '3%',
+      threshold: 'SAR 0',
+      perks: [t('tier1Perk1'), t('tier1Perk2'), t('tier1Perk3')],
+    },
+    {
+      name: t('tier2Name'),
+      commission: '5%',
+      threshold: 'SAR 50,000 / mo',
+      perks: [t('tier2Perk1'), t('tier2Perk2'), t('tier2Perk3'), t('tier2Perk4')],
+      featured: true,
+    },
+    {
+      name: t('tier3Name'),
+      commission: '8%',
+      threshold: 'SAR 200,000 / mo',
+      perks: [t('tier3Perk1'), t('tier3Perk2'), t('tier3Perk3'), t('tier3Perk4')],
+    },
+  ];
+
+  const steps = [
+    { n: '01', title: t('step1Title'), desc: t('step1Desc') },
+    { n: '02', title: t('step2Title'), desc: t('step2Desc') },
+    { n: '03', title: t('step3Title'), desc: t('step3Desc') },
+    { n: '04', title: t('step4Title'), desc: t('step4Desc') },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+
+      <section className="bg-emerald-900 py-16 px-4 text-center">
+        <p className="text-amber-300 text-xs font-semibold uppercase tracking-widest mb-3">{t('tagline')}</p>
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">{t('heroHeading')}</h1>
+        <p className="text-emerald-100 max-w-xl mx-auto">{t('heroDesc')}</p>
+        <a
+          href="#apply"
+          className="inline-block mt-6 bg-amber-400 hover:bg-amber-300 text-emerald-900 font-bold px-8 py-3 rounded-xl transition-colors text-sm"
+        >
+          {t('applyNowBtn')}
+        </a>
+      </section>
+
+      {/* How it works */}
+      <section className="py-14 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl font-bold text-gray-900 text-center mb-10">{t('howItWorksHeading')}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+            {steps.map((s) => (
+              <div key={s.n} className="text-center">
+                <div className="w-10 h-10 bg-emerald-100 text-emerald-700 font-black text-sm rounded-full flex items-center justify-center mx-auto mb-3">
+                  {s.n}
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">{s.title}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Tiers */}
+      <section className="bg-white py-14 px-4 border-y border-gray-100">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-xl font-bold text-gray-900 text-center mb-10">{t('tiersHeading')}</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {tiers.map((tier) => (
+              <div
+                key={tier.name}
+                className={`rounded-2xl border p-6 ${
+                  tier.featured
+                    ? 'border-emerald-500 bg-emerald-50 shadow-md'
+                    : 'border-gray-100 bg-white shadow-sm'
+                }`}
+              >
+                {tier.featured && (
+                  <span className="inline-block bg-emerald-700 text-white text-xs font-bold px-2.5 py-1 rounded-full mb-3">
+                    {t('mostPopular')}
+                  </span>
+                )}
+                <h3 className="font-bold text-gray-900 text-lg">{tier.name}</h3>
+                <div className="text-3xl font-black text-emerald-700 my-2">{tier.commission}</div>
+                <p className="text-xs text-gray-400 mb-4">{t('from')} {tier.threshold} {t('referrals')}</p>
+                <ul className="space-y-2">
+                  {tier.perks.map((p) => (
+                    <li key={p} className="text-sm text-gray-600 flex items-start gap-2">
+                      <span className="text-emerald-600 mt-0.5" aria-hidden="true">&#10003;</span>
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Apply form placeholder */}
+      <section id="apply" className="py-14 px-4">
+        <div className="max-w-xl mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">{t('applyHeading')}</h2>
+          <p className="text-sm text-gray-500 mb-6">{t('applyDesc')}</p>
+          <Link
+            href="/contact"
+            className="block w-full text-center bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-3 rounded-xl transition-colors"
+          >
+            {t('contactApplyBtn')}
+          </Link>
+        </div>
+      </section>
+
+    </div>
+  );
+}

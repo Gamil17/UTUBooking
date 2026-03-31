@@ -1,0 +1,341 @@
+'use client';
+
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
+import { useQuery } from '@tanstack/react-query';
+import type { FlightOffer } from '@/lib/api';
+import FlightCard from '@/components/flights/FlightCard';
+import FlightFilters, { type FilterState, buildInitialFilters } from '@/components/flights/FlightFilters';
+import FlightSearchBar, { type SearchBarParams } from '@/components/flights/FlightSearchBar';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+type SortKey = 'recommended' | 'cheapest' | 'fastest' | 'departure';
+
+// ─── URL param helpers ────────────────────────────────────────────────────────
+function parseParams(sp: ReturnType<typeof useSearchParams>): SearchBarParams {
+  return {
+    from:     (sp.get('from') ?? '').toUpperCase(),
+    to:       (sp.get('to')   ?? '').toUpperCase(),
+    depart:   sp.get('depart')   ?? '',
+    return:   sp.get('return')   ?? '',
+    tripType: (sp.get('tripType') as SearchBarParams['tripType']) ?? 'oneway',
+    cabin:    (sp.get('cabin')   as SearchBarParams['cabin'])    ?? 'economy',
+    adults:   Math.max(1, parseInt(sp.get('adults') ?? '1', 10)),
+  };
+}
+
+function buildQS(p: SearchBarParams) {
+  const base: Record<string, string> = {
+    from: p.from, to: p.to, depart: p.depart,
+    tripType: p.tripType, cabin: p.cabin, adults: String(p.adults),
+  };
+  if (p.tripType === 'roundtrip' && p.return) base.return = p.return;
+  return new URLSearchParams(base).toString();
+}
+
+// ─── Skeleton card ────────────────────────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3 animate-pulse">
+      <div className="flex items-start gap-4">
+        <div className="w-10 h-10 rounded-xl bg-gray-200 shrink-0" />
+        <div className="flex-1 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-4 bg-gray-200 rounded" />
+            <div className="flex-1 h-2 bg-gray-100 rounded" />
+            <div className="w-10 h-4 bg-gray-200 rounded" />
+          </div>
+          <div className="w-2/3 h-2 bg-gray-100 rounded" />
+        </div>
+        <div className="shrink-0 flex flex-col items-end gap-2">
+          <div className="w-20 h-5 bg-gray-200 rounded" />
+          <div className="w-16 h-8 bg-gray-200 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="text-center py-20">
+      <svg className="w-14 h-14 mx-auto text-gray-200 mb-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+      </svg>
+      <p className="text-gray-400 text-sm">{message}</p>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+export default function FlightsSearchPage() {
+  const rawSP  = useSearchParams();
+  const router = useRouter();
+  const locale = useLocale();
+  const t      = useTranslations('flightResults');
+  const tSearch = useTranslations('search');
+
+  const [searchParams, setSearchParams] = useState<SearchBarParams>(() => parseParams(rawSP));
+  const [sortBy,   setSortBy]   = useState<SortKey>('recommended');
+  const [filters,  setFilters]  = useState<FilterState | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // ── Data fetch ─────────────────────────────────────────────────────────
+  const { data, isFetching, isError } = useQuery({
+    queryKey: ['flights', searchParams],
+    queryFn: async () => {
+      const qs = new URLSearchParams({
+        origin:      searchParams.from,
+        destination: searchParams.to,
+        date:        searchParams.depart,
+        adults:      String(searchParams.adults),
+        cabinClass:  searchParams.cabin.toUpperCase().replace('_', '_'),
+        currency:    'SAR',
+        maxOffers:   '50',
+        ...(searchParams.tripType === 'roundtrip' && searchParams.return
+          ? { returnDate: searchParams.return } : {}),
+      });
+      const res = await fetch(`/api/flights/search?${qs}`);
+      if (!res.ok) throw new Error('Search failed');
+      return res.json() as Promise<{ results: FlightOffer[]; count: number }>;
+    },
+    enabled: !!(searchParams.from && searchParams.to && searchParams.depart),
+  });
+
+  // Initialise filters when data first loads
+  useEffect(() => {
+    if (data?.results?.length) {
+      setFilters(buildInitialFilters(data.results));
+    }
+  }, [data]);
+
+  // ── Tag computation ────────────────────────────────────────────────────
+  const offerTags = useMemo(() => {
+    if (!data?.results?.length) return new Map<string, string[]>();
+    const minPrice    = Math.min(...data.results.map((o) => o.price));
+    const minDuration = Math.min(...data.results.map((o) => o.durationMinutes));
+    return new Map(
+      data.results.map((o) => [o.id, [
+        ...(o.price === minPrice              ? ['cheapest']   : []),
+        ...(o.durationMinutes === minDuration && o.stops === 0 ? ['best_value'] : []),
+        ...(o.stops === 0                     ? ['direct']     : []),
+      ]])
+    );
+  }, [data]);
+
+  // ── Filtered + sorted results ──────────────────────────────────────────
+  const displayedOffers = useMemo(() => {
+    if (!data?.results || !filters) return [];
+
+    let result = data.results.filter((o) => {
+      if (filters.stops.size > 0) {
+        const k = o.stops >= 2 ? 2 : o.stops as 0 | 1 | 2;
+        if (!filters.stops.has(k)) return false;
+      }
+      if (o.price < filters.priceMin || o.price > filters.priceMax) return false;
+      if (filters.departureBlocks.size > 0) {
+        const block = Math.floor(new Date(o.departureAt).getHours() / 6) as 0 | 1 | 2 | 3;
+        if (!filters.departureBlocks.has(block)) return false;
+      }
+      if (filters.airlines.size > 0 && !filters.airlines.has(o.airlineCode)) return false;
+      if (o.durationMinutes > filters.maxDuration) return false;
+      if (filters.baggageOnly && !o.baggageIncluded) return false;
+      return true;
+    });
+
+    switch (sortBy) {
+      case 'cheapest':   return [...result].sort((a, b) => a.price - b.price);
+      case 'fastest':    return [...result].sort((a, b) => a.durationMinutes - b.durationMinutes);
+      case 'departure':  return [...result].sort((a, b) =>
+        new Date(a.departureAt).getTime() - new Date(b.departureAt).getTime());
+      default:           return result;
+    }
+  }, [data, filters, sortBy]);
+
+  // ── Handlers ───────────────────────────────────────────────────────────
+  const handleSearch = useCallback((p: SearchBarParams) => {
+    setSearchParams(p);
+    setFilters(null);
+    router.replace(`/flights/search?${buildQS(p)}`, { scroll: false });
+  }, [router]);
+
+  const handleSelect = useCallback((id: string) => {
+    const offer = data?.results.find((o) => o.id === id);
+    if (!offer) return;
+    const params = new URLSearchParams({
+      offerId:   id,
+      from:      offer.originIata,
+      to:        offer.destinationIata,
+      depart:    offer.departureAt,
+      airline:   offer.airlineCode,
+      flightNum: offer.flightNum,
+      cabin:     offer.cabinClass.toLowerCase(),
+      adults:    String(searchParams.adults),
+      price:     String(offer.price),
+      currency:  offer.currency,
+      duration:  String(offer.durationMinutes),
+      stops:     String(offer.stops),
+      ...(searchParams.tripType === 'roundtrip' && searchParams.return
+        ? { return: searchParams.return } : {}),
+    });
+    router.push(`/checkout/flights?${params}`);
+  }, [data, router, searchParams]);
+
+  const isReturn = searchParams.tripType === 'roundtrip';
+
+  const SORT_TABS: { key: SortKey; label: string }[] = [
+    { key: 'recommended', label: t('recommended') },
+    { key: 'cheapest',    label: t('cheapest')    },
+    { key: 'fastest',     label: t('fastest')     },
+    { key: 'departure',   label: t('departureTime') },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+
+      {/* ── Sticky search bar ──────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-30 bg-white shadow-sm border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4">
+          <FlightSearchBar
+            initialParams={searchParams}
+            onSearch={handleSearch}
+            isLoading={isFetching}
+          />
+        </div>
+      </div>
+
+      {/* ── Body ───────────────────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="flex gap-6 items-start">
+
+          {/* ── Left sidebar (desktop) ──────────────────────────────────── */}
+          <aside className="hidden lg:block w-72 shrink-0 sticky top-[5.5rem]">
+            {data?.results && filters ? (
+              <FlightFilters
+                offers={data.results}
+                filters={filters}
+                onChange={setFilters}
+              />
+            ) : (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse space-y-3">
+                {[72, 56, 88, 48].map((w, i) => (
+                  <div key={i} className={`h-3 bg-gray-200 rounded`} style={{ width: `${w}%` }} />
+                ))}
+              </div>
+            )}
+          </aside>
+
+          {/* ── Results area ─────────────────────────────────────────────── */}
+          <main className="flex-1 min-w-0">
+
+            {/* Sort bar */}
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-100 shadow-sm p-1">
+                {SORT_TABS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setSortBy(key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      sortBy === key
+                        ? 'bg-emerald-700 text-white'
+                        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Result count + mobile filter button */}
+              <div className="flex items-center gap-3">
+                {!isFetching && data && (
+                  <span className="text-xs text-gray-500">
+                    {displayedOffers.length} / {data.count ?? data.results.length} {t('resultsCount').replace('{count}', '')}
+                  </span>
+                )}
+                <button
+                  onClick={() => setFiltersOpen(true)}
+                  className="lg:hidden flex items-center gap-1.5 text-xs font-semibold border border-gray-200 rounded-xl px-3 py-1.5 bg-white hover:bg-gray-50"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 12h10M10 20h4" />
+                  </svg>
+                  {t('filters')}
+                </button>
+              </div>
+            </div>
+
+            {/* Error */}
+            {isError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 mb-4">
+                Could not load flights. Please try again.
+              </div>
+            )}
+
+            {/* No search yet */}
+            {!searchParams.from && !searchParams.to && (
+              <EmptyState message={tSearch('searchFlights')} />
+            )}
+
+            {/* Loading skeletons */}
+            {isFetching && (
+              <>{[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}</>
+            )}
+
+            {/* No results */}
+            {!isFetching && data && displayedOffers.length === 0 && (
+              <EmptyState message={t('noResults')} />
+            )}
+
+            {/* Flight cards */}
+            {!isFetching && displayedOffers.map((offer) => (
+              <FlightCard
+                key={offer.id}
+                offer={offer}
+                isReturn={isReturn}
+                tags={offerTags.get(offer.id) ?? []}
+                onSelect={handleSelect}
+              />
+            ))}
+          </main>
+        </div>
+      </div>
+
+      {/* ── Mobile filter dialog ────────────────────────────────────────────── */}
+      {filtersOpen && data?.results && filters && (
+        <dialog
+          open
+          className="fixed inset-0 z-50 m-0 p-0 w-full h-full bg-transparent"
+          onClick={(e) => e.target === e.currentTarget && setFiltersOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute bottom-0 left-0 right-0 bg-slate-50 rounded-t-2xl max-h-[85vh] overflow-y-auto p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-gray-900">{t('filters')}</h2>
+              <button
+                onClick={() => setFiltersOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+              >
+                ✕
+              </button>
+            </div>
+            <FlightFilters
+              offers={data.results}
+              filters={filters}
+              onChange={(f) => { setFilters(f); }}
+            />
+            <button
+              onClick={() => setFiltersOpen(false)}
+              className="w-full mt-4 bg-emerald-700 text-white font-semibold py-3 rounded-xl text-sm"
+            >
+              Show {displayedOffers.length} flights
+            </button>
+          </div>
+        </dialog>
+      )}
+
+    </div>
+  );
+}
