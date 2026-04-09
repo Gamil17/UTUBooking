@@ -56,9 +56,6 @@ const MEHRAM_AGE_THRESHOLD = 45;
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function MehramVerificationStep({
-  bookingId: _bookingId,
-  bookingType: _bookingType,
-  userCountry: _userCountry,
   onComplete,
   onBack,
 }: Props) {
@@ -132,7 +129,7 @@ export default function MehramVerificationStep({
 
   // ── Shared input classes ──────────────────────────────────────────────────
   const inputCls =
-    'w-full border border-gray-300 rounded-xl px-4 py-3 text-base text-gray-900 ' +
+    'w-full border border-utu-border-strong rounded-xl px-4 py-3 text-base text-utu-text-primary ' +
     'focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent ' +
     'placeholder-gray-400 min-h-[44px]';
 
@@ -141,7 +138,7 @@ export default function MehramVerificationStep({
       'w-full flex items-start gap-3 p-4 rounded-2xl border-2 transition-all text-start cursor-pointer',
       active
         ? 'border-emerald-500 bg-emerald-50 shadow-sm'
-        : 'border-gray-200 bg-white hover:border-gray-300',
+        : 'border-utu-border-default bg-utu-bg-card hover:border-utu-border-strong',
     ].join(' ');
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -153,17 +150,17 @@ export default function MehramVerificationStep({
     >
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900" style={{ lineHeight: 1.6 }}>
+        <h2 className="text-xl font-bold text-utu-text-primary" style={{ lineHeight: 1.6 }}>
           {t('stepTitle')}
         </h2>
-        <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+        <p className="text-sm text-utu-text-muted mt-2 leading-relaxed">
           {t('subtitle')}
         </p>
       </div>
 
       {/* Gender selector */}
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-gray-700" style={{ lineHeight: 1.8 }}>
+        <label className="block text-sm font-semibold text-utu-text-secondary" style={{ lineHeight: 1.8 }}>
           {t('genderLabel')}
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -177,14 +174,14 @@ export default function MehramVerificationStep({
               style={{ lineHeight: 1.8 }}
             >
               <span className="text-xl">{g === 'male' ? '👤' : '👤'}</span>
-              <span className="font-medium text-gray-900">
+              <span className="font-medium text-utu-text-primary">
                 {t(g === 'male' ? 'genderMale' : 'genderFemale')}
               </span>
               <div className={[
                 'ms-auto w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center',
-                gender === g ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300',
+                gender === g ? 'border-emerald-500 bg-emerald-500' : 'border-utu-border-strong',
               ].join(' ')}>
-                {gender === g && <div className="w-2 h-2 rounded-full bg-white" />}
+                {gender === g && <div className="w-2 h-2 rounded-full bg-utu-bg-card" />}
               </div>
             </button>
           ))}
@@ -194,7 +191,7 @@ export default function MehramVerificationStep({
       {/* Age input — only for female */}
       {isFemale && (
         <div className="space-y-1.5">
-          <label htmlFor="mehram-age" className="block text-sm font-semibold text-gray-700" style={{ lineHeight: 1.8 }}>
+          <label htmlFor="mehram-age" className="block text-sm font-semibold text-utu-text-secondary" style={{ lineHeight: 1.8 }}>
             {t('ageLabel')}
           </label>
           <input
@@ -233,7 +230,7 @@ export default function MehramVerificationStep({
       {/* Travel arrangement — only for female under 45 */}
       {isUnder45 && (
         <div className="space-y-3">
-          <label className="block text-sm font-semibold text-gray-700" style={{ lineHeight: 1.8 }}>
+          <label className="block text-sm font-semibold text-utu-text-secondary" style={{ lineHeight: 1.8 }}>
             {t('optionTitle')}
           </label>
 
@@ -245,15 +242,15 @@ export default function MehramVerificationStep({
             className={cardCls(option === 'with_mahram')}
           >
             <div className="flex-1 text-start">
-              <p className="font-medium text-gray-900 text-sm" style={{ lineHeight: 1.8 }}>
+              <p className="font-medium text-utu-text-primary text-sm" style={{ lineHeight: 1.8 }}>
                 {t('optionWithMahram')}
               </p>
             </div>
             <div className={[
               'w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center mt-0.5',
-              option === 'with_mahram' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300',
+              option === 'with_mahram' ? 'border-emerald-500 bg-emerald-500' : 'border-utu-border-strong',
             ].join(' ')}>
-              {option === 'with_mahram' && <div className="w-2 h-2 rounded-full bg-white" />}
+              {option === 'with_mahram' && <div className="w-2 h-2 rounded-full bg-utu-bg-card" />}
             </div>
           </button>
 
@@ -262,7 +259,7 @@ export default function MehramVerificationStep({
             <div className="ms-2 ps-4 border-s-2 border-emerald-200 space-y-4">
               {/* Companion name */}
               <div className="space-y-1.5">
-                <label htmlFor="companion-name" className="block text-sm font-medium text-gray-700" style={{ lineHeight: 1.8 }}>
+                <label htmlFor="companion-name" className="block text-sm font-medium text-utu-text-secondary" style={{ lineHeight: 1.8 }}>
                   {t('companionNameLabel')}
                 </label>
                 <input
@@ -278,14 +275,14 @@ export default function MehramVerificationStep({
 
               {/* Relationship */}
               <div className="space-y-1.5">
-                <label htmlFor="companion-rel" className="block text-sm font-medium text-gray-700" style={{ lineHeight: 1.8 }}>
+                <label htmlFor="companion-rel" className="block text-sm font-medium text-utu-text-secondary" style={{ lineHeight: 1.8 }}>
                   {t('relationshipLabel')}
                 </label>
                 <select
                   id="companion-rel"
                   value={companionRel}
                   onChange={e => { setCompanionRel(e.target.value); setError(''); }}
-                  className={`${inputCls} bg-white`}
+                  className={`${inputCls} bg-utu-bg-card`}
                 >
                   <option value="">—</option>
                   {MAHRAM_RELATIONSHIPS.map(rel => (
@@ -306,22 +303,22 @@ export default function MehramVerificationStep({
             className={cardCls(option === 'authorized_group')}
           >
             <div className="flex-1 text-start">
-              <p className="font-medium text-gray-900 text-sm" style={{ lineHeight: 1.8 }}>
+              <p className="font-medium text-utu-text-primary text-sm" style={{ lineHeight: 1.8 }}>
                 {t('optionGroup')}
               </p>
             </div>
             <div className={[
               'w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center mt-0.5',
-              option === 'authorized_group' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300',
+              option === 'authorized_group' ? 'border-emerald-500 bg-emerald-500' : 'border-utu-border-strong',
             ].join(' ')}>
-              {option === 'authorized_group' && <div className="w-2 h-2 rounded-full bg-white" />}
+              {option === 'authorized_group' && <div className="w-2 h-2 rounded-full bg-utu-bg-card" />}
             </div>
           </button>
 
           {/* Group operator */}
           {option === 'authorized_group' && (
             <div className="ms-2 ps-4 border-s-2 border-emerald-200 space-y-1.5">
-              <label htmlFor="group-operator" className="block text-sm font-medium text-gray-700" style={{ lineHeight: 1.8 }}>
+              <label htmlFor="group-operator" className="block text-sm font-medium text-utu-text-secondary" style={{ lineHeight: 1.8 }}>
                 {t('groupOperatorLabel')}
               </label>
               <input
@@ -358,7 +355,7 @@ export default function MehramVerificationStep({
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 border border-gray-300 text-gray-700 rounded-xl py-3 text-sm font-medium hover:bg-gray-50 transition-colors min-h-[44px]"
+          className="flex-1 border border-utu-border-strong text-utu-text-secondary rounded-xl py-3 text-sm font-medium hover:bg-utu-bg-muted transition-colors min-h-[44px]"
           style={{ lineHeight: 1.8 }}
         >
           {t('backBtn')}
@@ -370,7 +367,7 @@ export default function MehramVerificationStep({
           className={[
             'flex-grow rounded-xl py-3 text-sm font-semibold transition-colors min-h-[44px]',
             !gender
-              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              ? 'bg-utu-border-default text-utu-text-muted cursor-not-allowed'
               : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white',
           ].join(' ')}
           style={{ lineHeight: 1.8 }}

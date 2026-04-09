@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { AdminStatCard } from '@/components/admin/AdminStatCard';
 import {
   getIncompleteBookings,
@@ -17,16 +18,20 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function relativeTime(iso: string | null) {
+type TFn = (key: string, values?: Record<string, string | number>) => string;
+
+function relativeTime(iso: string | null, t: TFn) {
   if (!iso) return '—';
   const diff = Date.now() - new Date(iso).getTime();
   const h = Math.floor(diff / 3_600_000);
-  if (h < 1)  return 'just now';
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+  if (h < 1)  return t('justNow');
+  if (h < 24) return t('hoursAgo', { h });
+  return t('daysAgo', { d: Math.floor(h / 24) });
 }
 
 export default function IncompleteBookingsPage() {
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const [feedback, setFeedback] = useState<Record<string, string>>({});
@@ -39,12 +44,12 @@ export default function IncompleteBookingsPage() {
   const triggerMutation = useMutation({
     mutationFn: (bookingId: string) => triggerRecoveryEmail(bookingId),
     onSuccess: (_, bookingId) => {
-      setFeedback((f) => ({ ...f, [bookingId]: 'Queued' }));
+      setFeedback((f) => ({ ...f, [bookingId]: t('feedbackQueued') }));
       setTimeout(() => setFeedback((f) => { const c = { ...f }; delete c[bookingId]; return c; }), 3000);
       qc.invalidateQueries({ queryKey: ['incomplete-bookings'] });
     },
     onError: (_, bookingId) => {
-      setFeedback((f) => ({ ...f, [bookingId]: 'Error' }));
+      setFeedback((f) => ({ ...f, [bookingId]: t('feedbackError') }));
     },
   });
 
@@ -58,79 +63,79 @@ export default function IncompleteBookingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#111827]">Incomplete Bookings</h1>
+      <h1 className="text-2xl font-bold text-utu-text-primary">{t('incompleteBookings')}</h1>
 
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <AdminStatCard label="Total Pending"    value={stats?.total_pending   ?? '—'} />
-        <AdminStatCard label="Recovery Active"  value={stats?.recovery_active ?? '—'} />
-        <AdminStatCard label="Suppressed"       value={stats?.suppressed      ?? '—'} />
-        <AdminStatCard label="Recovered Today"  value={stats?.recovered_today ?? '—'} trend="up" />
+        <AdminStatCard label={t('statTotalPending')}    value={stats?.total_pending   ?? '—'} />
+        <AdminStatCard label={t('statRecoveryActive')}  value={stats?.recovery_active ?? '—'} />
+        <AdminStatCard label={t('statSuppressed')}      value={stats?.suppressed      ?? '—'} />
+        <AdminStatCard label={t('statRecoveredToday')}  value={stats?.recovered_today ?? '—'} trend="up" />
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-utu-border-default bg-utu-bg-card shadow-sm">
         {isLoading && (
-          <div className="p-8 text-center text-sm text-[#6B7280]">Loading…</div>
+          <div className="p-8 text-center text-sm text-utu-text-muted">{tCommon('loading')}</div>
         )}
         {isError && (
-          <div className="p-8 text-center text-sm text-red-500">Failed to load bookings.</div>
+          <div className="p-8 text-center text-sm text-red-500">{t('failLoadBookings')}</div>
         )}
         {data && (
           <table className="min-w-full divide-y divide-[#E5E7EB] text-sm">
-            <thead className="bg-[#F9FAFB]">
+            <thead className="bg-utu-bg-muted">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Customer</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Booking</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Check-in</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Price</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Emails</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Last sent</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Actions</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colCustomer')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colBookingRef')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colCheckIn')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colPrice')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colEmails')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colLastSent')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E7EB]">
               {data.data.map((row) => (
-                <tr key={row.booking_id} className="hover:bg-[#F9FAFB]">
+                <tr key={row.booking_id} className="hover:bg-utu-bg-muted">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-[#111827]">{row.name_en || '—'}</p>
-                    <p className="text-xs text-[#6B7280]">{row.email}</p>
+                    <p className="font-medium text-utu-text-primary">{row.name_en || '—'}</p>
+                    <p className="text-xs text-utu-text-muted">{row.email}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-mono text-xs text-[#111827]">{row.reference_no}</p>
-                    <p className="text-xs text-[#6B7280] capitalize">{row.product_type}</p>
+                    <p className="font-mono text-xs text-utu-text-primary">{row.reference_no}</p>
+                    <p className="text-xs text-utu-text-muted capitalize">{row.product_type}</p>
                   </td>
-                  <td className="px-4 py-3 text-[#374151]">{formatDate(row.check_in)}</td>
-                  <td className="px-4 py-3 text-[#374151]">
+                  <td className="px-4 py-3 text-utu-text-secondary">{formatDate(row.check_in)}</td>
+                  <td className="px-4 py-3 text-utu-text-secondary">
                     {row.currency} {Number(row.total_price).toFixed(2)}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`font-medium ${row.email_count >= MAX_RECOVERY ? 'text-[#6B7280]' : 'text-[#111827]'}`}>
+                    <span className={`font-medium ${row.email_count >= MAX_RECOVERY ? 'text-utu-text-muted' : 'text-utu-text-primary'}`}>
                       {row.email_count}/{MAX_RECOVERY}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[#6B7280]">{relativeTime(row.last_sent_at)}</td>
+                  <td className="px-4 py-3 text-utu-text-muted">{relativeTime(row.last_sent_at, t)}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       {row.suppressed ? (
-                        <span className="rounded-full bg-[#FEF2F2] px-2 py-0.5 text-xs font-medium text-red-600">
-                          Suppressed
+                        <span className="rounded-full bg-utu-error-bg px-2 py-0.5 text-xs font-medium text-red-600">
+                          {t('suppressed')}
                         </span>
                       ) : (
                         <>
                           <button
                             onClick={() => triggerMutation.mutate(row.booking_id)}
                             disabled={triggerMutation.isPending || row.email_count >= MAX_RECOVERY}
-                            className="rounded bg-[#10B981] px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
+                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
                           >
-                            {feedback[row.booking_id] ?? 'Send Now'}
+                            {feedback[row.booking_id] ?? t('sendNow')}
                           </button>
                           <button
                             onClick={() => suppressMutation.mutate(row)}
                             disabled={suppressMutation.isPending}
-                            className="rounded border border-[#E5E7EB] px-3 py-1 text-xs font-medium text-[#374151] hover:bg-[#F3F4F6] disabled:opacity-40"
+                            className="rounded border border-utu-border-default px-3 py-1 text-xs font-medium text-utu-text-secondary hover:bg-utu-bg-muted disabled:opacity-40"
                           >
-                            Suppress
+                            {t('suppress')}
                           </button>
                         </>
                       )}
@@ -140,8 +145,8 @@ export default function IncompleteBookingsPage() {
               ))}
               {data.data.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-[#6B7280]">
-                    No incomplete bookings found.
+                  <td colSpan={7} className="px-4 py-8 text-center text-utu-text-muted">
+                    {t('noIncompleteBookings')}
                   </td>
                 </tr>
               )}
@@ -156,16 +161,16 @@ export default function IncompleteBookingsPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="rounded border border-[#E5E7EB] px-3 py-1.5 text-sm text-[#374151] hover:bg-[#F3F4F6] disabled:opacity-40"
+            className="rounded border border-utu-border-default px-3 py-1.5 text-sm text-utu-text-secondary hover:bg-utu-bg-muted disabled:opacity-40"
           >
-            Previous
+            {t('previous')}
           </button>
-          <span className="flex items-center px-3 text-sm text-[#6B7280]">Page {page}</span>
+          <span className="flex items-center px-3 text-sm text-utu-text-muted">{t('page', { n: page })}</span>
           <button
             onClick={() => setPage((p) => p + 1)}
-            className="rounded border border-[#E5E7EB] px-3 py-1.5 text-sm text-[#374151] hover:bg-[#F3F4F6]"
+            className="rounded border border-utu-border-default px-3 py-1.5 text-sm text-utu-text-secondary hover:bg-utu-bg-muted"
           >
-            Next
+            {t('next')}
           </button>
         </div>
       )}

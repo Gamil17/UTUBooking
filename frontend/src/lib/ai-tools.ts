@@ -129,6 +129,9 @@ interface FlightResult {
 
 // ─── Tool Executors ───────────────────────────────────────────────────────────
 
+const HOTEL_SERVICE  = process.env.INTERNAL_HOTEL_SERVICE_URL  ?? 'http://hotel-service:3003';
+const FLIGHT_SERVICE = process.env.INTERNAL_FLIGHT_SERVICE_URL ?? 'http://flight-service:3004';
+
 async function searchHotels(input: {
   destination: string;
   checkIn: string;
@@ -146,7 +149,7 @@ async function searchHotels(input: {
     });
 
     const res = await fetch(
-      `http://localhost:3003/api/v1/hotels/search?${params}`,
+      `${HOTEL_SERVICE}/api/v1/hotels/search?${params}`,
       { signal: AbortSignal.timeout(8000) }
     );
 
@@ -202,7 +205,7 @@ async function searchFlights(input: {
     });
 
     const res = await fetch(
-      `http://localhost:3004/api/v1/flights/search?${params}`,
+      `${FLIGHT_SERVICE}/api/v1/flights/search?${params}`,
       { signal: AbortSignal.timeout(8000) }
     );
 
@@ -238,6 +241,58 @@ function stubFlights(from: string, to: string, departDate: string): string {
   return `Available flights from ${from} to ${to} on ${departDate}:\n${lines.join('\n')}`;
 }
 
+// Common city → IATA lookup so planTrip produces valid codes
+const CITY_IATA: Record<string, string> = {
+  dubai: 'DXB', london: 'LHR', paris: 'CDG', istanbul: 'IST',
+  cairo: 'CAI', 'kuala lumpur': 'KUL', jakarta: 'CGK', karachi: 'KHI',
+  lahore: 'LHE', islamabad: 'ISB', dhaka: 'DAC', delhi: 'DEL',
+  mumbai: 'BOM', riyadh: 'RUH', jeddah: 'JED', dammam: 'DMM',
+  abu: 'AUH', 'abu dhabi': 'AUH', amman: 'AMM', beirut: 'BEY',
+  baghdad: 'BGW', tehran: 'IKA', frankfurt: 'FRA', amsterdam: 'AMS',
+  toronto: 'YYZ', 'new york': 'JFK', houston: 'IAH', chicago: 'ORD',
+  'kuala': 'KUL', casablanca: 'CMN', tunis: 'TUN', algiers: 'ALG',
+};
+
+function cityToIata(city: string): string {
+  const key = city.toLowerCase().trim();
+  if (CITY_IATA[key]) return CITY_IATA[key];
+  // If user typed an IATA code directly (3 letters)
+  if (/^[A-Z]{3}$/.test(city.toUpperCase())) return city.toUpperCase();
+  // Last-resort: first 3 letters upper-cased (may be wrong but better than crashing)
+  return key.slice(0, 3).toUpperCase();
+}
+
+function parseTravelMonth(month: string): string {
+  const MONTHS: Record<string, number> = {
+    january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+    july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+    ramadan: 3, // approximate — varies by year; good enough for planning purposes
+    hajj: 6,   // approximate Dhul Hijjah
+    umrah: 3,
+  };
+  const lower = month.toLowerCase();
+  const today = new Date();
+  let targetYear = today.getFullYear();
+  let targetMonth = today.getMonth() + 2; // next month as fallback
+
+  for (const [name, num] of Object.entries(MONTHS)) {
+    if (lower.includes(name)) {
+      targetMonth = num;
+      // If that month already passed this year, use next year
+      const probe = new Date(targetYear, num - 1, 15);
+      if (probe < today) targetYear++;
+      break;
+    }
+  }
+
+  // Try to extract a 4-digit year from the string
+  const yearMatch = month.match(/\b(202\d|203\d)\b/);
+  if (yearMatch) targetYear = parseInt(yearMatch[1], 10);
+
+  const mm = String(targetMonth).padStart(2, '0');
+  return `${targetYear}-${mm}-15`;
+}
+
 async function planTrip(input: {
   destination: string;
   nights: number;
@@ -245,16 +300,15 @@ async function planTrip(input: {
   departureCity: string;
   month: string;
 }): Promise<string> {
-  // Derive approximate dates from month string
-  const today = new Date();
-  const checkIn = `${today.getFullYear() + (today.getMonth() >= 11 ? 1 : 0)}-03-15`;
+  const checkIn  = parseTravelMonth(input.month);
   const checkOut = new Date(new Date(checkIn).getTime() + input.nights * 86400000)
     .toISOString()
     .slice(0, 10);
+  const fromCode = cityToIata(input.departureCity);
 
   const [hotelResult, flightResult] = await Promise.all([
     searchHotels({ destination: input.destination, checkIn, checkOut, guests: input.guests }),
-    searchFlights({ from: input.departureCity.toUpperCase().slice(0, 3), to: 'JED', departDate: checkIn, passengers: input.guests }),
+    searchFlights({ from: fromCode, to: 'JED', departDate: checkIn, passengers: input.guests }),
   ]);
 
   return (

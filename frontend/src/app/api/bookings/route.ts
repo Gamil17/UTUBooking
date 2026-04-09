@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL ?? 'http://booking-service:3006';
+const BOOKING_SERVICE = process.env.BOOKING_SERVICE_URL ?? 'http://localhost:3006';
 
 export async function GET(req: NextRequest) {
   const auth = req.headers.get('Authorization');
@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
     const upstream = await fetch(url, {
       headers: { Authorization: auth },
       cache: 'no-store',
+      signal: AbortSignal.timeout(10000),
     });
     const data = await upstream.json().catch(() => ({}));
     return NextResponse.json(data, { status: upstream.status });
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', Authorization: auth },
       body:    JSON.stringify(body),
+      signal:  AbortSignal.timeout(10000),
     });
     const data = await upstream.json().catch(() => ({}));
     return NextResponse.json(data, { status: upstream.status });

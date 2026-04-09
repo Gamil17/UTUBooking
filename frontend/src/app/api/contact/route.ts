@@ -14,6 +14,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Please enter a valid email address.' }, { status: 400 });
     }
 
+    // Whitelist topic values to prevent injection into downstream templates/tickets
+    const VALID_TOPICS = new Set(['flights', 'hotels', 'hajj', 'cars', 'payments', 'tech', 'visa', 'privacy', 'other']);
+    if (!VALID_TOPICS.has(topic.trim().toLowerCase())) {
+      return NextResponse.json({ message: 'Invalid topic.' }, { status: 400 });
+    }
+
     // In production: forward to email service (AWS SES / SendGrid) or internal ticketing system.
     // Log for now so submissions aren't silently dropped.
     console.log('[contact-form]', {

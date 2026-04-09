@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import Image from 'next/image';
 import type { HotelOffer } from '@/lib/api';
 
 // ─── Star row ─────────────────────────────────────────────────────────────────
@@ -11,7 +12,7 @@ function Stars({ count }: { count: number | null }) {
   return (
     <span className="flex gap-px" aria-label={`${filled} stars`}>
       {[0, 1, 2, 3, 4].map((i) => (
-        <svg key={i} className={`w-3.5 h-3.5 ${i < filled ? 'text-amber-400' : 'text-gray-200'}`}
+        <svg key={i} className={`w-3.5 h-3.5 ${i < filled ? 'text-amber-400' : 'text-utu-border-default'}`}
           viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
         </svg>
@@ -57,21 +58,16 @@ export default function HotelSearchCard({ offer, onSelect }: Props) {
 
   return (
     <article
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 overflow-hidden flex flex-col sm:flex-row hover:shadow-md transition-shadow"
+      className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm mb-3 overflow-hidden flex flex-col sm:flex-row hover:shadow-md transition-shadow"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       {/* ── Image panel ──────────────────────────────────────────────── */}
-      <div className="relative sm:w-52 sm:shrink-0 h-44 sm:h-auto bg-gray-100 overflow-hidden">
+      <div className="relative sm:w-52 sm:shrink-0 h-44 sm:h-auto bg-utu-bg-muted overflow-hidden">
         {mainImage ? (
-          <img
-            src={mainImage}
-            alt={name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
+          <Image src={mainImage} alt={name} fill className="object-cover" unoptimized />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <svg className="w-10 h-10 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <svg className="w-10 h-10 text-utu-text-muted" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.04-6.71l-2.75 3.54-1.96-2.36L6.5 17h11l-3.54-4.71z"/>
             </svg>
           </div>
@@ -85,7 +81,7 @@ export default function HotelSearchCard({ offer, onSelect }: Props) {
                 key={i}
                 onClick={() => setImgIdx(i)}
                 className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  i === imgIdx ? 'bg-white' : 'bg-white/50'
+                  i === imgIdx ? 'bg-utu-bg-card' : 'bg-utu-bg-card/50'
                 }`}
                 aria-label={`Photo ${i + 1}`}
               />
@@ -100,17 +96,17 @@ export default function HotelSearchCard({ offer, onSelect }: Props) {
         {/* Header row: name + price */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-2">{name}</h3>
+            <h3 className="font-bold text-utu-text-primary text-sm leading-tight line-clamp-2">{name}</h3>
             <Stars count={offer.stars} />
           </div>
           <div className="shrink-0 text-end">
-            <div className="text-lg font-extrabold text-gray-900 leading-none">
-              SAR {offer.pricePerNight.toLocaleString('en-SA')}
+            <div className="text-lg font-extrabold text-utu-text-primary leading-none">
+              {offer.pricePerNight.toLocaleString(undefined, { style: 'currency', currency: offer.currency ?? 'SAR', maximumFractionDigits: 0 })}
             </div>
-            <div className="text-[10px] text-gray-400">{tP('perNight')}</div>
+            <div className="text-[10px] text-utu-text-muted">{tP('perNight')}</div>
             {offer.nights > 1 && (
-              <div className="text-[10px] text-gray-400">
-                SAR {offer.totalPrice.toLocaleString('en-SA')} {tP('total')}
+              <div className="text-[10px] text-utu-text-muted">
+                {offer.totalPrice.toLocaleString(undefined, { style: 'currency', currency: offer.currency ?? 'SAR', maximumFractionDigits: 0 })} {tP('total')}
               </div>
             )}
           </div>
@@ -119,7 +115,7 @@ export default function HotelSearchCard({ offer, onSelect }: Props) {
         {/* Location + Haram distance */}
         <div className="flex items-center flex-wrap gap-1.5">
           {offer.address && (
-            <span className="text-xs text-gray-500 truncate">{offer.address}</span>
+            <span className="text-xs text-utu-text-muted truncate">{offer.address}</span>
           )}
           <HaramBadge meters={offer.distanceHaramM} />
         </div>
@@ -133,7 +129,7 @@ export default function HotelSearchCard({ offer, onSelect }: Props) {
               </span>
             ))}
             {offer.amenities.length > 4 && (
-              <span className="text-[10px] text-gray-400">+{offer.amenities.length - 4}</span>
+              <span className="text-[10px] text-utu-text-muted">+{offer.amenities.length - 4}</span>
             )}
           </div>
         )}
@@ -145,14 +141,14 @@ export default function HotelSearchCard({ offer, onSelect }: Props) {
               {tP('freeCancellation')}
             </span>
           )}
-          {(offer as any).reviewScore != null && (
+          {offer.reviewScore != null && (
             <span className="bg-emerald-700 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-              {Number((offer as any).reviewScore).toFixed(1)}
+              {Number(offer.reviewScore).toFixed(1)}
             </span>
           )}
-          {(offer as any).urgency && (
+          {offer.urgency && (
             <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
-              {(offer as any).urgency}
+              {offer.urgency}
             </span>
           )}
           <button

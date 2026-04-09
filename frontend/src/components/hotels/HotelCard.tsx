@@ -21,8 +21,9 @@
 import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import HalalBadge from './HalalBadge';
-import DirectPartnerBadge, { PartnerPerks, PartnerTier } from './DirectPartnerBadge';
+import DirectPartnerBadge, { PartnerTier } from './DirectPartnerBadge';
 import { formatPrice } from '@/utils/formatting';
+import type { Locale } from '@/i18n/config';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export interface HotelCardOffer {
   checkIn:          string;
   checkOut:         string;
   nights:           number;
+  guests?:          number | null;
   freeCancellation: boolean;
   source:           'hotelbeds' | 'bookingcom';
   reviewScore?:     number | null;
@@ -60,10 +62,10 @@ interface Props {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function StarRating({ count }: { count: number | null }) {
+function StarRating({ count, label }: { count: number | null; label: string }) {
   if (!count) return null;
   return (
-    <span className="flex gap-0.5" aria-label={`${count} stars`}>
+    <span className="flex gap-0.5" aria-label={label}>
       {Array.from({ length: count }).map((_, i) => (
         <svg key={i} aria-hidden="true" className="h-3.5 w-3.5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -88,17 +90,14 @@ export default function HotelCard({ offer, currency, onBook }: Props) {
   // Thumbnail — first image or grey placeholder
   const thumbnail = offer.images?.[0] ?? null;
 
-  // Partner perks come embedded in halalAmenities after overlay
-  const partnerPerks = offer.isDirectPartner ? (offer.halalAmenities as PartnerPerks | null) : null;
-
   return (
     <article
-      className="flex flex-col sm:flex-row rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+      className="flex flex-col sm:flex-row rounded-2xl border border-utu-border-default bg-utu-bg-card shadow-sm hover:shadow-md transition-shadow overflow-hidden"
       dir={isRtl ? 'rtl' : 'ltr'}
       aria-label={hotelName}
     >
       {/* ── Image ── */}
-      <div className="relative h-48 sm:h-auto sm:w-48 flex-shrink-0 bg-gray-100">
+      <div className="relative h-48 sm:h-auto sm:w-48 flex-shrink-0 bg-utu-bg-muted">
         {thumbnail ? (
           <Image
             src={thumbnail}
@@ -110,7 +109,7 @@ export default function HotelCard({ offer, currency, onBook }: Props) {
           />
         ) : (
           // Placeholder when no image available
-          <div className="flex h-full items-center justify-center text-gray-300">
+          <div className="flex h-full items-center justify-center text-utu-text-muted">
             <svg aria-hidden="true" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
                 d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -136,16 +135,15 @@ export default function HotelCard({ offer, currency, onBook }: Props) {
 
         {/* Name + stars + distance */}
         <div className="space-y-1">
-          <h3 className="text-base font-semibold text-gray-900 leading-tight line-clamp-2">
+          <h3 className="text-base font-semibold text-utu-text-primary leading-tight line-clamp-2">
             {hotelName}
           </h3>
 
           <div className="flex flex-wrap items-center gap-2">
-            <StarRating count={offer.stars} />
+            <StarRating count={offer.stars} label={t('starRating', { count: offer.stars ?? 0 })} />
 
             {offer.distanceHaramM !== null && (
-              <span className="text-xs text-gray-500">
-                {/* @ts-expect-error next-intl rich text */}
+              <span className="text-xs text-utu-text-muted">
                 {t('distanceHaram', { m: offer.distanceHaramM.toLocaleString() })}
               </span>
             )}
@@ -157,7 +155,7 @@ export default function HotelCard({ offer, currency, onBook }: Props) {
             )}
           </div>
 
-          <p className="text-xs text-gray-400 truncate">{offer.address || offer.city}</p>
+          <p className="text-xs text-utu-text-muted truncate">{offer.address || offer.city}</p>
         </div>
 
         {/* Badges row */}
@@ -169,7 +167,6 @@ export default function HotelCard({ offer, currency, onBook }: Props) {
         {/* Free cancellation */}
         {offer.freeCancellation && (
           <p className="text-xs font-medium text-emerald-600">
-            {/* @ts-expect-error dynamic key */}
             ✓ {t('freeCancellation')}
           </p>
         )}
@@ -178,20 +175,20 @@ export default function HotelCard({ offer, currency, onBook }: Props) {
         <div className="flex-1" />
 
         {/* Price + CTA */}
-        <div className="flex items-end justify-between gap-4 pt-2 border-t border-gray-100">
+        <div className="flex items-end justify-between gap-4 pt-2 border-t border-utu-border-default">
           <div>
-            <p className="text-xs text-gray-400">
-              {offer.nights} {offer.nights === 1 ? 'night' : 'nights'} · {offer.guests ?? ''} guests
+            <p className="text-xs text-utu-text-muted">
+              {offer.nights} {offer.nights === 1 ? t('night') : t('nights')} · {offer.guests ?? ''} guests
             </p>
-            <p className="text-xl font-bold text-gray-900">
-              {formatPrice(offer.pricePerNight, currency)}
-              <span className="text-sm font-normal text-gray-400">
+            <p className="text-xl font-bold text-utu-text-primary">
+              {formatPrice(offer.pricePerNight, locale as Locale, { currency })}
+              <span className="text-sm font-normal text-utu-text-muted">
                 {' '}{t('perNight')}
               </span>
             </p>
             {offer.nights > 1 && (
-              <p className="text-xs text-gray-400">
-                {formatPrice(offer.totalPrice, currency)} total
+              <p className="text-xs text-utu-text-muted">
+                {formatPrice(offer.totalPrice, locale as Locale, { currency })} {t('total')}
               </p>
             )}
           </div>

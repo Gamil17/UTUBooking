@@ -126,15 +126,15 @@ export default function LatAmPaymentSelector({
               <span className="font-black text-base" style={{ color: '#009EE3' }}>Mercado</span>
               <span className="font-black text-base text-yellow-500">Pago</span>
             </div>
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-utu-text-secondary">
               Serás redirigido/a al checkout seguro de MercadoPago. Elige tu método de pago preferido.
             </p>
             {/* Local methods list */}
             <div>
-              <p className="text-xs font-semibold text-gray-500 mb-1">Métodos disponibles en {countryName}:</p>
+              <p className="text-xs font-semibold text-utu-text-muted mb-1">Métodos disponibles en {countryName}:</p>
               <div className="flex flex-wrap gap-1">
                 {methods.map((m) => (
-                  <span key={m} className="text-xs bg-white border border-blue-100 text-gray-600 rounded-full px-2 py-0.5">
+                  <span key={m} className="text-xs bg-utu-bg-card border border-blue-100 text-utu-text-secondary rounded-full px-2 py-0.5">
                     {m}
                   </span>
                 ))}
@@ -154,14 +154,14 @@ export default function LatAmPaymentSelector({
       )}
 
       {phase === 'loading' && (
-        <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+        <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
           <span className="w-5 h-5 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
           <span className="text-sm">Conectando con MercadoPago…</span>
         </div>
       )}
 
       {phase === 'redirecting' && (
-        <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+        <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
           <span className="w-5 h-5 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
           <span className="text-sm">Redirigiendo al checkout…</span>
         </div>
@@ -185,13 +185,13 @@ export default function LatAmPaymentSelector({
         <button
           type="button"
           onClick={onCancel}
-          className="w-full border border-gray-300 text-gray-700 rounded-xl py-3 text-sm font-medium hover:bg-gray-50 min-h-[44px]"
+          className="w-full border border-utu-border-strong text-utu-text-secondary rounded-xl py-3 text-sm font-medium hover:bg-utu-bg-muted min-h-[44px]"
         >
           Cancelar
         </button>
       )}
 
-      <p className="text-xs text-center text-gray-400">
+      <p className="text-xs text-center text-utu-text-muted">
         Pagos seguros procesados por MercadoPago · Cifrado SSL
       </p>
     </div>

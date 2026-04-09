@@ -41,7 +41,7 @@ export default function USDepartureSelector({ tripType, selected, onSelect }: Pr
     fetch(`/api/flights/departures?countryCode=US&tripType=${tripType}`)
       .then((r) => r.json())
       .then((data) => { setAirports(data.departures ?? []); })
-      .catch(console.error)
+      .catch((err) => console.error('[USDepartureSelector] Failed to load departure airports:', err))
       .finally(() => setLoading(false));
   }, [tripType]);
 
@@ -49,7 +49,7 @@ export default function USDepartureSelector({ tripType, selected, onSelect }: Pr
     return (
       <div className="flex gap-2 overflow-x-auto pb-1">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-14 w-28 rounded-xl bg-gray-100 animate-pulse flex-shrink-0" />
+          <div key={i} className="h-14 w-28 rounded-xl bg-utu-bg-muted animate-pulse flex-shrink-0" />
         ))}
       </div>
     );
@@ -77,11 +77,11 @@ export default function USDepartureSelector({ tripType, selected, onSelect }: Pr
                 'flex-shrink-0 rounded-xl px-3 py-2 text-left min-h-[44px] min-w-[100px] transition-colors border',
                 isActive
                   ? 'border-emerald-500 bg-emerald-50 text-emerald-900 shadow-sm'
-                  : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300 hover:bg-emerald-50/50',
+                  : 'border-utu-border-default bg-utu-bg-card text-utu-text-secondary hover:border-emerald-300 hover:bg-emerald-50/50',
               ].join(' ')}
             >
               <p className="text-base font-bold leading-none">{ap.iata}</p>
-              <p className="text-xs text-gray-500 mt-0.5 truncate max-w-[120px]">{ap.city}</p>
+              <p className="text-xs text-utu-text-muted mt-0.5 truncate max-w-[120px]">{ap.city}</p>
               {ap.muslimPop === 'very_large' && (
                 <p className="text-[10px] text-emerald-600 font-medium mt-0.5 truncate max-w-[120px]">
                   {POP_LABEL[ap.muslimPop]}
@@ -92,7 +92,7 @@ export default function USDepartureSelector({ tripType, selected, onSelect }: Pr
         })}
       </div>
       {selected && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-utu-text-muted">
           {airports.find((a) => a.iata === selected)?.name}
           {' · '}{airports.find((a) => a.iata === selected)?.state}
         </p>

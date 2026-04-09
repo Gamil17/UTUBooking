@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import ContactForm from '@/components/contact/ContactForm';
 import ContactSearch from '@/components/contact/ContactSearch';
+import { SITE_CONFIG } from '@/lib/siteConfig';
 export const metadata: Metadata = {
   title: 'Contact Us — UTUBooking.com',
   description: 'Get help with your UTUBooking hotel, flight, or car rental booking. 24/7 support in Arabic, English, and Urdu.',
@@ -15,7 +16,7 @@ export default async function ContactPage() {
       icon: '📧',
       title: t('emailTitle'),
       detail: t('emailDetail'),
-      href: 'mailto:support@utubooking.com',
+      href: `mailto:${SITE_CONFIG.supportEmail}`,
       label: t('emailLabel'),
       note: t('emailNote'),
     },
@@ -31,7 +32,7 @@ export default async function ContactPage() {
       icon: '📞',
       title: t('saudiTitle'),
       detail: t('saudiDetail'),
-      href: 'tel:+9668000000000',
+      href: `tel:${SITE_CONFIG.saudiPhone}`,
       label: t('saudiLabel'),
       note: t('saudiNote'),
     },
@@ -39,7 +40,7 @@ export default async function ContactPage() {
       icon: '📞',
       title: t('uaeTitle'),
       detail: t('uaeDetail'),
-      href: 'tel:+971600000000',
+      href: `tel:${SITE_CONFIG.uaePhone}`,
       label: t('uaeLabel'),
       note: t('uaeNote'),
     },
@@ -110,14 +111,14 @@ export default async function ContactPage() {
       </section>
 
       {/* Self-Service Quick Links */}
-      <section className="bg-white border-b border-gray-100 py-6 px-4">
+      <section className="bg-utu-bg-card border-b border-utu-border-default py-6 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {selfService.map((s) => (
               <a
                 key={s.label}
                 href={s.href}
-                className="flex items-center gap-2 bg-slate-50 hover:bg-emerald-50 border border-gray-100 hover:border-emerald-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 hover:text-emerald-700 transition-colors"
+                className="flex items-center gap-2 bg-slate-50 hover:bg-emerald-50 border border-utu-border-default hover:border-emerald-200 rounded-xl px-4 py-3 text-sm font-medium text-utu-text-secondary hover:text-emerald-700 transition-colors"
               >
                 <span className="text-lg" aria-hidden="true">{s.icon}</span>
                 {s.label}
@@ -130,14 +131,14 @@ export default async function ContactPage() {
       {/* Contact Methods */}
       <section className="py-14 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl font-bold text-gray-900 text-center mb-8">{t('contactTeamHeading')}</h2>
+          <h2 className="text-xl font-bold text-utu-text-primary text-center mb-8">{t('contactTeamHeading')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {contactMethods.map((m) => (
-              <div key={m.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col items-center text-center gap-3">
+              <div key={m.title} className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-5 flex flex-col items-center text-center gap-3">
                 <span className="text-3xl" aria-hidden="true">{m.icon}</span>
                 <div>
-                  <div className="font-semibold text-gray-900 text-sm">{m.title}</div>
-                  <div className="text-gray-500 text-xs mt-0.5">{m.detail}</div>
+                  <div className="font-semibold text-utu-text-primary text-sm">{m.title}</div>
+                  <div className="text-utu-text-muted text-xs mt-0.5">{m.detail}</div>
                 </div>
                 <a
                   href={m.href}
@@ -145,7 +146,7 @@ export default async function ContactPage() {
                 >
                   {m.label}
                 </a>
-                <span className="text-xs text-gray-400">{m.note}</span>
+                <span className="text-xs text-utu-text-muted">{m.note}</span>
               </div>
             ))}
           </div>
@@ -153,21 +154,21 @@ export default async function ContactPage() {
       </section>
 
       {/* FAQ Categories */}
-      <section className="bg-white py-14 px-4">
+      <section className="bg-utu-bg-card py-14 px-4">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-xl font-bold text-gray-900 text-center mb-2">{t('faqHeading')}</h2>
-          <p className="text-center text-gray-500 text-sm mb-8">{t('faqDesc')}</p>
+          <h2 className="text-xl font-bold text-utu-text-primary text-center mb-2">{t('faqHeading')}</h2>
+          <p className="text-center text-utu-text-muted text-sm mb-8">{t('faqDesc')}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {faqCategories.map((cat) => (
-              <div key={cat.title} className="bg-slate-50 rounded-2xl border border-gray-100 p-5 hover:shadow-sm transition-shadow">
+              <div key={cat.title} className="bg-slate-50 rounded-2xl border border-utu-border-default p-5 hover:shadow-sm transition-shadow">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-2xl" aria-hidden="true">{cat.icon}</span>
-                  <h3 className="font-semibold text-gray-900 text-sm">{cat.title}</h3>
+                  <h3 className="font-semibold text-utu-text-primary text-sm">{cat.title}</h3>
                 </div>
                 <ul className="space-y-1.5">
                   {cat.topics.map((topic) => (
                     <li key={topic}>
-                      <a href="/faq" className="text-xs text-gray-500 hover:text-emerald-700 hover:underline transition-colors leading-snug block">
+                      <a href="/faq" className="text-xs text-utu-text-muted hover:text-emerald-700 hover:underline transition-colors leading-snug block">
                         {topic}
                       </a>
                     </li>
@@ -182,16 +183,31 @@ export default async function ContactPage() {
       {/* Contact Form */}
       <section id="contact" className="py-14 px-4">
         <div className="max-w-xl mx-auto">
-          <h2 className="text-xl font-bold text-gray-900 text-center mb-2">{t('formHeading')}</h2>
-          <p className="text-center text-gray-500 text-sm mb-8">{t('formDesc')}</p>
+          <h2 className="text-xl font-bold text-utu-text-primary text-center mb-2">{t('formHeading')}</h2>
+          <p className="text-center text-utu-text-muted text-sm mb-8">{t('formDesc')}</p>
           <ContactForm labels={{
             fieldName: t('fieldName'), fieldNamePh: t('fieldNamePh'),
             fieldEmail: t('fieldEmail'), fieldEmailPh: t('fieldEmailPh'),
             fieldRef: t('fieldRef'), fieldRefPh: t('fieldRefPh'),
             fieldTopic: t('fieldTopic'), fieldTopicDefault: t('fieldTopicDefault'),
-            topics: [t('topicFlights'), t('topicHotels'), t('topicHajj'), t('topicCars'), t('topicPayments'), t('topicTech'), t('topicVisa'), t('topicPrivacy'), t('topicOther')],
+            topics: [
+              { value: 'flights',  label: t('topicFlights') },
+              { value: 'hotels',   label: t('topicHotels') },
+              { value: 'hajj',     label: t('topicHajj') },
+              { value: 'cars',     label: t('topicCars') },
+              { value: 'payments', label: t('topicPayments') },
+              { value: 'tech',     label: t('topicTech') },
+              { value: 'visa',     label: t('topicVisa') },
+              { value: 'privacy',  label: t('topicPrivacy') },
+              { value: 'other',    label: t('topicOther') },
+            ],
             fieldMessage: t('fieldMessage'), fieldMessagePh: t('fieldMessagePh'),
             submitBtn: t('submitBtn'),
+            sendingLabel: t('sendingLabel'),
+            successTitle: t('successTitle'),
+            successDesc: t('successDesc'),
+            errorGeneric: t('errorGeneric'),
+            errorNetwork: t('errorNetwork'),
           }} />
         </div>
       </section>

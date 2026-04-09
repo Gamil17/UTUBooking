@@ -105,7 +105,6 @@ export default function DirectPartnerBadge({
         aria-label={t('badge')}
       >
         <StarIcon className={`h-3 w-3 ${styles.icon}`} />
-        {/* @ts-expect-error dynamic key */}
         {t(`tier.${tier}`)}
       </span>
     );
@@ -126,9 +125,9 @@ export default function DirectPartnerBadge({
       <div className="flex items-center gap-2">
         <StarIcon className={`h-5 w-5 ${styles.icon}`} />
         <div>
-          {/* @ts-expect-error dynamic key */}
+
           <p className={`text-sm font-semibold ${styles.heading}`}>{t(`tier.${tier}`)}</p>
-          <p className="text-xs text-gray-500">{t('badgeDesc')}</p>
+          <p className="text-xs text-utu-text-muted">{t('badgeDesc')}</p>
         </div>
       </div>
 
@@ -138,10 +137,10 @@ export default function DirectPartnerBadge({
           {activePerks.map((key) => (
             <li
               key={key}
-              className="flex items-center gap-1.5 text-xs text-gray-700"
+              className="flex items-center gap-1.5 text-xs text-utu-text-secondary"
             >
               <span aria-hidden="true">{PERK_ICONS[key]}</span>
-              {/* @ts-expect-error dynamic key */}
+    
               {t(`perks.${key}`)}
             </li>
           ))}

@@ -58,12 +58,12 @@ export default async function AboutPage() {
       </section>
 
       {/* Stats */}
-      <section className="bg-white border-b border-gray-100 py-10 px-4">
+      <section className="bg-utu-bg-card border-b border-utu-border-default py-10 px-4">
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {stats.map((s) => (
             <div key={s.label}>
               <div className="text-3xl font-bold text-emerald-700">{s.value}</div>
-              <div className="text-sm text-gray-500 mt-1">{s.label}</div>
+              <div className="text-sm text-utu-text-muted mt-1">{s.label}</div>
             </div>
           ))}
         </div>
@@ -72,24 +72,24 @@ export default async function AboutPage() {
       {/* Mission */}
       <section className="py-16 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('missionHeading')}</h2>
-          <p className="text-gray-600 text-lg leading-relaxed">
+          <h2 className="text-2xl font-bold text-utu-text-primary mb-4">{t('missionHeading')}</h2>
+          <p className="text-utu-text-secondary text-lg leading-relaxed">
             {t('missionText')}
           </p>
         </div>
       </section>
 
       {/* Values */}
-      <section className="bg-white py-16 px-4">
+      <section className="bg-utu-bg-card py-16 px-4">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">{t('valuesHeading')}</h2>
+          <h2 className="text-2xl font-bold text-utu-text-primary text-center mb-10">{t('valuesHeading')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {values.map((v) => (
-              <div key={v.title} className="bg-slate-50 rounded-2xl p-6 flex gap-4 items-start border border-gray-100">
+              <div key={v.title} className="bg-slate-50 rounded-2xl p-6 flex gap-4 items-start border border-utu-border-default">
                 <span className="text-3xl" aria-hidden="true">{v.icon}</span>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">{v.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{v.desc}</p>
+                  <h3 className="font-semibold text-utu-text-primary mb-1">{v.title}</h3>
+                  <p className="text-sm text-utu-text-muted leading-relaxed">{v.desc}</p>
                 </div>
               </div>
             ))}
@@ -100,12 +100,12 @@ export default async function AboutPage() {
       {/* Markets */}
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">{t('marketsHeading')}</h2>
+          <h2 className="text-2xl font-bold text-utu-text-primary text-center mb-10">{t('marketsHeading')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {markets.map((m) => (
-              <div key={m.region} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <div key={m.region} className="bg-utu-bg-card rounded-xl p-4 border border-utu-border-default shadow-sm">
                 <div className="font-semibold text-emerald-700 text-sm mb-1">{m.region}</div>
-                <div className="text-sm text-gray-500">{m.countries}</div>
+                <div className="text-sm text-utu-text-muted">{m.countries}</div>
               </div>
             ))}
           </div>
@@ -113,15 +113,15 @@ export default async function AboutPage() {
       </section>
 
       {/* Milestones */}
-      <section className="bg-white py-16 px-4">
+      <section className="bg-utu-bg-card py-16 px-4">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">{t('journeyHeading')}</h2>
+          <h2 className="text-2xl font-bold text-utu-text-primary text-center mb-10">{t('journeyHeading')}</h2>
           <div className="relative border-s-2 border-emerald-200 ps-6 space-y-8">
             {milestones.map((m) => (
               <div key={m.year} className="relative">
                 <div className="absolute -start-[1.65rem] top-1 w-4 h-4 bg-emerald-600 rounded-full border-2 border-white" />
                 <div className="text-xs font-bold text-emerald-600 uppercase tracking-wide mb-1">{m.year}</div>
-                <div className="text-gray-700 text-sm">{m.event}</div>
+                <div className="text-utu-text-secondary text-sm">{m.event}</div>
               </div>
             ))}
           </div>
@@ -134,7 +134,7 @@ export default async function AboutPage() {
           <h2 className="text-2xl font-bold text-white mb-3">{t('ctaHeading')}</h2>
           <p className="text-emerald-100 mb-6">{t('ctaDesc')}</p>
           <Link
-            href="/"
+            href="/hotels/search"
             className="inline-block bg-amber-400 hover:bg-amber-300 text-emerald-900 font-bold px-8 py-3 rounded-xl transition-colors text-sm"
           >
             {t('ctaBtn')}

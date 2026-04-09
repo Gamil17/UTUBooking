@@ -77,10 +77,12 @@ export async function GET(req: NextRequest) {
     fetch(
       `${FLIGHT_SERVICE}/api/v1/flights/search?origin=${origin}&destination=JED` +
       `&date=${checkIn}&adults=${adults}&returnDate=${checkOut}&tripType=umrah`,
+      { signal: AbortSignal.timeout(15000) },
     ),
     fetch(
       `${HOTEL_SERVICE}/api/v1/hotels/search?location=Makkah&checkIn=${checkIn}` +
       `&checkOut=${checkOut}&guests=${adults}&halal_friendly=true`,
+      { signal: AbortSignal.timeout(15000) },
     ),
   ]);
 

@@ -81,8 +81,8 @@ export function buildInitialFilters(offers: FlightOffer[]): FilterState {
 // ─── Section heading ──────────────────────────────────────────────────────────
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="border-b border-gray-100 pb-4 mb-4">
-      <h3 className="text-xs font-bold text-gray-700 uppercase tracking-widest mb-3">{title}</h3>
+    <div className="border-b border-utu-border-default pb-4 mb-4">
+      <h3 className="text-xs font-bold text-utu-text-secondary uppercase tracking-widest mb-3">{title}</h3>
       {children}
     </div>
   );
@@ -97,6 +97,8 @@ interface Props {
 
 export default function FlightFilters({ offers, filters, onChange }: Props) {
   const t = useTranslations('flightResults');
+  const currency = offers[0]?.currency ?? 'SAR';
+  const fmtAmt = (n: number) => n.toLocaleString(undefined, { style: 'currency', currency, maximumFractionDigits: 0 });
 
   // ── Derived stats ────────────────────────────────────────────────────────
   const stopCounts = useMemo(() => {
@@ -120,17 +122,17 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
   // ── Helpers ──────────────────────────────────────────────────────────────
   function toggleStop(s: 0 | 1 | 2) {
     const next = new Set(filters.stops);
-    next.has(s) ? next.delete(s) : next.add(s);
+    if (next.has(s)) { next.delete(s); } else { next.add(s); }
     onChange({ ...filters, stops: next });
   }
   function toggleBlock(b: 0 | 1 | 2 | 3) {
     const next = new Set(filters.departureBlocks);
-    next.has(b) ? next.delete(b) : next.add(b);
+    if (next.has(b)) { next.delete(b); } else { next.add(b); }
     onChange({ ...filters, departureBlocks: next });
   }
   function toggleAirline(code: string) {
     const next = new Set(filters.airlines);
-    next.has(code) ? next.delete(code) : next.add(code);
+    if (next.has(code)) { next.delete(code); } else { next.add(code); }
     onChange({ ...filters, airlines: next });
   }
   function reset() {
@@ -140,11 +142,11 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
   const stopLabels = [t('direct'), t('oneStop'), t('twoStops')];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-sm">
+    <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-5 text-sm">
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-bold text-gray-900">{t('filters')}</h2>
+        <h2 className="font-bold text-utu-text-primary">{t('filters')}</h2>
         <button onClick={reset} className="text-xs text-emerald-700 hover:underline">{t('clearFilters')}</button>
       </div>
 
@@ -159,7 +161,7 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl mb-1.5 border text-sm transition-colors ${
                 active
                   ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                  : 'border-gray-100 bg-slate-50 text-gray-700 hover:bg-gray-100'
+                  : 'border-utu-border-default bg-slate-50 text-utu-text-secondary hover:bg-utu-bg-muted'
               }`}
             >
               <span>{stopLabels[s]}</span>
@@ -171,9 +173,9 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
 
       {/* Price range */}
       <Section title={t('priceRange')}>
-        <div className="flex justify-between text-xs text-gray-500 mb-2">
-          <span>SAR {filters.priceMin.toLocaleString('en-SA')}</span>
-          <span>SAR {filters.priceMax.toLocaleString('en-SA')}</span>
+        <div className="flex justify-between text-xs text-utu-text-muted mb-2">
+          <span>{fmtAmt(filters.priceMin)}</span>
+          <span>{fmtAmt(filters.priceMax)}</span>
         </div>
         <div className="relative h-5 flex items-center">
           <input
@@ -202,7 +204,7 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
               zIndex: 2,
             }}
           />
-          <div className="w-full h-1 bg-gray-200 rounded-full" style={{ zIndex: 1 }} />
+          <div className="w-full h-1 bg-utu-border-default rounded-full" style={{ zIndex: 1 }} />
         </div>
       </Section>
 
@@ -218,7 +220,7 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
                 className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-xs font-medium transition-colors ${
                   active
                     ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                    : 'border-gray-100 bg-slate-50 text-gray-600 hover:bg-gray-100'
+                    : 'border-utu-border-default bg-slate-50 text-utu-text-secondary hover:bg-utu-bg-muted'
                 }`}
               >
                 {block.icon}
@@ -235,18 +237,18 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
           {airlineStats.map(([code, lowestPrice]) => {
             const checked = filters.airlines.has(code);
             return (
-              <label key={code} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-lg px-2 py-1.5">
+              <label key={code} className="flex items-center gap-2 cursor-pointer hover:bg-utu-bg-muted rounded-lg px-2 py-1.5">
                 <input
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggleAirline(code)}
-                  className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-utu-border-strong text-emerald-600 focus:ring-emerald-500"
                 />
                 <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${airlineColor(code)}`}>
                   <span className="text-white text-[9px] font-bold">{code.slice(0, 2)}</span>
                 </div>
-                <span className="flex-1 text-gray-700 text-xs">{code}</span>
-                <span className="text-xs text-gray-400">SAR {lowestPrice.toLocaleString('en-SA')}</span>
+                <span className="flex-1 text-utu-text-secondary text-xs">{code}</span>
+                <span className="text-xs text-utu-text-muted">{fmtAmt(lowestPrice)}</span>
               </label>
             );
           })}
@@ -255,7 +257,7 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
 
       {/* Max Duration */}
       <Section title={t('maxDuration')}>
-        <p className="text-xs text-gray-500 mb-2">Up to {fmtDuration(filters.maxDuration)}</p>
+        <p className="text-xs text-utu-text-muted mb-2">Up to {fmtDuration(filters.maxDuration)}</p>
         <input
           type="range"
           min={0}
@@ -268,14 +270,14 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
 
       {/* Baggage */}
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-700">{t('baggageIncluded')}</span>
+        <span className="text-sm text-utu-text-secondary">{t('baggageIncluded')}</span>
         <button
           role="switch"
           aria-checked={filters.baggageOnly}
           onClick={() => onChange({ ...filters, baggageOnly: !filters.baggageOnly })}
-          className={`w-10 h-5 rounded-full transition-colors relative ${filters.baggageOnly ? 'bg-emerald-600' : 'bg-gray-200'}`}
+          className={`w-10 h-5 rounded-full transition-colors relative ${filters.baggageOnly ? 'bg-emerald-600' : 'bg-utu-border-default'}`}
         >
-          <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${filters.baggageOnly ? 'translate-x-5' : 'translate-x-0.5'}`} />
+          <span className={`absolute top-0.5 w-4 h-4 bg-utu-bg-card rounded-full shadow transition-transform ${filters.baggageOnly ? 'translate-x-5' : 'translate-x-0.5'}`} />
         </button>
       </div>
 

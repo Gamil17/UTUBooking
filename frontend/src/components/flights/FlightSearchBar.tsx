@@ -82,7 +82,7 @@ export default function FlightSearchBar({ initialParams, onSearch, isLoading }: 
               onClick={() => key !== 'multicity' && set('tripType', key)}
               className={`relative px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                 params.tripType === key
-                  ? 'bg-white text-emerald-700 shadow-sm'
+                  ? 'bg-utu-bg-card text-emerald-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               } ${key === 'multicity' ? 'cursor-default' : 'cursor-pointer'}`}
             >
@@ -98,7 +98,7 @@ export default function FlightSearchBar({ initialParams, onSearch, isLoading }: 
         <select
           value={params.cabin}
           onChange={(e) => set('cabin', e.target.value as CabinClass)}
-          className="text-xs border border-slate-200 rounded-full px-3 py-1.5 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="text-xs border border-slate-200 rounded-full px-3 py-1.5 bg-utu-bg-card text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           {CABINS.map(({ key, label }) => (
             <option key={key} value={key}>{label}</option>
@@ -106,7 +106,7 @@ export default function FlightSearchBar({ initialParams, onSearch, isLoading }: 
         </select>
 
         {/* Adults counter */}
-        <div className="flex items-center gap-2 border border-slate-200 rounded-full px-3 py-1 bg-white">
+        <div className="flex items-center gap-2 border border-slate-200 rounded-full px-3 py-1 bg-utu-bg-card">
           <button
             type="button"
             onClick={() => set('adults', Math.max(1, params.adults - 1))}
@@ -149,7 +149,7 @@ export default function FlightSearchBar({ initialParams, onSearch, isLoading }: 
           type="button"
           onClick={swap}
           title={t('swap')}
-          className="w-9 h-9 mb-0.5 flex items-center justify-center rounded-full border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-500 hover:text-emerald-700 transition-colors shrink-0"
+          className="w-9 h-9 mb-0.5 flex items-center justify-center rounded-full border border-slate-200 bg-utu-bg-card hover:bg-emerald-50 hover:border-emerald-300 text-slate-500 hover:text-emerald-700 transition-colors shrink-0"
         >
           <SwapIcon />
         </button>

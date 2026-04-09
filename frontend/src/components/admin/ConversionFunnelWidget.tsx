@@ -1,24 +1,28 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { getFunnelMetrics, type FunnelRow } from '@/lib/api';
 
-const PERIODS = [
-  { value: '7d',  label: '7 days'  },
-  { value: '30d', label: '30 days' },
-] as const;
-
 const FUNNEL_STEPS = ['search', 'detail_view', 'booking_started', 'booking_completed'] as const;
-const STEP_LABELS: Record<string, string> = {
-  search:             'Search',
-  detail_view:        'Detail View',
-  booking_started:    'Booking Started',
-  booking_completed:  'Booking Completed',
-};
 
 export function ConversionFunnelWidget() {
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
   const [period, setPeriod] = useState<'7d' | '30d'>('7d');
+
+  const PERIODS = [
+    { value: '7d',  label: t('period7d')  },
+    { value: '30d', label: t('period30d') },
+  ] as const;
+
+  const STEP_LABELS: Record<string, string> = {
+    search:             t('stepSearch'),
+    detail_view:        t('stepDetailView'),
+    booking_started:    t('stepBookingStarted'),
+    booking_completed:  t('stepBookingCompleted'),
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['funnel', period],
@@ -46,18 +50,18 @@ export function ConversionFunnelWidget() {
   const maxStep = Math.max(...FUNNEL_STEPS.map((s) => stepTotals[s] ?? 0), 1);
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
+    <div className="rounded-xl border border-utu-border-default bg-utu-bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-[#111827]">Conversion Funnel</h2>
-        <div className="flex rounded-lg border border-[#E5E7EB] overflow-hidden">
+        <h2 className="text-base font-semibold text-utu-text-primary">{t('funnelTitle')}</h2>
+        <div className="flex rounded-lg border border-utu-border-default overflow-hidden">
           {PERIODS.map((p) => (
             <button
               key={p.value}
               onClick={() => setPeriod(p.value)}
               className={`px-3 py-1.5 text-sm font-medium transition-colors
                 ${period === p.value
-                  ? 'bg-[#10B981] text-white'
-                  : 'bg-white text-[#6B7280] hover:bg-[#F9FAFB]'}`}
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-utu-bg-card text-utu-text-muted hover:bg-utu-bg-muted'}`}
               style={{ minHeight: 44 }}
               aria-pressed={period === p.value}
             >
@@ -67,8 +71,8 @@ export function ConversionFunnelWidget() {
         </div>
       </div>
 
-      {isLoading && <div className="py-8 text-center text-sm text-[#6B7280]">Loading...</div>}
-      {error    && <div className="py-8 text-center text-sm text-red-500">Failed to load funnel data</div>}
+      {isLoading && <div className="py-8 text-center text-sm text-utu-text-muted">{tCommon('loading')}</div>}
+      {error    && <div className="py-8 text-center text-sm text-red-500">{t('funnelLoadError')}</div>}
 
       {data && (
         <div className="mt-5 space-y-4">
@@ -79,12 +83,12 @@ export function ConversionFunnelWidget() {
             return (
               <div key={step}>
                 <div className="mb-1 flex justify-between text-xs">
-                  <span className="font-medium text-[#111827]">{STEP_LABELS[step]}</span>
-                  <span className="text-[#6B7280]">{count.toLocaleString()}</span>
+                  <span className="font-medium text-utu-text-primary">{STEP_LABELS[step]}</span>
+                  <span className="text-utu-text-muted">{count.toLocaleString()}</span>
                 </div>
-                <div className="h-3 w-full rounded-full bg-[#F9FAFB]">
+                <div className="h-3 w-full rounded-full bg-utu-bg-muted">
                   <div
-                    className="h-3 rounded-full bg-[#10B981] transition-all duration-500"
+                    className="h-3 rounded-full bg-emerald-600 transition-all duration-500"
                     style={{ width: `${pct}%` }}
                     role="progressbar"
                     aria-valuenow={pct}
@@ -98,13 +102,13 @@ export function ConversionFunnelWidget() {
 
           {/* Top countries */}
           {topCountries.length > 0 && (
-            <div className="mt-5 border-t border-[#E5E7EB] pt-4">
-              <p className="mb-2 text-xs font-medium text-[#6B7280]">Top Search Countries</p>
+            <div className="mt-5 border-t border-utu-border-default pt-4">
+              <p className="mb-2 text-xs font-medium text-utu-text-muted">{t('topSearchCountries')}</p>
               <div className="flex flex-wrap gap-2">
                 {topCountries.map(([country, count]) => (
                   <span
                     key={country}
-                    className="rounded-full bg-[#F9FAFB] px-3 py-1 text-xs text-[#111827]"
+                    className="rounded-full bg-utu-bg-muted px-3 py-1 text-xs text-utu-text-primary"
                   >
                     {country.toUpperCase()} · {count.toLocaleString()}
                   </span>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -121,7 +121,7 @@ const severityStyles: Record<string, { bar: string; badge: string; badgeText: st
 function ChevronIcon({ open }: { open: boolean }) {
   return (
     <svg
-      className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+      className={`w-4 h-4 text-utu-text-muted flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
       fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -132,12 +132,12 @@ function ChevronIcon({ open }: { open: boolean }) {
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-gray-100 last:border-0">
+    <div className="border-b border-utu-border-default last:border-0">
       <button onClick={() => setOpen(!open)} className="w-full flex items-start justify-between gap-4 py-4 text-start">
-        <span className="text-sm font-medium text-gray-800 leading-snug">{q}</span>
+        <span className="text-sm font-medium text-utu-text-primary leading-snug">{q}</span>
         <ChevronIcon open={open} />
       </button>
-      {open && <p className="text-sm text-gray-500 leading-relaxed pb-4 pe-6">{a}</p>}
+      {open && <p className="text-sm text-utu-text-muted leading-relaxed pb-4 pe-6">{a}</p>}
     </div>
   );
 }
@@ -273,11 +273,14 @@ export default function FAQPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [regionFilter, setRegionFilter] = useState('All');
+  const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
 
-  useEffect(() => {
+  // Sync search from URL ?q= param — React docs "Adjusting state based on props or other state" pattern
+  if (prevSearchParams !== searchParams) {
+    setPrevSearchParams(searchParams);
     const q = searchParams.get('q');
     if (q) { setSearch(q); setMainTab('faq'); setActiveCategory(null); }
-  }, [searchParams]);
+  }
 
   const filteredFAQs = search.trim()
     ? categories.map((cat) => ({
@@ -313,16 +316,16 @@ export default function FAQPage() {
           <p className="text-emerald-100 text-base">{t('heroDesc')}</p>
           {mainTab === 'faq' && (
             <div className="mt-6 max-w-lg mx-auto">
-              <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-lg">
+              <div className="flex items-center bg-utu-bg-card rounded-xl overflow-hidden shadow-lg">
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setActiveCategory(null); }}
                   placeholder={t('searchPlaceholder')}
-                  className="flex-1 px-4 py-3 text-sm text-gray-800 outline-none"
+                  className="flex-1 px-4 py-3 text-sm text-utu-text-primary outline-none"
                 />
                 {search && (
-                  <button onClick={() => setSearch('')} className="px-3 text-gray-400 hover:text-gray-600">✕</button>
+                  <button onClick={() => setSearch('')} className="px-3 text-utu-text-muted hover:text-utu-text-secondary">✕</button>
                 )}
                 <button
                   type="button"
@@ -338,7 +341,7 @@ export default function FAQPage() {
       </section>
 
       {/* Main Tabs */}
-      <section className="bg-white border-b border-gray-100 sticky top-14 z-20 shadow-sm">
+      <section className="bg-utu-bg-card border-b border-utu-border-default sticky top-14 z-20 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 flex gap-1 py-3 justify-center">
           {[
             { key: 'faq',      label: t('tabFaqs'),    icon: '❓' },
@@ -351,7 +354,7 @@ export default function FAQPage() {
               className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
                 mainTab === tab.key
                   ? 'bg-emerald-700 text-white'
-                  : 'bg-slate-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
+                  : 'bg-slate-100 text-utu-text-secondary hover:bg-emerald-50 hover:text-emerald-700'
               }`}
             >
               {tab.icon} {tab.label}
@@ -365,12 +368,12 @@ export default function FAQPage() {
         <>
           {/* Category Pills */}
           {!search && (
-            <section className="bg-white border-b border-gray-50 py-3 px-4">
+            <section className="bg-utu-bg-card border-b border-utu-border-default py-3 px-4">
               <div className="max-w-5xl mx-auto flex flex-wrap gap-2 justify-center">
                 <button
                   onClick={() => setActiveCategory(null)}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    activeCategory === null ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
+                    activeCategory === null ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-utu-text-secondary hover:bg-emerald-50 hover:text-emerald-700'
                   }`}
                 >
                   {t('allTopics')}
@@ -380,7 +383,7 @@ export default function FAQPage() {
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id === activeCategory ? null : cat.id)}
                     className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      activeCategory === cat.id ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
+                      activeCategory === cat.id ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-utu-text-secondary hover:bg-emerald-50 hover:text-emerald-700'
                     }`}
                   >
                     {cat.icon} {cat.title}
@@ -394,19 +397,19 @@ export default function FAQPage() {
             <div className="max-w-3xl mx-auto space-y-8">
               {filteredFAQs.length === 0 && (
                 <div className="text-center py-16">
-                  <p className="text-gray-500 text-sm">{t('noResults', { search })}</p>
-                  <p className="text-gray-400 text-xs mt-1">
+                  <p className="text-utu-text-muted text-sm">{t('noResults', { search })}</p>
+                  <p className="text-utu-text-muted text-xs mt-1">
                     {t('noResultsHint')}{' '}
                     <Link href="/contact" className="text-emerald-700 hover:underline">{t('contactSupportLink')}</Link>.
                   </p>
                 </div>
               )}
               {filteredFAQs.map((cat) => (
-                <div key={cat.id} id={cat.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-slate-50">
+                <div key={cat.id} id={cat.id} className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-3 px-6 py-4 border-b border-utu-border-default bg-slate-50">
                     <span className="text-2xl">{cat.icon}</span>
-                    <h2 className="font-bold text-gray-900 text-base">{cat.title}</h2>
-                    <span className="ms-auto text-xs text-gray-400">{t('questionsLabel', { count: cat.faqs.length })}</span>
+                    <h2 className="font-bold text-utu-text-primary text-base">{cat.title}</h2>
+                    <span className="ms-auto text-xs text-utu-text-muted">{t('questionsLabel', { count: cat.faqs.length })}</span>
                   </div>
                   <div className="px-6">
                     {cat.faqs.map((faq) => (
@@ -426,8 +429,8 @@ export default function FAQPage() {
           <div className="max-w-6xl mx-auto">
 
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-1">{t('airlineHeading')}</h2>
-              <p className="text-sm text-gray-500">{t('airlineDesc')}</p>
+              <h2 className="text-xl font-bold text-utu-text-primary mb-1">{t('airlineHeading')}</h2>
+              <p className="text-sm text-utu-text-muted">{t('airlineDesc')}</p>
               <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3 inline-block">
                 {t('airlineDisclaimer')}
               </p>
@@ -440,7 +443,7 @@ export default function FAQPage() {
                   key={r}
                   onClick={() => setRegionFilter(r)}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                    regionFilter === r ? 'bg-emerald-700 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-700'
+                    regionFilter === r ? 'bg-emerald-700 text-white' : 'bg-utu-bg-card border border-utu-border-default text-utu-text-secondary hover:border-emerald-300 hover:text-emerald-700'
                   }`}
                 >
                   {r}
@@ -449,7 +452,7 @@ export default function FAQPage() {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
                   <thead>
@@ -463,25 +466,25 @@ export default function FAQPage() {
                   </thead>
                   <tbody>
                     {filteredAirlines.map((row, i) => (
-                      <tr key={row.code} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                        <td className="px-4 py-3 font-medium text-gray-800">
+                      <tr key={row.code} className={i % 2 === 0 ? 'bg-utu-bg-card' : 'bg-slate-50'}>
+                        <td className="px-4 py-3 font-medium text-utu-text-primary">
                           <div>{row.airline}</div>
-                          <div className="text-xs text-gray-400 font-mono">{row.code}</div>
+                          <div className="text-xs text-utu-text-muted font-mono">{row.code}</div>
                           {row.note && <div className="text-xs text-amber-600 mt-0.5">{row.note}</div>}
                         </td>
                         <td className="px-4 py-3">
                           <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">{row.region}</span>
                         </td>
-                        <td className="px-4 py-3 text-gray-600 text-xs leading-relaxed max-w-[180px]">{row.changes}</td>
-                        <td className="px-4 py-3 text-gray-600 text-xs leading-relaxed max-w-[140px]">{row.refunds}</td>
-                        <td className="px-4 py-3 text-gray-600 text-xs leading-relaxed max-w-[160px]">{row.vouchers}</td>
+                        <td className="px-4 py-3 text-utu-text-secondary text-xs leading-relaxed max-w-[180px]">{row.changes}</td>
+                        <td className="px-4 py-3 text-utu-text-secondary text-xs leading-relaxed max-w-[140px]">{row.refunds}</td>
+                        <td className="px-4 py-3 text-utu-text-secondary text-xs leading-relaxed max-w-[160px]">{row.vouchers}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <div className="px-4 py-3 bg-slate-50 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-xs text-gray-400">{t('airlinesShown', { count: filteredAirlines.length })}</span>
+              <div className="px-4 py-3 bg-slate-50 border-t border-utu-border-default flex items-center justify-between">
+                <span className="text-xs text-utu-text-muted">{t('airlinesShown', { count: filteredAirlines.length })}</span>
                 <Link href="/contact" className="text-xs text-emerald-700 hover:underline font-medium">
                   {t('airlineSupportLink')}
                 </Link>
@@ -496,15 +499,15 @@ export default function FAQPage() {
         <section className="py-10 px-4">
           <div className="max-w-3xl mx-auto">
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-1">{t('advisoryHeading')}</h2>
-              <p className="text-sm text-gray-500">{t('advisoryDesc')}</p>
+              <h2 className="text-xl font-bold text-utu-text-primary mb-1">{t('advisoryHeading')}</h2>
+              <p className="text-sm text-utu-text-muted">{t('advisoryDesc')}</p>
             </div>
 
             <div className="space-y-4">
               {advisories.map((adv) => {
                 const style = severityStyles[adv.severity];
                 return (
-                  <div key={adv.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex">
+                  <div key={adv.title} className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm overflow-hidden flex">
                     <div className={`w-1.5 flex-shrink-0 ${style.bar}`} />
                     <div className="p-5 flex-1">
                       <div className="flex items-start justify-between gap-3 mb-2">
@@ -513,13 +516,13 @@ export default function FAQPage() {
                             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide ${style.badge} ${style.badgeText}`}>
                               {severityLabel(adv.severity)}
                             </span>
-                            <span className="text-xs text-gray-400">{adv.region}</span>
+                            <span className="text-xs text-utu-text-muted">{adv.region}</span>
                           </div>
-                          <h3 className="font-bold text-gray-900 text-sm">{adv.title}</h3>
+                          <h3 className="font-bold text-utu-text-primary text-sm">{adv.title}</h3>
                         </div>
-                        <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">{adv.updated}</span>
+                        <span className="text-xs text-utu-text-muted whitespace-nowrap flex-shrink-0">{adv.updated}</span>
                       </div>
-                      <p className="text-sm text-gray-600 leading-relaxed mb-3">{adv.body}</p>
+                      <p className="text-sm text-utu-text-secondary leading-relaxed mb-3">{adv.body}</p>
                       <a
                         href={adv.actionHref}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
@@ -532,7 +535,7 @@ export default function FAQPage() {
               })}
             </div>
 
-            <div className="mt-6 bg-slate-100 rounded-xl px-4 py-3 text-xs text-gray-500">
+            <div className="mt-6 bg-slate-100 rounded-xl px-4 py-3 text-xs text-utu-text-muted">
               {t('advisoryDisclaimer')}
             </div>
           </div>
@@ -547,13 +550,13 @@ export default function FAQPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/contact"
-              className="bg-white text-emerald-800 font-semibold text-sm px-6 py-2.5 rounded-xl hover:bg-emerald-50 transition-colors"
+              className="bg-utu-bg-card text-emerald-800 font-semibold text-sm px-6 py-2.5 rounded-xl hover:bg-emerald-50 transition-colors"
             >
               {t('contactSupportBtn')}
             </Link>
             <a
               href="mailto:support@utubooking.com"
-              className="bg-white/10 border border-white/20 text-white font-medium text-sm px-6 py-2.5 rounded-xl hover:bg-white/20 transition-colors"
+              className="bg-utu-bg-card/10 border border-white/20 text-white font-medium text-sm px-6 py-2.5 rounded-xl hover:bg-utu-bg-card/20 transition-colors"
             >
               support@utubooking.com
             </a>

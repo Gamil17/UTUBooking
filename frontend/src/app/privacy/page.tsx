@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — UTUBooking',
@@ -109,6 +110,38 @@ const S = {
 
 export default function PrivacyPage() {
   return (
+    <div className="min-h-screen bg-slate-50 font-sans">
+
+      {/* Navbar */}
+      <header className="bg-emerald-800 text-white sticky top-0 z-30 shadow-md">
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-amber-400 rounded-lg flex items-center justify-center">
+              <span className="text-emerald-900 font-black text-xs">U</span>
+            </div>
+            <span className="font-bold text-base tracking-tight">UTUBooking</span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm text-emerald-100">
+            <Link href="/about" className="hover:text-white transition-colors">About</Link>
+            <Link href="/#contact" className="hover:text-white transition-colors">Contact Us</Link>
+          </nav>
+          <Link href="/" className="bg-utu-bg-card/10 hover:bg-utu-bg-card/20 border border-white/20 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors">
+            Book Now
+          </Link>
+        </div>
+      </header>
+
+      {/* Header */}
+      <section className="bg-emerald-800 py-12 px-4 text-center">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-3xl font-bold text-white mb-2">Privacy Policy</h1>
+          <p className="text-emerald-200 text-sm">Last updated: 24 March 2026 · Version 1.0</p>
+          <p className="mt-3 text-amber-300 text-xs font-semibold uppercase tracking-widest">
+            Draft — Pending legal review before publication
+          </p>
+        </div>
+      </section>
+
     <main style={S.page}>
       <h1 style={S.h1}>Privacy Policy</h1>
       <p style={S.meta}>
@@ -473,5 +506,20 @@ export default function PrivacyPage() {
         <a href="mailto:privacy@utubooking.com" style={{ ...S.link, color: '#9CA3AF' }}>privacy@utubooking.com</a>
       </p>
     </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-utu-text-muted py-8 px-4 text-center text-sm /* EXCEPTION: dark mini-footer */">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+          <p>© 2026 UTUBooking.com — AMEC Solutions. All rights reserved.</p>
+          <div className="flex gap-4">
+            <Link href="/about" className="hover:text-white transition-colors">About</Link>
+            <Link href="/#contact" className="hover:text-white transition-colors">Contact</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+            <Link href="/privacy" className="text-white font-semibold">Privacy</Link>
+          </div>
+        </div>
+      </footer>
+
+    </div>
   );
 }

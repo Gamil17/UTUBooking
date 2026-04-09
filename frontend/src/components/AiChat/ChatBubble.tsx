@@ -15,6 +15,7 @@ export default function ChatBubble({ isOpen, onClick, hasUnread = false }: Props
   // Show pulse ring after 30s of inactivity to draw attention
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing pulse on open is a direct response to isOpen prop; no viable alternative
       setShowPulse(false);
       if (idleTimer.current) clearTimeout(idleTimer.current);
       return;
@@ -64,7 +65,7 @@ export default function ChatBubble({ isOpen, onClick, hasUnread = false }: Props
           'focus:outline-none focus:ring-4 focus:ring-emerald-300',
           'hover:scale-105 active:scale-95',
           isOpen
-            ? 'bg-gray-600 hover:bg-gray-700'
+            ? 'bg-gray-600 hover:bg-gray-700' /* EXCEPTION: AI chat dark action button */
             : 'bg-emerald-500 hover:bg-emerald-600',
         ].join(' ')}
       >

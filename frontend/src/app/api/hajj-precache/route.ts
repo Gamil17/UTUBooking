@@ -13,7 +13,7 @@ export async function GET() {
   }
 
   const hotelServiceUrl =
-    process.env.INTERNAL_HOTEL_SERVICE_URL ?? 'http://hotel-service:3003';
+    process.env.INTERNAL_HOTEL_SERVICE_URL ?? 'http://localhost:3003';
 
   const today = getIsoDate(1);
   const weekOut = getIsoDate(8);
@@ -48,6 +48,12 @@ export async function GET() {
 
     const makkah = makkahRes.ok ? ((await makkahRes.json()).results ?? []) : [];
     const madinah = madinahRes.ok ? ((await madinahRes.json()).results ?? []) : [];
+
+    // Don't cache empty results — return 503 so the service worker retries later
+    if (makkah.length === 0 && madinah.length === 0) {
+      console.error('[hajj-precache] both hotel fetches returned empty results');
+      return NextResponse.json({ error: 'Hotel data unavailable' }, { status: 503 });
+    }
 
     return NextResponse.json(
       {

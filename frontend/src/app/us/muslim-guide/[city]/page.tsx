@@ -43,7 +43,7 @@ export default function CityGuidePage({ params }: { params: { city: string } }) 
     <article className="max-w-2xl mx-auto px-4 py-8 space-y-10">
 
       {/* ── Breadcrumb ─────────────────────────────────────────────── */}
-      <nav aria-label="Breadcrumb" className="text-xs text-gray-400">
+      <nav aria-label="Breadcrumb" className="text-xs text-utu-text-muted">
         <Link href="/us/muslim-guide" className="hover:underline">US Muslim Guide</Link>
         {' / '}
         <span>{guide.name}</span>
@@ -54,14 +54,14 @@ export default function CityGuidePage({ params }: { params: { city: string } }) 
         <div className="flex items-center gap-2">
           <span className="text-3xl" aria-hidden="true">🕌</span>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-utu-text-primary">
               Muslim Guide to {guide.name}
             </h1>
-            <p className="text-sm text-gray-500">{guide.state}</p>
+            <p className="text-sm text-utu-text-muted">{guide.state}</p>
           </div>
         </div>
         <p className="text-lg font-medium text-emerald-700 italic">{guide.tagline}</p>
-        <p className="text-sm text-gray-600 leading-relaxed">{guide.heroDescription}</p>
+        <p className="text-sm text-utu-text-secondary leading-relaxed">{guide.heroDescription}</p>
         <div className="inline-flex items-center gap-2 bg-emerald-50 rounded-xl px-4 py-2 text-sm text-emerald-800">
           <span>🕌</span>
           <span>Muslim Population: {guide.muslimPopEstimate}</span>
@@ -86,7 +86,7 @@ export default function CityGuidePage({ params }: { params: { city: string } }) 
 
       {/* ── Halal Restaurants ──────────────────────────────────────── */}
       <section aria-labelledby="halal-heading" className="space-y-3">
-        <h2 id="halal-heading" className="text-base font-semibold text-gray-900 flex items-center gap-2">
+        <h2 id="halal-heading" className="text-base font-semibold text-utu-text-primary flex items-center gap-2">
           <span aria-hidden="true">🥩</span> Halal Dining Nearby
         </h2>
         <HalalRestaurantList
@@ -99,14 +99,14 @@ export default function CityGuidePage({ params }: { params: { city: string } }) 
 
       {/* ── Mosques ────────────────────────────────────────────────── */}
       <section aria-labelledby="mosques-heading" className="space-y-3">
-        <h2 id="mosques-heading" className="text-base font-semibold text-gray-900 flex items-center gap-2">
+        <h2 id="mosques-heading" className="text-base font-semibold text-utu-text-primary flex items-center gap-2">
           <span aria-hidden="true">🕌</span> Mosques
         </h2>
         <ul className="space-y-3" role="list">
           {guide.mosques.map((mosque) => (
-            <li key={mosque.name} className="rounded-xl border border-gray-100 bg-white p-4 hover:shadow-sm transition-shadow">
-              <p className="text-sm font-semibold text-gray-900">{mosque.name}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{mosque.address}</p>
+            <li key={mosque.name} className="rounded-xl border border-utu-border-default bg-utu-bg-card p-4 hover:shadow-sm transition-shadow">
+              <p className="text-sm font-semibold text-utu-text-primary">{mosque.name}</p>
+              <p className="text-xs text-utu-text-muted mt-0.5">{mosque.address}</p>
               <a
                 href={mosque.mapsUrl}
                 target="_blank"
@@ -123,15 +123,15 @@ export default function CityGuidePage({ params }: { params: { city: string } }) 
 
       {/* ── Islamic Services ───────────────────────────────────────── */}
       <section aria-labelledby="services-heading" className="space-y-4">
-        <h2 id="services-heading" className="text-base font-semibold text-gray-900 flex items-center gap-2">
+        <h2 id="services-heading" className="text-base font-semibold text-utu-text-primary flex items-center gap-2">
           <span aria-hidden="true">🌙</span> Islamic Services
         </h2>
         {guide.islamicServices.map((group) => (
-          <div key={group.category} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">{group.category}</h3>
+          <div key={group.category} className="rounded-xl border border-utu-border-default bg-utu-bg-muted p-4">
+            <h3 className="text-sm font-semibold text-utu-text-secondary mb-2">{group.category}</h3>
             <ul className="space-y-1" role="list">
               {group.items.map((item) => (
-                <li key={item} className="text-sm text-gray-600 flex items-start gap-2">
+                <li key={item} className="text-sm text-utu-text-secondary flex items-start gap-2">
                   <span className="text-emerald-500 mt-0.5" aria-hidden="true">•</span>
                   {item}
                 </li>
@@ -144,7 +144,7 @@ export default function CityGuidePage({ params }: { params: { city: string } }) 
       {/* ── Hotel Search CTA ───────────────────────────────────────── */}
       <section className="rounded-2xl bg-gray-900 text-white p-6 text-center space-y-3">
         <p className="text-base font-semibold">Find Halal-Friendly Hotels near {guide.name}</p>
-        <p className="text-sm text-gray-300">
+        <p className="text-sm text-utu-text-muted">
           Filter by halal food, prayer rooms, and more.
         </p>
         <Link
@@ -156,7 +156,7 @@ export default function CityGuidePage({ params }: { params: { city: string } }) 
       </section>
 
       {/* ── Disclaimer ─────────────────────────────────────────────── */}
-      <footer className="text-xs text-gray-400 border-t border-gray-100 pt-4">
+      <footer className="text-xs text-utu-text-muted border-t border-utu-border-default pt-4">
         <p>
           Content reviewed annually. Community listings are for informational purposes only.
           UTUBooking recommends verifying halal certification directly with restaurants and hotels.

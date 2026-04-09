@@ -2,7 +2,6 @@ import Redis from 'ioredis';
 
 // Prevent multiple connections during Next.js hot-module replacement in dev
 declare global {
-  // eslint-disable-next-line no-var
   var __redis: Redis | undefined;
 }
 

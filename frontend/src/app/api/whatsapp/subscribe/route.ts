@@ -51,12 +51,13 @@ export async function POST(req: NextRequest) {
     const res = await fetch(`${BACKEND_URL}/api/v1/whatsapp/subscribe`, {
       method:  'POST',
       headers: {
-        'Content-Type':     'application/json',
+        'Content-Type':      'application/json',
         'x-internal-secret': INTERNAL_SECRET,
         // Forward auth token so the auth service can extract userId
-        'Authorization':    req.headers.get('Authorization') ?? '',
+        'Authorization':     req.headers.get('Authorization') ?? '',
       },
-      body: JSON.stringify({ phone: e164, lgpdConsent }),
+      body:   JSON.stringify({ phone: e164, lgpdConsent }),
+      signal: AbortSignal.timeout(10000),
     });
 
     const data = await res.json().catch(() => ({}));
@@ -88,11 +89,12 @@ export async function DELETE(req: NextRequest) {
     const res = await fetch(`${BACKEND_URL}/api/v1/whatsapp/subscribe`, {
       method:  'DELETE',
       headers: {
-        'Content-Type':     'application/json',
+        'Content-Type':      'application/json',
         'x-internal-secret': INTERNAL_SECRET,
-        'Authorization':    req.headers.get('Authorization') ?? '',
+        'Authorization':     req.headers.get('Authorization') ?? '',
       },
-      body: JSON.stringify({ phone: body?.phone ?? '' }),
+      body:   JSON.stringify({ phone: body?.phone ?? '' }),
+      signal: AbortSignal.timeout(10000),
     });
 
     const data = await res.json().catch(() => ({}));

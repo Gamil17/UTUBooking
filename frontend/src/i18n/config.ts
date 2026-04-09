@@ -12,11 +12,21 @@ export const LOCALES = [
   // Phase 9 — More Europe
   'pl',     // Polish — eu-central-1
   'es',     // Spanish (Castilian) — eu-central-1 / eu-west-1
+  'sv',     // Swedish
+  'ru',     // Russian
   // Phase 10 — US Launch
   'en-US',  // American English — us-east-1 (Virginia); USD + US date format
   // Phase 12 — Americas
   'pt-BR',  // Brazilian Portuguese — sa-east-1 (São Paulo)
   'es-419', // Latin American Spanish — sa-east-1 + us-east-1
+  // Phase 13 — East Asia & Southeast Asia expansion
+  'ja',     // Japanese — ap-northeast-1 (Tokyo)
+  'ko',     // Korean — ap-northeast-2 (Seoul)
+  'th',     // Thai — ap-southeast-1 (Singapore)
+  'vi',     // Vietnamese — ap-southeast-1
+  'zh-CN',  // Simplified Chinese — ap-east-1 (Hong Kong) / cn-north-1
+  'zh-HK',  // Traditional Chinese (HK) — ap-east-1
+  'zh-TW',  // Traditional Chinese (TW) — ap-northeast-1
 ] as const;
 
 export type Locale = typeof LOCALES[number];
@@ -26,6 +36,9 @@ export const DEFAULT_LOCALE: Locale = 'en';
 // RTL languages — Arabic, Urdu, Farsi
 export const RTL_LOCALES: Locale[] = ['ar', 'ur', 'fa'];
 export const isRTL = (locale: Locale) => RTL_LOCALES.includes(locale);
+
+// CJK languages requiring specific font handling
+export const CJK_LOCALES: Locale[] = ['ja', 'ko', 'zh-CN', 'zh-HK', 'zh-TW'];
 
 // Font per language
 // CRITICAL: Urdu uses Nastaliq (NOT standard Arabic font)
@@ -49,8 +62,18 @@ export const LOCALE_FONTS: Record<Locale, string> = {
   nl:       'Inter, sans-serif',
   pl:       'Inter, sans-serif',
   es:       'Inter, sans-serif',
+  sv:       'Inter, sans-serif',
+  ru:       'Inter, sans-serif',
   'pt-BR':  'Inter, sans-serif',
   'es-419': 'Inter, sans-serif',
+  // Phase 13 — East Asia
+  ja:       'Noto Sans JP, Inter, sans-serif',
+  ko:       'Noto Sans KR, Inter, sans-serif',
+  th:       'Noto Sans Thai, Inter, sans-serif',
+  vi:       'Inter, sans-serif',
+  'zh-CN':  'Noto Sans SC, Inter, sans-serif',
+  'zh-HK':  'Noto Sans HK, Inter, sans-serif',
+  'zh-TW':  'Noto Sans TC, Inter, sans-serif',
 };
 
 // Settlement currency per market locale
@@ -75,6 +98,16 @@ export const LOCALE_CURRENCY: Record<Locale, string> = {
   es:       'EUR',
   'pt-BR':  'BRL',
   'es-419': 'USD', // Mixed LATAM — USD as display default; override per country via tenant config
+  sv:       'SEK',
+  ru:       'RUB',
+  // Phase 13 — East Asia
+  ja:       'JPY',
+  ko:       'KRW',
+  th:       'THB',
+  vi:       'VND',
+  'zh-CN':  'CNY',
+  'zh-HK':  'HKD',
+  'zh-TW':  'TWD',
 };
 
 // ── Phase 4: Country → Currency map ──────────────────────────────────────────
@@ -104,4 +137,14 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   es:       'Español',
   'pt-BR':  'Português (Brasil)',
   'es-419': 'Español (Latinoamérica)',
+  sv:       'Svenska',
+  ru:       'Русский',
+  // Phase 13 — East Asia
+  ja:       '日本語',
+  ko:       '한국어',
+  th:       'ภาษาไทย',
+  vi:       'Tiếng Việt',
+  'zh-CN':  '简体中文',
+  'zh-HK':  '繁體中文 (HK)',
+  'zh-TW':  '繁體中文 (TW)',
 };

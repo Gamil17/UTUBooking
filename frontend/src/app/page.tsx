@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import { LOCALE_CURRENCY } from '@/i18n/config';
 import LocaleDatePicker from '@/components/DatePicker';
 import TabSections from '@/components/home/TabSections';
 import HomeHeader from '@/components/home/HomeHeader';
@@ -43,7 +44,7 @@ function InputField({
 
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
-      <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+      <label className="text-xs font-medium text-utu-text-secondary uppercase tracking-wide">
         {label}
       </label>
       <input
@@ -51,7 +52,7 @@ function InputField({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+        className="w-full border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-primary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-utu-bg-card"
       />
     </div>
   );
@@ -101,12 +102,16 @@ export default function HomePage() {
   const tSearch  = useTranslations('search');
 
   const [tab, setTab] = useState<Tab>(() => parseTab(searchParams.get('tab')));
+  const [prevSearchParams, setPrevSearchParams] = useState(searchParams);
 
-  // Sync tab when URL param changes (e.g. footer link navigates to /?tab=flights)
-  // Also scroll to the search card so the user sees the tab switch immediately.
+  // Sync tab when URL param changes — React docs "Adjusting state based on props or other state" pattern
+  if (prevSearchParams !== searchParams) {
+    setPrevSearchParams(searchParams);
+    setTab(parseTab(searchParams.get('tab')));
+  }
+
+  // Scroll side effect only — no setState
   useEffect(() => {
-    const next = parseTab(searchParams.get('tab'));
-    setTab(next);
     if (searchParams.get('tab')) {
       document.getElementById('search-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -189,7 +194,7 @@ export default function HomePage() {
     const rtl = ['ar', 'ur', 'fa'].some((l) => locale.startsWith(l));
     html.lang = locale;
     html.dir  = rtl ? 'rtl' : 'ltr';
-    html.setAttribute('data-currency', (locale === 'id' || locale === 'ms') ? 'IDR' : 'SAR');
+    html.setAttribute('data-currency', LOCALE_CURRENCY[locale as keyof typeof LOCALE_CURRENCY] ?? 'SAR');
   }, [locale]);
 
   const tabList = useMemo(() => [
@@ -211,8 +216,8 @@ export default function HomePage() {
       <section className="bg-gradient-to-b from-emerald-900 via-emerald-800 to-teal-700 pt-12 pb-32 px-4 text-center relative overflow-hidden">
         {/* Decorative circles */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-[-60px] start-[-60px] w-64 h-64 rounded-full bg-white" />
-          <div className="absolute bottom-[-40px] end-[-40px] w-48 h-48 rounded-full bg-white" />
+          <div className="absolute top-[-60px] start-[-60px] w-64 h-64 rounded-full bg-utu-bg-card" />
+          <div className="absolute bottom-[-40px] end-[-40px] w-48 h-48 rounded-full bg-utu-bg-card" />
         </div>
 
         <div className="relative max-w-2xl mx-auto">
@@ -230,10 +235,10 @@ export default function HomePage() {
 
       {/* ── Search Box (floats over hero) ──────────────────────────────────── */}
       <div id="search-card" className="max-w-4xl w-full mx-auto px-4 -mt-20 relative z-10">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="bg-utu-bg-card rounded-2xl shadow-xl border border-utu-border-default overflow-hidden">
 
           {/* Tab bar */}
-          <div className="flex border-b border-gray-100">
+          <div className="flex border-b border-utu-border-default">
             {tabList.map(({ key, label, icon }) => (
               <button
                 key={key}
@@ -241,7 +246,7 @@ export default function HomePage() {
                 className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors
                   ${tab === key
                     ? 'text-emerald-700 border-b-2 border-emerald-700 bg-emerald-50/60'
-                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                    : 'text-utu-text-muted hover:text-utu-text-primary hover:bg-utu-bg-muted'
                   }`}
               >
                 <span className="text-base">{icon}</span>
@@ -311,13 +316,13 @@ export default function HomePage() {
                       className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors border ${
                         flightForm.tripType === type
                           ? 'bg-emerald-700 text-white border-emerald-700'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-400'
+                          : 'bg-utu-bg-card text-utu-text-secondary border-utu-border-default hover:border-emerald-400'
                       }`}
                     >
                       {type === 'oneway' ? tSearch('oneWay') : tSearch('roundTrip')}
                     </button>
                   ))}
-                  <span className="px-3 py-1 rounded-full text-xs text-gray-400 border border-dashed border-gray-200">
+                  <span className="px-3 py-1 rounded-full text-xs text-utu-text-muted border border-dashed border-utu-border-default">
                     {tSearch('multiCity')} — {tSearch('comingSoon')}
                   </span>
                 </div>

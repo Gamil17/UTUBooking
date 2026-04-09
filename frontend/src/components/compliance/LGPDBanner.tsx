@@ -77,7 +77,10 @@ export default function LGPDBanner({ countryCode }: Props) {
   useEffect(() => {
     if (countryCode !== 'BR') return;
     const saved = loadSavedChoices();
-    if (!saved) setVisible(true);
+    if (!saved) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reads cookie (SSR-unavailable), must run after hydration to avoid mismatch
+      setVisible(true);
+    }
   }, [countryCode]);
 
   if (!visible) return null;
@@ -108,8 +111,8 @@ export default function LGPDBanner({ countryCode }: Props) {
 
   if (declined) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 px-4 py-3 flex items-center justify-between gap-4">
-        <p className="text-xs text-gray-500">Apenas cookies essenciais estão ativos.</p>
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-utu-bg-card border-t border-utu-border-default px-4 py-3 flex items-center justify-between gap-4">
+        <p className="text-xs text-utu-text-muted">Apenas cookies essenciais estão ativos.</p>
         <button
           type="button"
           onClick={() => { setDeclined(false); setVisible(true); }}
@@ -126,15 +129,15 @@ export default function LGPDBanner({ countryCode }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label="Aviso de Privacidade — LGPD"
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg max-h-[90vh] overflow-y-auto"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-utu-bg-card border-t border-utu-border-default shadow-lg max-h-[90vh] overflow-y-auto"
     >
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
 
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-sm font-bold text-gray-900">Suas preferências de privacidade</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <h2 className="text-sm font-bold text-utu-text-primary">Suas preferências de privacidade</h2>
+            <p className="text-xs text-utu-text-muted mt-0.5">
               Lei Geral de Proteção de Dados — Lei 13.709/2018 (LGPD)
             </p>
           </div>
@@ -146,30 +149,30 @@ export default function LGPDBanner({ countryCode }: Props) {
           </div>
         </div>
 
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-utu-text-secondary">
           Utilizamos cookies e dados para melhorar sua experiência, analisar o uso do site e personalizar conteúdo. Você pode escolher quais categorias aceitar. Cookies estritamente necessários não podem ser desativados — são essenciais para o funcionamento do site.
         </p>
 
         {/* Expanded categories */}
         {expanded && (
-          <div className="space-y-3 border-t border-gray-100 pt-3">
+          <div className="space-y-3 border-t border-utu-border-default pt-3">
 
             {/* Strictly necessary — always on */}
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold text-gray-800">Estritamente necessários</p>
-                <p className="text-xs text-gray-500">Autenticação, carrinho, segurança. Não podem ser desativados.</p>
+                <p className="text-xs font-semibold text-utu-text-primary">Estritamente necessários</p>
+                <p className="text-xs text-utu-text-muted">Autenticação, carrinho, segurança. Não podem ser desativados.</p>
               </div>
               <div className="w-10 h-5 bg-green-500 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-end pr-0.5">
-                <div className="w-4 h-4 bg-white rounded-full" />
+                <div className="w-4 h-4 bg-utu-bg-card rounded-full" />
               </div>
             </div>
 
             {/* Analytics */}
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold text-gray-800">Análise e desempenho</p>
-                <p className="text-xs text-gray-500">Entender como você usa o site; nenhum dado é vendido a terceiros.</p>
+                <p className="text-xs font-semibold text-utu-text-primary">Análise e desempenho</p>
+                <p className="text-xs text-utu-text-muted">Entender como você usa o site; nenhum dado é vendido a terceiros.</p>
               </div>
               <button
                 type="button"
@@ -177,9 +180,9 @@ export default function LGPDBanner({ countryCode }: Props) {
                 aria-checked={choices.analytics}
                 onClick={() => toggle('analytics')}
                 className={['w-10 h-5 rounded-full flex-shrink-0 mt-0.5 transition-colors flex items-center',
-                  choices.analytics ? 'bg-green-500 justify-end pr-0.5' : 'bg-gray-300 justify-start pl-0.5'].join(' ')}
+                  choices.analytics ? 'bg-green-500 justify-end pr-0.5' : 'bg-utu-border-strong justify-start pl-0.5'].join(' ')}
               >
-                <div className="w-4 h-4 bg-white rounded-full" />
+                <div className="w-4 h-4 bg-utu-bg-card rounded-full" />
                 <span className="sr-only">{choices.analytics ? 'Ativado' : 'Desativado'}</span>
               </button>
             </div>
@@ -187,8 +190,8 @@ export default function LGPDBanner({ countryCode }: Props) {
             {/* Marketing */}
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold text-gray-800">Marketing e publicidade</p>
-                <p className="text-xs text-gray-500">Anúncios personalizados de Hajj/Umrah. Requer consentimento explícito (Art. 7 LGPD).</p>
+                <p className="text-xs font-semibold text-utu-text-primary">Marketing e publicidade</p>
+                <p className="text-xs text-utu-text-muted">Anúncios personalizados de Hajj/Umrah. Requer consentimento explícito (Art. 7 LGPD).</p>
               </div>
               <button
                 type="button"
@@ -196,9 +199,9 @@ export default function LGPDBanner({ countryCode }: Props) {
                 aria-checked={choices.marketing}
                 onClick={() => toggle('marketing')}
                 className={['w-10 h-5 rounded-full flex-shrink-0 mt-0.5 transition-colors flex items-center',
-                  choices.marketing ? 'bg-green-500 justify-end pr-0.5' : 'bg-gray-300 justify-start pl-0.5'].join(' ')}
+                  choices.marketing ? 'bg-green-500 justify-end pr-0.5' : 'bg-utu-border-strong justify-start pl-0.5'].join(' ')}
               >
-                <div className="w-4 h-4 bg-white rounded-full" />
+                <div className="w-4 h-4 bg-utu-bg-card rounded-full" />
                 <span className="sr-only">{choices.marketing ? 'Ativado' : 'Desativado'}</span>
               </button>
             </div>
@@ -206,8 +209,8 @@ export default function LGPDBanner({ countryCode }: Props) {
             {/* Personalization */}
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold text-gray-800">Personalização</p>
-                <p className="text-xs text-gray-500">Recomendações de hotéis e preços baseados no seu histórico de buscas.</p>
+                <p className="text-xs font-semibold text-utu-text-primary">Personalização</p>
+                <p className="text-xs text-utu-text-muted">Recomendações de hotéis e preços baseados no seu histórico de buscas.</p>
               </div>
               <button
                 type="button"
@@ -215,9 +218,9 @@ export default function LGPDBanner({ countryCode }: Props) {
                 aria-checked={choices.personalization}
                 onClick={() => toggle('personalization')}
                 className={['w-10 h-5 rounded-full flex-shrink-0 mt-0.5 transition-colors flex items-center',
-                  choices.personalization ? 'bg-green-500 justify-end pr-0.5' : 'bg-gray-300 justify-start pl-0.5'].join(' ')}
+                  choices.personalization ? 'bg-green-500 justify-end pr-0.5' : 'bg-utu-border-strong justify-start pl-0.5'].join(' ')}
               >
-                <div className="w-4 h-4 bg-white rounded-full" />
+                <div className="w-4 h-4 bg-utu-bg-card rounded-full" />
                 <span className="sr-only">{choices.personalization ? 'Ativado' : 'Desativado'}</span>
               </button>
             </div>
@@ -225,7 +228,7 @@ export default function LGPDBanner({ countryCode }: Props) {
         )}
 
         {/* LGPD rights note */}
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-utu-text-muted">
           Seus direitos: acesso, correção, exclusão e portabilidade dos dados (LGPD Art. 18).{' '}
           <a href="/privacidade" className="text-green-700 underline">Política de privacidade</a> ·{' '}
           <a href="https://www.anpd.gov.br" target="_blank" rel="noopener noreferrer" className="text-green-700 underline">ANPD</a>
@@ -253,7 +256,7 @@ export default function LGPDBanner({ countryCode }: Props) {
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="flex-1 min-w-[120px] border border-gray-300 text-gray-700 rounded-xl py-2.5 text-xs font-semibold min-h-[44px] hover:bg-gray-50"
+              className="flex-1 min-w-[120px] border border-utu-border-strong text-utu-text-secondary rounded-xl py-2.5 text-xs font-semibold min-h-[44px] hover:bg-utu-bg-muted"
             >
               Gerenciar preferências
             </button>
@@ -262,7 +265,7 @@ export default function LGPDBanner({ countryCode }: Props) {
           <button
             type="button"
             onClick={handleDeclineAll}
-            className="flex-1 min-w-[120px] text-gray-500 rounded-xl py-2.5 text-xs hover:bg-gray-50 min-h-[44px]"
+            className="flex-1 min-w-[120px] text-utu-text-muted rounded-xl py-2.5 text-xs hover:bg-utu-bg-muted min-h-[44px]"
           >
             Apenas essenciais
           </button>

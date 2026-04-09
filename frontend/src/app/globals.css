@@ -1,16 +1,134 @@
 @import "tailwindcss";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/dm-sans/400.css";
+@import "@fontsource/dm-sans/500.css";
+@import "@fontsource/dm-sans/600.css";
+@import "@fontsource/ibm-plex-sans-arabic/400.css";
+@import "@fontsource/ibm-plex-sans-arabic/600.css";
+@import "@fontsource/noto-sans-arabic/400.css";
+@import "@fontsource/noto-sans-arabic/600.css";
+@import "@fontsource/noto-nastaliq-urdu/400.css";
+@import "@fontsource/noto-sans-devanagari/400.css";
+@import "@fontsource/noto-sans-devanagari/600.css";
+@import "@fontsource/vazirmatn/400.css";
+@import "@fontsource/vazirmatn/600.css";
+/* CJK & Thai fonts are loaded via Google Fonts CDN in layout.tsx <head>.
+   Do NOT re-add @fontsource imports here — each CJK fontsource CSS contains
+   ~124 @font-face rules (×2 formats = ~250 file refs per weight). Loading 10
+   CJK weights creates ~2,500 Turbopack dev-mode file watchers, crashing the
+   dev server with "An unexpected Turbopack error". Google Fonts serves the
+   same optimized unicode-range subsets without that overhead. */
 
+/* ── UTUBooking Design System — CSS Custom Properties ──────────────────────── */
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
   --font-family: var(--font-inter), system-ui, sans-serif;
+
+  /* Brand */
+  --utu-navy:        #1E3A5F;
+  --utu-blue:        #2563EB;
+  --utu-blue-mid:    #3B82F6;
+  --utu-blue-light:  #DBEAFE;
+  --utu-blue-pale:   #EFF6FF;
+  /* Backgrounds */
+  --utu-bg-page:     #F1F5F9;
+  --utu-bg-card:     #FFFFFF;
+  --utu-bg-muted:    #F8FAFC;
+  --utu-bg-subtle:   #EFF6FF;
+  /* Text */
+  --utu-text-primary:   #0F172A;
+  --utu-text-secondary: #475569;
+  --utu-text-muted:     #94A3B8;
+  /* Borders */
+  --utu-border-default: #E2E8F0;
+  --utu-border-strong:  #CBD5E1;
+  /* Status */
+  --utu-success-bg:     #F0FDF4;
+  --utu-success-border: #BBF7D0;
+  --utu-success-text:   #14532D;
+  --utu-info-bg:        #EFF6FF;
+  --utu-info-border:    #BAE6FD;
+  --utu-info-text:      #0C4A6E;
+  --utu-warning-bg:     #FFFBEB;
+  --utu-warning-border: #FDE68A;
+  --utu-warning-text:   #78350F;
+  --utu-error-bg:       #FEF2F2;
+  --utu-error-border:   #FECACA;
+  --utu-error-text:     #991B1B;
+  /* Spacing */
+  --utu-space-xs:  8px;
+  --utu-space-sm:  12px;
+  --utu-space-md:  16px;
+  --utu-space-lg:  24px;
+  --utu-space-xl:  32px;
+  --utu-space-2xl: 48px;
+  /* Radius */
+  --utu-radius-tag:   4px;
+  --utu-radius-input: 8px;
+  --utu-radius-card:  12px;
+  --utu-radius-pill:  9999px;
 }
 
+/* ── Tailwind v4 @theme — registers all UTU tokens as utility classes ─────── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-arabic: var(--font-arabic), 'Segoe UI', Tahoma, Arial, sans-serif;
+
+  /* Brand colors → bg-utu-navy, text-utu-blue, etc. */
+  --color-utu-navy:        #1E3A5F;
+  --color-utu-blue:        #2563EB;
+  --color-utu-blue-mid:    #3B82F6;
+  --color-utu-blue-light:  #DBEAFE;
+  --color-utu-blue-pale:   #EFF6FF;
+  /* Backgrounds */
+  --color-utu-bg-page:     #F1F5F9;
+  --color-utu-bg-card:     #FFFFFF;
+  --color-utu-bg-muted:    #F8FAFC;
+  --color-utu-bg-subtle:   #EFF6FF;
+  /* Text */
+  --color-utu-text-primary:   #0F172A;
+  --color-utu-text-secondary: #475569;
+  --color-utu-text-muted:     #94A3B8;
+  /* Borders */
+  --color-utu-border-default: #E2E8F0;
+  --color-utu-border-strong:  #CBD5E1;
+  /* Status */
+  --color-utu-success-bg:     #F0FDF4;
+  --color-utu-success-border: #BBF7D0;
+  --color-utu-success-text:   #14532D;
+  --color-utu-info-bg:        #EFF6FF;
+  --color-utu-info-border:    #BAE6FD;
+  --color-utu-info-text:      #0C4A6E;
+  --color-utu-warning-bg:     #FFFBEB;
+  --color-utu-warning-border: #FDE68A;
+  --color-utu-warning-text:   #78350F;
+  --color-utu-error-bg:       #FEF2F2;
+  --color-utu-error-border:   #FECACA;
+  --color-utu-error-text:     #991B1B;
+
+  /* Spacing → p-utu-xs, m-utu-md, gap-utu-lg, etc. */
+  --spacing-utu-xs:  8px;
+  --spacing-utu-sm:  12px;
+  --spacing-utu-md:  16px;
+  --spacing-utu-lg:  24px;
+  --spacing-utu-xl:  32px;
+  --spacing-utu-2xl: 48px;
+
+  /* Border radius → rounded-utu-tag, rounded-utu-card, etc. */
+  --radius-utu-tag:   4px;
+  --radius-utu-input: 8px;
+  --radius-utu-card:  12px;
+  --radius-utu-pill:  9999px;
+
+  /* Fonts → font-latin, font-arabic */
+  --font-family-latin:  'DM Sans', 'Inter', system-ui, sans-serif;
+  --font-family-arabic: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', system-ui, sans-serif;
 }
 
 body {
@@ -57,6 +175,54 @@ body {
   --font-family: 'Vazirmatn', sans-serif;
   font-feature-settings: 'liga' 1;
   text-align: right;
+}
+
+/* Phase 13 — East Asia & Southeast Asia */
+
+/* Japanese */
+[lang="ja"] {
+  --font-family: 'Noto Sans JP', 'Inter', system-ui, sans-serif;
+  font-feature-settings: 'palt' 1;
+  line-height: 1.8;
+}
+
+/* Korean */
+[lang="ko"] {
+  --font-family: 'Noto Sans KR', 'Inter', system-ui, sans-serif;
+  word-break: keep-all;
+  line-height: 1.7;
+}
+
+/* Thai */
+[lang="th"] {
+  --font-family: 'Noto Sans Thai', 'Inter', system-ui, sans-serif;
+  line-height: 1.9;
+}
+
+/* Vietnamese — Latin-ext via Inter */
+[lang="vi"] {
+  --font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Swedish, Russian — Inter covers Cyrillic + Latin-ext subsets */
+[lang="sv"],
+[lang="ru"] {
+  --font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Simplified Chinese (mainland) */
+[lang="zh-CN"] {
+  --font-family: 'Noto Sans SC', 'Inter', system-ui, sans-serif;
+  font-feature-settings: 'palt' 1;
+  line-height: 1.8;
+}
+
+/* Traditional Chinese — covers HK and TW */
+[lang="zh-HK"],
+[lang="zh-TW"] {
+  --font-family: 'Noto Sans TC', 'Inter', system-ui, sans-serif;
+  font-feature-settings: 'palt' 1;
+  line-height: 1.8;
 }
 
 /* Arabic font stack activates when dir=rtl is on the html element.

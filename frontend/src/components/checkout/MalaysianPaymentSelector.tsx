@@ -5,6 +5,7 @@
  *
  * Shown for MY country code users (currency = MYR) at checkout.
  * Gateway: iPay88 — Malaysia's leading payment aggregator
+ * EXCEPTION: #0A67B2 is iPay88/FPX official brand blue. Do not replace with design tokens.
  *
  * Supported methods:
  *   FPX (Financial Process Exchange) — all Malaysian banks
@@ -188,15 +189,15 @@ export default function MalaysianPaymentSelector({
     <div className="space-y-5">
 
       {/* ── Amount summary ─────────────────────────────────────────────── */}
-      <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 flex items-center justify-between">
-        <span className="text-sm text-gray-500">Jumlah Bayaran</span>
-        <span className="text-lg font-bold text-gray-900">{formattedAmount}</span>
+      <div className="rounded-xl bg-utu-bg-muted border border-utu-border-default px-4 py-3 flex items-center justify-between">
+        <span className="text-sm text-utu-text-muted">Jumlah Bayaran</span>
+        <span className="text-lg font-bold text-utu-text-primary">{formattedAmount}</span>
       </div>
 
       {/* ── Method selector ────────────────────────────────────────────── */}
       {step === 'select' && (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-700">Pilih kaedah pembayaran</p>
+          <p className="text-sm font-medium text-utu-text-secondary">Pilih kaedah pembayaran</p>
 
           {METHODS.map((m) => (
             <button
@@ -207,7 +208,7 @@ export default function MalaysianPaymentSelector({
               className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border-2 transition-all text-left
                 ${selected === m.id
                   ? 'border-emerald-500 bg-emerald-50'
-                  : 'border-gray-100 bg-white hover:border-gray-300'
+                  : 'border-utu-border-default bg-utu-bg-card hover:border-utu-border-strong'
                 }`}
               style={{ minHeight: 56 }}
             >
@@ -218,8 +219,8 @@ export default function MalaysianPaymentSelector({
                 {m.logo}
               </span>
               <span className="flex-1">
-                <span className="block text-sm font-semibold text-gray-900">{m.label}</span>
-                <span className="block text-xs text-gray-500">{m.tagline}</span>
+                <span className="block text-sm font-semibold text-utu-text-primary">{m.label}</span>
+                <span className="block text-xs text-utu-text-muted">{m.tagline}</span>
               </span>
               {selected === m.id && (
                 <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -232,7 +233,7 @@ export default function MalaysianPaymentSelector({
           {/* FPX bank selector */}
           {selected === 'fpx' && (
             <div className="ps-2">
-              <p className="text-xs text-gray-500 mb-2">Pilih bank anda:</p>
+              <p className="text-xs text-utu-text-muted mb-2">Pilih bank anda:</p>
               <div className="grid grid-cols-2 gap-2">
                 {FPX_BANKS.map((b) => (
                   <button
@@ -243,7 +244,7 @@ export default function MalaysianPaymentSelector({
                     className={`py-2.5 px-3 rounded-xl text-xs font-semibold border-2 transition-all text-left
                       ${fpxBank === b.code
                         ? 'border-[#0A67B2] bg-blue-50 text-[#0A67B2]'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                        : 'border-utu-border-default bg-utu-bg-card text-utu-text-secondary hover:border-utu-border-strong'
                       }`}
                     style={{ minHeight: 40 }}
                   >
@@ -259,7 +260,7 @@ export default function MalaysianPaymentSelector({
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 border border-gray-200 text-gray-600 rounded-xl py-3 text-sm font-medium hover:bg-gray-50 transition-colors"
+              className="flex-1 border border-utu-border-default text-utu-text-secondary rounded-xl py-3 text-sm font-medium hover:bg-utu-bg-muted transition-colors"
               style={{ minHeight: 48 }}
             >
               Batal
@@ -280,15 +281,15 @@ export default function MalaysianPaymentSelector({
       {(step === 'loading' || step === 'redirecting') && (
         <div className="flex flex-col items-center gap-3 py-10">
           <span
-            className="w-8 h-8 border-[3px] border-gray-100 rounded-full animate-spin"
+            className="w-8 h-8 border-[3px] border-utu-border-default rounded-full animate-spin"
             style={{ borderTopColor: method.color }}
           />
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-utu-text-muted">
             {step === 'loading'
               ? 'Sesi pembayaran sedang dibuka…'
               : `Anda akan dipindahkan ke ${method.label}…`}
           </p>
-          <p className="text-xs text-gray-400">Jangan tutup tab ini</p>
+          <p className="text-xs text-utu-text-muted">Jangan tutup tab ini</p>
         </div>
       )}
 
@@ -302,7 +303,7 @@ export default function MalaysianPaymentSelector({
             <button
               type="button"
               onClick={onCancel}
-              className="text-sm text-gray-500 underline underline-offset-2"
+              className="text-sm text-utu-text-muted underline underline-offset-2"
             >
               Batal
             </button>

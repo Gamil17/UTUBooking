@@ -189,7 +189,7 @@ export default function PakistanPaymentSelector({
 
           {/* Wallet selection */}
           <div className="space-y-3">
-            <p className="text-sm text-gray-600 font-medium" style={{ lineHeight: 2 }}>
+            <p className="text-sm text-utu-text-secondary font-medium" style={{ lineHeight: 2 }}>
               ادائیگی کا طریقہ منتخب کریں
             </p>
 
@@ -205,7 +205,7 @@ export default function PakistanPaymentSelector({
                     'w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-right',
                     checked
                       ? 'border-emerald-500 bg-emerald-50 shadow-sm'
-                      : 'border-gray-200 bg-white hover:border-gray-300',
+                      : 'border-utu-border-default bg-utu-bg-card hover:border-utu-border-strong',
                   ].join(' ')}
                   aria-pressed={checked}
                 >
@@ -219,10 +219,10 @@ export default function PakistanPaymentSelector({
 
                   {/* Name + tagline */}
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-base" style={{ lineHeight: 2 }}>
+                    <p className="font-semibold text-utu-text-primary text-base" style={{ lineHeight: 2 }}>
                       {meta.name}
                     </p>
-                    <p className="text-xs text-gray-500" style={{ lineHeight: 2 }}>
+                    <p className="text-xs text-utu-text-muted" style={{ lineHeight: 2 }}>
                       {meta.tagline}
                     </p>
                   </div>
@@ -230,9 +230,9 @@ export default function PakistanPaymentSelector({
                   {/* Radio indicator */}
                   <div className={[
                     'w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center',
-                    checked ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300',
+                    checked ? 'border-emerald-500 bg-emerald-500' : 'border-utu-border-strong',
                   ].join(' ')}>
-                    {checked && <div className="w-2 h-2 rounded-full bg-white" />}
+                    {checked && <div className="w-2 h-2 rounded-full bg-utu-bg-card" />}
                   </div>
                 </button>
               );
@@ -243,7 +243,7 @@ export default function PakistanPaymentSelector({
           <div className="space-y-1.5">
             <label
               htmlFor="pk-mobile"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-utu-text-secondary"
               style={{ lineHeight: 2 }}
             >
               موبائل نمبر
@@ -256,11 +256,11 @@ export default function PakistanPaymentSelector({
               placeholder="03xxxxxxxxx"
               value={mobileNumber}
               onChange={e => { setMobileNumber(e.target.value); setErrorMessage(''); }}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-gray-400 min-h-[44px]"
+              className="w-full border border-utu-border-strong rounded-xl px-4 py-3 text-base text-utu-text-primary focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-gray-400 min-h-[44px]"
               style={{ fontFamily: 'Inter, sans-serif', textAlign: 'left' }}
               maxLength={13}
             />
-            <p className="text-xs text-gray-400" style={{ lineHeight: 2, direction: 'rtl' }}>
+            <p className="text-xs text-utu-text-muted" style={{ lineHeight: 2, direction: 'rtl' }}>
               {wallet.hint}
             </p>
           </div>
@@ -277,7 +277,7 @@ export default function PakistanPaymentSelector({
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 border border-gray-300 text-gray-700 rounded-xl py-3 text-sm font-medium hover:bg-gray-50 transition-colors min-h-[44px]"
+              className="flex-1 border border-utu-border-strong text-utu-text-secondary rounded-xl py-3 text-sm font-medium hover:bg-utu-bg-muted transition-colors min-h-[44px]"
               style={{ lineHeight: 2 }}
             >
               منسوخ
@@ -289,7 +289,7 @@ export default function PakistanPaymentSelector({
               className={[
                 'flex-2 flex-grow rounded-xl py-3 text-white text-sm font-semibold transition-colors min-h-[44px] flex items-center justify-center gap-2',
                 submitting || !mobileNumber
-                  ? 'bg-gray-300 cursor-not-allowed'
+                  ? 'bg-utu-border-strong cursor-not-allowed'
                   : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800',
               ].join(' ')}
               style={{ lineHeight: 2 }}
@@ -315,10 +315,10 @@ export default function PakistanPaymentSelector({
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-gray-900" style={{ lineHeight: 2 }}>
+            <h3 className="text-lg font-bold text-utu-text-primary" style={{ lineHeight: 2 }}>
               {wallet.name} ایپ کھولیں
             </h3>
-            <p className="text-sm text-gray-600 mt-2 leading-loose">
+            <p className="text-sm text-utu-text-secondary mt-2 leading-loose">
               آپ کے موبائل پر ادائیگی کی درخواست بھیجی گئی ہے۔
               <br />
               اپنا PIN داخل کر کے تصدیق کریں۔
@@ -326,8 +326,8 @@ export default function PakistanPaymentSelector({
           </div>
 
           {/* Amount reminder */}
-          <div className="bg-gray-50 rounded-xl py-3 px-5">
-            <p className="text-xs text-gray-500" style={{ lineHeight: 2 }}>ادائیگی کی رقم</p>
+          <div className="bg-utu-bg-muted rounded-xl py-3 px-5">
+            <p className="text-xs text-utu-text-muted" style={{ lineHeight: 2 }}>ادائیگی کی رقم</p>
             <p className="text-xl font-bold text-emerald-700" style={{ lineHeight: 2 }}>
               {formattedAmount}
             </p>
@@ -335,19 +335,19 @@ export default function PakistanPaymentSelector({
 
           {/* Progress bar (timeout indicator) */}
           <div className="space-y-1">
-            <div className="w-full bg-gray-200 rounded-full h-1.5">
+            <div className="w-full bg-utu-border-default rounded-full h-1.5">
               <div
                 className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${100 - progress}%` }}
               />
             </div>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-utu-text-muted">
               {Math.max(0, Math.round((POLL_TIMEOUT_MS - pollElapsed) / 1000))} سیکنڈ باقی
             </p>
           </div>
 
           {/* Spinning indicator */}
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center justify-center gap-2 text-sm text-utu-text-muted">
             <span className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
             <span style={{ lineHeight: 2 }}>تصدیق کا انتظار ہے…</span>
           </div>
@@ -356,7 +356,7 @@ export default function PakistanPaymentSelector({
           <button
             type="button"
             onClick={() => { stopPolling(); setStep('select'); }}
-            className="text-sm text-gray-500 underline underline-offset-2 hover:text-gray-700"
+            className="text-sm text-utu-text-muted underline underline-offset-2 hover:text-utu-text-secondary"
             style={{ lineHeight: 2 }}
           >
             منسوخ کریں
@@ -375,10 +375,10 @@ export default function PakistanPaymentSelector({
           <h3 className="text-lg font-bold text-emerald-700" style={{ lineHeight: 2 }}>
             ادائیگی کامیاب!
           </h3>
-          <p className="text-sm text-gray-600" style={{ lineHeight: 2 }}>
+          <p className="text-sm text-utu-text-secondary" style={{ lineHeight: 2 }}>
             آپ کی بکنگ تصدیق شدہ ہے۔
           </p>
-          <p className="text-xs text-gray-400 font-mono" dir="ltr">{paymentRef}</p>
+          <p className="text-xs text-utu-text-muted font-mono" dir="ltr">{paymentRef}</p>
         </div>
       )}
 
@@ -394,7 +394,7 @@ export default function PakistanPaymentSelector({
             ادائیگی ناکام
           </h3>
           {errorMessage && (
-            <p className="text-sm text-gray-600" style={{ lineHeight: 2 }}>{errorMessage}</p>
+            <p className="text-sm text-utu-text-secondary" style={{ lineHeight: 2 }}>{errorMessage}</p>
           )}
           <button
             type="button"

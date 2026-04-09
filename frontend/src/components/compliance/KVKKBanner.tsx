@@ -19,6 +19,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useTenant } from '@/contexts/TenantContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -93,11 +94,12 @@ async function logConsent(
 
 export default function KVKKBanner({ countryCode }: Props) {
   const tenant                 = useTenant();
+  const t                      = useTranslations('kvkk');
   const [state, setState]      = useState<BannerState>('loading');
 
-  // Determine initial state after hydration (avoid SSR mismatch)
   useEffect(() => {
     if (!isKvkkRequired(tenant.locale, countryCode)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reads cookie (SSR-unavailable), must run after hydration to avoid mismatch
       setState('hidden');
       return;
     }
@@ -151,9 +153,8 @@ export default function KVKKBanner({ countryCode }: Props) {
       >
         <span style={{ color: '#D1D5DB', fontSize: 13 }}>
           ⚠️{' '}
-          <strong style={{ color: '#F9FAFB' }}>Sınırlı mod:</strong>{' '}
-          Kişisel verileriniz işlenmeyecektir. Rezervasyon ve bazı özellikler
-          kullanılamayabilir.
+          <strong style={{ color: '#F9FAFB' }}>{t('limitedModeLabel')}</strong>{' '}
+          {t('limitedModeDesc')}
         </span>
         <button
           onClick={handleRevoke}
@@ -170,7 +171,7 @@ export default function KVKKBanner({ countryCode }: Props) {
             minHeight:    36,
           }}
         >
-          Geri Al
+          {t('revokeBtn')}
         </button>
       </div>
     );
@@ -181,7 +182,7 @@ export default function KVKKBanner({ countryCode }: Props) {
     <div
       role="dialog"
       aria-modal="false"
-      aria-label="KVKK Kişisel Veri Gizliliği Bildirimi"
+      aria-label={t('heading')}
       style={{
         position:        'fixed',
         bottom:          0,
@@ -209,32 +210,27 @@ export default function KVKKBanner({ countryCode }: Props) {
         }}
       >
         <span aria-hidden="true">🔒</span>
-        Kişisel Verilerinizin Korunması (KVKK)
+        {t('heading')}
       </p>
 
       {/* Body text */}
       <p style={{ color: '#D1D5DB', fontSize: 13, lineHeight: 1.6, marginBottom: 10 }}>
-        <strong style={{ color: '#F9FAFB' }}>UTUBooking</strong> olarak,{' '}
-        <strong>6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK)</strong>{' '}
-        uyarınca kişisel verilerinizi işlemekteyiz.
+        {t('body1')}
       </p>
 
       <p style={{ color: '#D1D5DB', fontSize: 13, lineHeight: 1.6, marginBottom: 10 }}>
-        <strong style={{ color: '#F3F4F6' }}>İşlenen veriler:</strong>{' '}
-        Ad-soyad, e-posta adresi, telefon numarası, uyruk ve ödeme bilgileri.
+        <strong style={{ color: '#F3F4F6' }}>{t('dataTypesLabel')}</strong>{' '}
+        {t('dataTypes')}
       </p>
 
       <p style={{ color: '#D1D5DB', fontSize: 13, lineHeight: 1.6, marginBottom: 10 }}>
-        <strong style={{ color: '#F3F4F6' }}>Amaçlar:</strong>{' '}
-        Rezervasyon süreçlerinin yürütülmesi, müşteri iletişimi, ödeme işlemleri
-        ve yasal yükümlülüklerin yerine getirilmesi. Temel rezervasyon verileri,
-        KVKK md.&nbsp;5/2/c kapsamında sözleşme ifası için işlenmektedir.
+        <strong style={{ color: '#F3F4F6' }}>{t('purposeLabel')}</strong>{' '}
+        {t('purpose')}
       </p>
 
       <p style={{ color: '#D1D5DB', fontSize: 13, lineHeight: 1.6, marginBottom: 10 }}>
-        <strong style={{ color: '#F3F4F6' }}>KVKK kapsamındaki haklarınız:</strong>{' '}
-        Verilerinize erişim, düzeltme, silme, işlemenin kısıtlanması, veri
-        taşınabilirliği ve itiraz hakkına sahipsiniz. Talepleriniz için:{' '}
+        <strong style={{ color: '#F3F4F6' }}>{t('rightsLabel')}</strong>{' '}
+        {t('rights')}{' '}
         <a
           href="mailto:kvkk@utubooking.com"
           style={{ color: '#10B981', textDecoration: 'underline' }}
@@ -245,15 +241,13 @@ export default function KVKKBanner({ countryCode }: Props) {
       </p>
 
       <p style={{ color: '#9CA3AF', fontSize: 12, lineHeight: 1.5, marginBottom: 16 }}>
-        Verileriniz Türkiye (İstanbul) ve AB (Frankfurt) veri merkezlerinde
-        saklanmaktadır. Saklama süresi: aktif hesaplar için sözleşme süresi +
-        10 yıl (yasal yükümlülük).{' '}
+        {t('storage')}{' '}
         <a
           href="/privacy"
           style={{ color: '#10B981', textDecoration: 'underline' }}
           aria-label="Gizlilik politikasını oku"
         >
-          Gizlilik Politikası
+          {t('privacyPolicyLink')}
         </a>
       </p>
 
@@ -282,7 +276,7 @@ export default function KVKKBanner({ countryCode }: Props) {
             minWidth:        160,
           }}
         >
-          Kabul Ediyorum
+          {t('acceptBtn')}
         </button>
 
         <button
@@ -300,11 +294,11 @@ export default function KVKKBanner({ countryCode }: Props) {
             minHeight:       44,
           }}
         >
-          Reddet
+          {t('declineBtn')}
         </button>
 
         <span style={{ color: '#6B7280', fontSize: 12 }}>
-          Bu tercih 1 yıl boyunca hatırlanır.
+          {t('rememberedFor')}
         </span>
       </div>
     </div>

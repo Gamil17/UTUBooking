@@ -33,7 +33,6 @@ const TIME_OPTIONS = Array.from({ length: 24 }, (_, h) => {
 // ─── CarSearchBar ─────────────────────────────────────────────────────────────
 export default function CarSearchBar({ initialParams, onSearch, isLoading }: Props) {
   const t      = useTranslations('search');
-  const tCR    = useTranslations('carResults');
   const locale = useLocale();
 
   const [params, setParams] = useState<CarSearchParams>(initialParams);
@@ -123,7 +122,7 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
           <select
             value={params.pickupTime}
             onChange={(e) => set('pickupTime', e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-utu-bg-card focus:outline-none focus:ring-2 focus:ring-emerald-500"
           >
             {TIME_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -150,7 +149,7 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
           <select
             value={params.dropoffTime}
             onChange={(e) => set('dropoffTime', e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-utu-bg-card focus:outline-none focus:ring-2 focus:ring-emerald-500"
           >
             {TIME_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -190,7 +189,7 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
             className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
               params.differentDropoff
                 ? 'bg-emerald-700 border-emerald-700'
-                : 'border-gray-300 bg-white'
+                : 'border-utu-border-strong bg-utu-bg-card'
             }`}
           >
             {params.differentDropoff && (
@@ -199,7 +198,7 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
               </svg>
             )}
           </button>
-          <span className="text-xs text-gray-600">{t('differentDropoff')}</span>
+          <span className="text-xs text-utu-text-secondary">{t('differentDropoff')}</span>
         </label>
 
         {/* Driver age */}
@@ -212,7 +211,7 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
             className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
               params.driverAge30to65
                 ? 'bg-emerald-700 border-emerald-700'
-                : 'border-gray-300 bg-white'
+                : 'border-utu-border-strong bg-utu-bg-card'
             }`}
           >
             {params.driverAge30to65 && (
@@ -221,7 +220,7 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
               </svg>
             )}
           </button>
-          <span className="text-xs text-gray-600">{t('driverAge')}</span>
+          <span className="text-xs text-utu-text-secondary">{t('driverAge')}</span>
         </label>
 
         {/* Different dropoff location input */}

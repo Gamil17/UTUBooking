@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
         'x-internal-secret': INTERNAL_SECRET,
       },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10000),
     });
   } catch (err) {
     // Non-fatal — Meta expects 200 regardless, retry if we 5xx

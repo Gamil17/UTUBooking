@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { LOCALE_CURRENCY } from '@/i18n/config';
 import { useQuery } from '@tanstack/react-query';
 import type { CarOffer } from '@/lib/api';
 import CarCard from '@/components/cars/CarCard';
@@ -63,27 +64,27 @@ function CarIcon() {
 // ─── Skeleton card ────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 overflow-hidden flex animate-pulse">
-      <div className="w-52 h-40 bg-gray-200 shrink-0" />
+    <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm mb-3 overflow-hidden flex animate-pulse">
+      <div className="w-52 h-40 bg-utu-border-default shrink-0" />
       <div className="flex-1 p-4 space-y-3">
         <div className="flex justify-between gap-4">
           <div className="space-y-2 flex-1">
-            <div className="h-4 bg-gray-200 rounded w-1/2" />
-            <div className="h-3 bg-gray-100 rounded w-1/4" />
+            <div className="h-4 bg-utu-border-default rounded w-1/2" />
+            <div className="h-3 bg-utu-bg-muted rounded w-1/4" />
           </div>
           <div className="space-y-1 flex flex-col items-end shrink-0">
-            <div className="h-5 bg-gray-200 rounded w-24" />
-            <div className="h-3 bg-gray-100 rounded w-16" />
+            <div className="h-5 bg-utu-border-default rounded w-24" />
+            <div className="h-3 bg-utu-bg-muted rounded w-16" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-3 bg-gray-100 rounded" />
+            <div key={i} className="h-3 bg-utu-bg-muted rounded" />
           ))}
         </div>
         <div className="flex gap-1.5">
           {[80, 100, 60].map((w, i) => (
-            <div key={i} className="h-5 bg-gray-100 rounded-full" style={{ width: `${w}px` }} />
+            <div key={i} className="h-5 bg-utu-bg-muted rounded-full" style={{ width: `${w}px` }} />
           ))}
         </div>
       </div>
@@ -95,10 +96,10 @@ function SkeletonCard() {
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="text-center py-20">
-      <svg className="w-14 h-14 mx-auto text-gray-200 mb-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <svg className="w-14 h-14 mx-auto text-utu-border-default mb-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.01 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
       </svg>
-      <p className="text-gray-400 text-sm">{message}</p>
+      <p className="text-utu-text-muted text-sm">{message}</p>
     </div>
   );
 }
@@ -107,8 +108,10 @@ function EmptyState({ message }: { message: string }) {
 export default function CarsSearchPage() {
   const rawSP  = useSearchParams();
   const router = useRouter();
-  const t      = useTranslations('carResults');
-  const tS     = useTranslations('search');
+  const t        = useTranslations('carResults');
+  const tS       = useTranslations('search');
+  const locale   = useLocale();
+  const currency = LOCALE_CURRENCY[locale as keyof typeof LOCALE_CURRENCY] ?? 'SAR';
 
   const [searchParams, setSearchParams] = useState<CarSearchParams>(() => parseParams(rawSP));
   const [sortBy,       setSortBy]       = useState<SortKey>('recommended');
@@ -127,7 +130,7 @@ export default function CarsSearchPage() {
         pickupTime:      searchParams.pickupTime,
         dropoffDate:     searchParams.dropoffDate,
         dropoffTime:     searchParams.dropoffTime,
-        currency:        'SAR',
+        currency,
         maxOffers:       '40',
       });
       const res = await fetch(`/api/cars/search?${qs}`);
@@ -137,40 +140,41 @@ export default function CarsSearchPage() {
     enabled: !!(searchParams.pickupLocation && searchParams.pickupDate && searchParams.dropoffDate),
   });
 
-  useEffect(() => {
-    if (data?.results?.length) {
-      setFilters(buildInitialCarFilters(data.results));
-    }
-  }, [data]);
+  // Derive default filters from data — no useEffect needed; user overrides are layered on top
+  const defaultFilters = useMemo(
+    () => (data?.results?.length ? buildInitialCarFilters(data.results) : null),
+    [data],
+  );
+  const effectiveFilters = filters ?? defaultFilters;
 
   // ── Filtered + sorted results ───────────────────────────────────────────
   const displayedCars = useMemo(() => {
-    if (!data?.results || !filters) return [];
+    if (!data?.results || !effectiveFilters) return [];
 
-    let result = data.results.filter((o) => {
+    const result = data.results.filter((o) => {
       // Category strip quick filter
       if (activeCategory && o.category !== activeCategory) return false;
       // Sidebar filters
-      if (filters.categories.size > 0 && !filters.categories.has(o.category)) return false;
-      if (filters.suppliers.size > 0 && !filters.suppliers.has(o.supplier)) return false;
-      if (filters.seats.size > 0) {
+      if (effectiveFilters.categories.size > 0 && !effectiveFilters.categories.has(o.category)) return false;
+      if (effectiveFilters.suppliers.size > 0 && !effectiveFilters.suppliers.has(o.supplier)) return false;
+      if (effectiveFilters.seats.size > 0) {
         const s = o.seats ?? 0;
         const bucket: 4 | 5 | 6 = s <= 4 ? 4 : s === 5 ? 5 : 6;
-        if (!filters.seats.has(bucket)) return false;
+        if (!effectiveFilters.seats.has(bucket)) return false;
       }
-      if (filters.transmission.size > 0 && !filters.transmission.has(o.transmission)) return false;
-      if (filters.fuelTypes.size > 0) {
-        const ft = (o as any).fuelType ?? '';
-        if (!filters.fuelTypes.has(ft)) return false;
+      if (effectiveFilters.transmission.size > 0 && !effectiveFilters.transmission.has(o.transmission)) return false;
+      if (effectiveFilters.fuelTypes.size > 0) {
+        const ft = o.fuelType ?? '';
+        if (!effectiveFilters.fuelTypes.has(ft)) return false;
       }
-      if (filters.priceBracket !== null) {
+      if (effectiveFilters.priceBracket !== null) {
         const nextBracket = [200, 400, 600, 800, Infinity];
-        const idx = [0, 200, 400, 600, 800].indexOf(filters.priceBracket);
+        const idx = [0, 200, 400, 600, 800].indexOf(effectiveFilters.priceBracket);
         const max = nextBracket[idx] ?? Infinity;
-        if (o.pricePerDay < filters.priceBracket || o.pricePerDay >= max) return false;
+        if (o.pricePerDay < effectiveFilters.priceBracket || o.pricePerDay >= max) return false;
       }
-      if (filters.freeCancelOnly && !(o as any).freeCancellation) return false;
-      if (filters.hasAC && !(o as any).hasAC) return false;
+      if (effectiveFilters.freeCancelOnly && !o.freeCancellation) return false;
+      if (effectiveFilters.hasAC && !o.hasAC) return false;
       return true;
     });
 
@@ -179,11 +183,11 @@ export default function CarsSearchPage() {
         return [...result].sort((a, b) => a.pricePerDay - b.pricePerDay);
       case 'most_popular':
         return [...result].sort((a, b) =>
-          ((b as any).reviewCount ?? 0) - ((a as any).reviewCount ?? 0));
+          (b.reviewCount ?? 0) - (a.reviewCount ?? 0));
       default:
         return result;
     }
-  }, [data, filters, sortBy, activeCategory]);
+  }, [data, effectiveFilters, sortBy, activeCategory]);
 
   // ── Handlers ────────────────────────────────────────────────────────────
   const handleSearch = useCallback((p: CarSearchParams) => {
@@ -228,7 +232,7 @@ export default function CarsSearchPage() {
     <div className="min-h-screen bg-slate-50">
 
       {/* ── Sticky search bar ─────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white shadow-sm border-b border-slate-100">
+      <div className="sticky top-0 z-30 bg-utu-bg-card shadow-sm border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4">
           <CarSearchBar
             initialParams={searchParams}
@@ -244,16 +248,16 @@ export default function CarsSearchPage() {
 
           {/* ── Left sidebar (desktop) ─────────────────────────────────── */}
           <aside className="hidden lg:block w-72 shrink-0 sticky top-[7rem]">
-            {data?.results && filters ? (
+            {data?.results && effectiveFilters ? (
               <CarFilters
                 offers={data.results}
-                filters={filters}
+                filters={effectiveFilters}
                 onChange={setFilters}
               />
             ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse space-y-3">
+              <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-5 animate-pulse space-y-3">
                 {[72, 56, 88, 48, 64].map((w, i) => (
-                  <div key={i} className="h-3 bg-gray-200 rounded" style={{ width: `${w}%` }} />
+                  <div key={i} className="h-3 bg-utu-border-default rounded" style={{ width: `${w}%` }} />
                 ))}
               </div>
             )}
@@ -276,7 +280,7 @@ export default function CarsSearchPage() {
                       className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl border text-xs font-medium shrink-0 transition-colors ${
                         active
                           ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                          : 'border-gray-100 bg-white text-gray-600 hover:bg-gray-50'
+                          : 'border-utu-border-default bg-utu-bg-card text-utu-text-secondary hover:bg-utu-bg-muted'
                       }`}
                     >
                       <CarIcon />
@@ -289,7 +293,7 @@ export default function CarsSearchPage() {
 
             {/* Sort bar */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-100 shadow-sm p-1">
+              <div className="flex items-center gap-1 bg-utu-bg-card rounded-xl border border-utu-border-default shadow-sm p-1">
                 {SORT_TABS.map(({ key, label }) => (
                   <button
                     key={key}
@@ -297,7 +301,7 @@ export default function CarsSearchPage() {
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                       sortBy === key
                         ? 'bg-emerald-700 text-white'
-                        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                        : 'text-utu-text-muted hover:text-utu-text-primary hover:bg-utu-bg-muted'
                     }`}
                   >
                     {label}
@@ -308,13 +312,13 @@ export default function CarsSearchPage() {
               {/* Result count + mobile filter button */}
               <div className="flex items-center gap-3">
                 {!isFetching && data && (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-utu-text-muted">
                     {displayedCars.length} / {data.count ?? data.results.length} {t('resultsCount')}
                   </span>
                 )}
                 <button
                   onClick={() => setFiltersOpen(true)}
-                  className="lg:hidden flex items-center gap-1.5 text-xs font-semibold border border-gray-200 rounded-xl px-3 py-1.5 bg-white hover:bg-gray-50"
+                  className="lg:hidden flex items-center gap-1.5 text-xs font-semibold border border-utu-border-default rounded-xl px-3 py-1.5 bg-utu-bg-card hover:bg-utu-bg-muted"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 12h10M10 20h4"/>
@@ -369,17 +373,17 @@ export default function CarsSearchPage() {
           <div className="absolute inset-0 bg-black/40" />
           <div className="absolute bottom-0 left-0 right-0 bg-slate-50 rounded-t-2xl max-h-[85vh] overflow-y-auto p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-gray-900">{t('filters')}</h2>
+              <h2 className="font-bold text-utu-text-primary">{t('filters')}</h2>
               <button
                 onClick={() => setFiltersOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-utu-bg-muted text-utu-text-muted hover:bg-utu-border-default"
               >
                 ✕
               </button>
             </div>
             <CarFilters
               offers={data.results}
-              filters={filters}
+              filters={effectiveFilters}
               onChange={(f) => setFilters(f)}
             />
             <button

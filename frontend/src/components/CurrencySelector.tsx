@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslations, useLocale } from 'next-intl';
 
 const CURRENCIES = [
   { code: 'SAR', name: 'Saudi Arabian Riyal' },
@@ -75,13 +76,21 @@ const STORAGE_KEY = 'utu_currency';
 const DEFAULT = CURRENCIES[0]; // SAR
 
 export default function CurrencySelector() {
+  const t = useTranslations('common');
+  const locale = useLocale();
   const [selected, setSelected] = useState(DEFAULT);
   const [isOpen, setIsOpen]     = useState(false);
   const [search, setSearch]     = useState('');
   const [mounted, setMounted]   = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  function closeDropdown() {
+    setSearch('');
+    setIsOpen(false);
+  }
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads localStorage (SSR-unavailable), must run after hydration
     setMounted(true);
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -91,18 +100,17 @@ export default function CurrencySelector() {
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => searchRef.current?.focus(), 50);
-    } else {
+    if (!isOpen) {
       document.body.style.overflow = '';
-      setSearch('');
+      return;
     }
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => searchRef.current?.focus(), 50);
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsOpen(false); };
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') closeDropdown(); };
     if (isOpen) document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [isOpen]);
@@ -110,32 +118,47 @@ export default function CurrencySelector() {
   const handleSelect = useCallback((currency: typeof DEFAULT) => {
     setSelected(currency);
     localStorage.setItem(STORAGE_KEY, currency.code);
-    setIsOpen(false);
+    closeDropdown();
   }, []);
 
-  const filtered = search.trim()
+  const displayNames = useMemo(() => {
+    try {
+      return new Intl.DisplayNames([locale, 'en'], { type: 'currency' });
+    } catch {
+      return null;
+    }
+  }, [locale]);
+
+  const localizedName = useCallback(
+    (code: string, fallback: string) => displayNames?.of(code) ?? fallback,
+    [displayNames]
+  );
+
+  const q = search.trim().toLowerCase();
+  const filtered = q
     ? CURRENCIES.filter(
         (c) =>
-          c.code.toLowerCase().includes(search.toLowerCase()) ||
-          c.name.toLowerCase().includes(search.toLowerCase())
+          c.code.toLowerCase().includes(q) ||
+          c.name.toLowerCase().includes(q) ||
+          (displayNames?.of(c.code) ?? '').toLowerCase().includes(q)
       )
     : CURRENCIES;
 
   const modal = isOpen ? (
     <div
       className="fixed inset-0 z-[9999] flex items-start justify-center bg-black/50 pt-12 pb-4 px-4"
-          onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeDropdown(); }}
           role="dialog"
           aria-modal="true"
           aria-label="Select currency"
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
+          <div className="bg-utu-bg-card rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-900">Currency</h2>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-utu-border-default">
+              <h2 className="text-base font-semibold text-utu-text-primary">{t('currency')}</h2>
               <button
-                onClick={() => setIsOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                onClick={() => closeDropdown()}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-utu-text-muted hover:text-utu-text-secondary hover:bg-utu-bg-muted transition-colors"
                 aria-label="Close"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -145,18 +168,18 @@ export default function CurrencySelector() {
             </div>
 
             {/* Search */}
-            <div className="px-6 py-3 border-b border-gray-100">
+            <div className="px-6 py-3 border-b border-utu-border-default">
               <div className="flex items-center gap-2 border-2 border-emerald-500 rounded-xl px-3 py-2">
-                <svg className="w-4 h-4 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <svg className="w-4 h-4 text-utu-text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35"/>
                 </svg>
                 <input
                   ref={searchRef}
                   type="text"
-                  placeholder="Search"
+                  placeholder={t('search')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
+                  className="flex-1 text-sm text-utu-text-secondary placeholder-gray-400 outline-none bg-transparent"
                 />
               </div>
             </div>
@@ -164,7 +187,7 @@ export default function CurrencySelector() {
             {/* List */}
             <div className="overflow-y-auto px-4 py-3">
               {filtered.length === 0 ? (
-                <p className="text-center text-sm text-gray-400 py-8">No results found</p>
+                <p className="text-center text-sm text-utu-text-muted py-8">{t('noResults')}</p>
               ) : (
                 <div className="grid grid-cols-3 gap-x-2 gap-y-0.5">
                   {filtered.map((currency) => {
@@ -175,12 +198,12 @@ export default function CurrencySelector() {
                         onClick={() => handleSelect(currency)}
                         className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors ${
                           isSelected
-                            ? 'text-gray-900'
-                            : 'text-gray-700 hover:bg-gray-50'
+                            ? 'text-utu-text-primary'
+                            : 'text-utu-text-secondary hover:bg-utu-bg-muted'
                         }`}
                       >
                         <span className="text-sm font-bold shrink-0 w-10">{currency.code}</span>
-                        <span className="flex-1 text-xs text-gray-500 truncate">{currency.name}</span>
+                        <span className="flex-1 text-xs text-utu-text-muted truncate">{localizedName(currency.code, currency.name)}</span>
                         {isSelected && (
                           <svg className="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
@@ -200,7 +223,7 @@ export default function CurrencySelector() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1 text-emerald-200 hover:text-white transition-colors text-xs font-semibold px-2 py-1.5 rounded-lg hover:bg-white/10"
+        className="flex items-center gap-1 text-emerald-200 hover:text-white transition-colors text-xs font-semibold px-2 py-1.5 rounded-lg hover:bg-utu-bg-card/10"
         aria-label="Select currency"
       >
         {selected.code}

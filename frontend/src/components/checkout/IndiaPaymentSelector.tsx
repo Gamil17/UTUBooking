@@ -228,14 +228,14 @@ export default function IndiaPaymentSelector({
   }
 
   const inputCls =
-    'w-full border border-gray-300 rounded-xl px-4 py-3 text-base text-gray-900 ' +
+    'w-full border border-utu-border-strong rounded-xl px-4 py-3 text-base text-utu-text-primary ' +
     'focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent ' +
-    'placeholder-gray-400 min-h-[44px] bg-white';
+    'placeholder-gray-400 min-h-[44px] bg-utu-bg-card';
 
   const tabCls = (active: boolean) =>
     [
       'flex-1 py-2.5 text-sm font-semibold rounded-xl transition-colors min-h-[44px]',
-      active ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100',
+      active ? 'bg-emerald-600 text-white shadow-sm' : 'text-utu-text-secondary hover:bg-utu-bg-muted',
     ].join(' ');
 
   return (
@@ -248,7 +248,7 @@ export default function IndiaPaymentSelector({
       </div>
 
       {/* Payment method tabs */}
-      <div className="bg-gray-100 rounded-2xl p-1 flex gap-1 flex-wrap">
+      <div className="bg-utu-bg-muted rounded-2xl p-1 flex gap-1 flex-wrap">
         {([
           ['upi',        'UPI'],
           ['netbanking', 'Net Banking'],
@@ -272,7 +272,7 @@ export default function IndiaPaymentSelector({
         <div className="space-y-4">
           {/* Quick-launch UPI app buttons */}
           <div>
-            <p className="text-xs text-gray-500 mb-2 font-medium">ऐप से सीधे भुगतान करें</p>
+            <p className="text-xs text-utu-text-muted mb-2 font-medium">ऐप से सीधे भुगतान करें</p>
             <div className="flex gap-3">
               {UPI_APPS.map(app => (
                 <button
@@ -280,7 +280,7 @@ export default function IndiaPaymentSelector({
                   type="button"
                   aria-label={`${app.label} से भुगतान करें`}
                   onClick={() => setVpa(app.key === 'paytm' ? `${vpa.split('@')[0]}@paytm` : vpa)}
-                  className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors min-h-[60px]"
+                  className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border border-utu-border-default hover:border-utu-border-strong transition-colors min-h-[60px]"
                 >
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white"
@@ -288,21 +288,21 @@ export default function IndiaPaymentSelector({
                   >
                     {app.shortCode}
                   </div>
-                  <span className="text-xs text-gray-600">{app.label}</span>
+                  <span className="text-xs text-utu-text-secondary">{app.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
           <div className="relative flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400">या UPI ID दर्ज करें</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-utu-border-default" />
+            <span className="text-xs text-utu-text-muted">या UPI ID दर्ज करें</span>
+            <div className="flex-1 h-px bg-utu-border-default" />
           </div>
 
           {/* VPA input */}
           <div className="space-y-1.5">
-            <label htmlFor="upi-vpa" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="upi-vpa" className="block text-sm font-medium text-utu-text-secondary">
               UPI ID (VPA)
             </label>
             <input
@@ -316,7 +316,7 @@ export default function IndiaPaymentSelector({
               autoComplete="off"
               spellCheck={false}
             />
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-utu-text-muted">
               {isValidVpa(vpa) ? (
                 <span className="text-emerald-600 font-medium">✓ वैध UPI ID</span>
               ) : vpa.length > 3 ? (
@@ -332,7 +332,7 @@ export default function IndiaPaymentSelector({
       {/* ── NetBanking ──────────────────────────────────────────────────── */}
       {method === 'netbanking' && (
         <div className="space-y-1.5">
-          <label htmlFor="nb-bank" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="nb-bank" className="block text-sm font-medium text-utu-text-secondary">
             बैंक चुनें
           </label>
           <select
@@ -360,7 +360,7 @@ export default function IndiaPaymentSelector({
       {/* ── EMI ──────────────────────────────────────────────────────── */}
       {method === 'emi' && showEmi && (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-700">EMI अवधि चुनें</p>
+          <p className="text-sm font-medium text-utu-text-secondary">EMI अवधि चुनें</p>
           <div className="space-y-2">
             {(emiOptions.length > 0 ? emiOptions : getApproxEmi(amountINR)).map(opt => (
               <button
@@ -371,16 +371,16 @@ export default function IndiaPaymentSelector({
                   'w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all min-h-[44px]',
                   emiMonths === opt.months
                     ? 'border-emerald-500 bg-emerald-50'
-                    : 'border-gray-200 hover:border-gray-300',
+                    : 'border-utu-border-default hover:border-utu-border-strong',
                 ].join(' ')}
               >
-                <span className="font-semibold text-gray-900 text-sm">{opt.months} महीने</span>
-                <span className="text-sm text-gray-600">{formatInr(opt.monthlyAmount)}/माह</span>
-                <span className="text-xs text-gray-400">कुल {formatInr(opt.totalAmount)}</span>
+                <span className="font-semibold text-utu-text-primary text-sm">{opt.months} महीने</span>
+                <span className="text-sm text-utu-text-secondary">{formatInr(opt.monthlyAmount)}/माह</span>
+                <span className="text-xs text-utu-text-muted">कुल {formatInr(opt.totalAmount)}</span>
               </button>
             ))}
           </div>
-          <p className="text-xs text-gray-400">* ब्याज दर बैंक-विशिष्ट है। Razorpay checkout में सटीक दर दिखाई देगी।</p>
+          <p className="text-xs text-utu-text-muted">* ब्याज दर बैंक-विशिष्ट है। Razorpay checkout में सटीक दर दिखाई देगी।</p>
         </div>
       )}
 
@@ -397,15 +397,15 @@ export default function IndiaPaymentSelector({
                 'w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all min-h-[44px]',
                 walletCode === w.code
                   ? 'border-emerald-500 bg-emerald-50'
-                  : 'border-gray-200 hover:border-gray-300',
+                  : 'border-utu-border-default hover:border-utu-border-strong',
               ].join(' ')}
             >
-              <span className="font-medium text-gray-900 text-sm">{w.label}</span>
+              <span className="font-medium text-utu-text-primary text-sm">{w.label}</span>
               <div className={[
                 'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                walletCode === w.code ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300',
+                walletCode === w.code ? 'border-emerald-500 bg-emerald-500' : 'border-utu-border-strong',
               ].join(' ')}>
-                {walletCode === w.code && <div className="w-2 h-2 rounded-full bg-white" />}
+                {walletCode === w.code && <div className="w-2 h-2 rounded-full bg-utu-bg-card" />}
               </div>
             </button>
           ))}
@@ -422,7 +422,7 @@ export default function IndiaPaymentSelector({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 border border-gray-300 text-gray-700 rounded-xl py-3 text-sm font-medium hover:bg-gray-50 min-h-[44px]"
+          className="flex-1 border border-utu-border-strong text-utu-text-secondary rounded-xl py-3 text-sm font-medium hover:bg-utu-bg-muted min-h-[44px]"
         >
           रद्द करें
         </button>
@@ -433,7 +433,7 @@ export default function IndiaPaymentSelector({
           className={[
             'flex-grow rounded-xl py-3 text-white text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2 transition-colors',
             loading || status === 'done'
-              ? 'bg-gray-300 cursor-not-allowed'
+              ? 'bg-utu-border-strong cursor-not-allowed'
               : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800',
           ].join(' ')}
         >
@@ -466,7 +466,6 @@ function getApproxEmi(amountInr: number): EmiOption[] {
 // ── Razorpay global type augmentation ─────────────────────────────────────────
 declare global {
   interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Razorpay: new (options: Record<string, unknown>) => { open(): void };
   }
 }

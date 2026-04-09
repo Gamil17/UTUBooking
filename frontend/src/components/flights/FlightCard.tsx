@@ -16,7 +16,7 @@ function airlineColor(code: string) {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtTime(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleTimeString('en-SA', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 function fmtDuration(mins: number) {
@@ -25,8 +25,8 @@ function fmtDuration(mins: number) {
   return m ? `${h}h ${m}m` : `${h}h`;
 }
 
-function fmtPrice(price: number) {
-  return `SAR ${price.toLocaleString('en-SA')}`;
+function fmtPrice(price: number, currency: string) {
+  return price.toLocaleString(undefined, { style: 'currency', currency, maximumFractionDigits: 0 });
 }
 
 // ─── Stop dot-line SVG ────────────────────────────────────────────────────────
@@ -49,30 +49,34 @@ function StopLine({ stops }: { stops: number }) {
 
 // ─── Single leg row ───────────────────────────────────────────────────────────
 function LegRow({ offer, label }: { offer: FlightOffer; label?: string }) {
+  const tc = useTranslations('common');
   const nextDay = new Date(offer.arrivalAt).getDate() !== new Date(offer.departureAt).getDate();
+  const stopLabel = offer.stops === 0
+    ? tc('direct')
+    : offer.stops === 1
+    ? tc('oneStop')
+    : tc('nStops', { n: offer.stops });
   return (
     <div className="flex items-center gap-3">
-      {label && <span className="text-[10px] text-gray-400 w-10 shrink-0">{label}</span>}
+      {label && <span className="text-[10px] text-utu-text-muted w-10 shrink-0">{label}</span>}
       {/* Depart */}
       <div className="text-center shrink-0 w-12">
-        <p className="text-base font-bold text-gray-900 leading-none">{fmtTime(offer.departureAt)}</p>
-        <p className="text-[11px] text-gray-500 mt-0.5">{offer.originIata}</p>
+        <p className="text-base font-bold text-utu-text-primary leading-none">{fmtTime(offer.departureAt)}</p>
+        <p className="text-[11px] text-utu-text-muted mt-0.5">{offer.originIata}</p>
       </div>
       {/* Line */}
       <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-        <p className="text-[11px] text-gray-400">{fmtDuration(offer.durationMinutes)}</p>
+        <p className="text-[11px] text-utu-text-muted">{fmtDuration(offer.durationMinutes)}</p>
         <StopLine stops={offer.stops} />
-        <p className="text-[10px] text-gray-400">
-          {offer.stops === 0 ? 'Direct' : offer.stops === 1 ? '1 stop' : `${offer.stops} stops`}
-        </p>
+        <p className="text-[10px] text-utu-text-muted">{stopLabel}</p>
       </div>
       {/* Arrive */}
       <div className="text-center shrink-0 w-12">
-        <p className="text-base font-bold text-gray-900 leading-none">
+        <p className="text-base font-bold text-utu-text-primary leading-none">
           {fmtTime(offer.arrivalAt)}
           {nextDay && <sup className="text-[9px] text-amber-500 ms-0.5">+1</sup>}
         </p>
-        <p className="text-[11px] text-gray-500 mt-0.5">{offer.destinationIata}</p>
+        <p className="text-[11px] text-utu-text-muted mt-0.5">{offer.destinationIata}</p>
       </div>
     </div>
   );
@@ -103,12 +107,12 @@ export default function FlightCard({ offer, isReturn, tags, onSelect }: FlightCa
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4 mb-3">
+    <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm hover:shadow-md transition-shadow p-4 mb-3">
       {/* Tags row */}
       {tags.length > 0 && (
         <div className="flex gap-1.5 mb-3">
           {tags.map((tag) => (
-            <span key={tag} className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${TAG_STYLES[tag] ?? 'bg-gray-100 text-gray-600'}`}>
+            <span key={tag} className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${TAG_STYLES[tag] ?? 'bg-utu-bg-muted text-utu-text-secondary'}`}>
               {tagLabels[tag] ?? tag}
             </span>
           ))}
@@ -125,7 +129,7 @@ export default function FlightCard({ offer, isReturn, tags, onSelect }: FlightCa
         <div className="flex-1 min-w-0 space-y-3">
           <LegRow offer={offer} label={isReturn ? t('outbound') : undefined} />
           {isReturn && (
-            <div className="border-t border-dashed border-gray-100 pt-3">
+            <div className="border-t border-dashed border-utu-border-default pt-3">
               {/* Return leg uses swapped airports — backend provides separate offer for return */}
               <LegRow
                 offer={{ ...offer, originIata: offer.destinationIata, destinationIata: offer.originIata }}
@@ -138,8 +142,8 @@ export default function FlightCard({ offer, isReturn, tags, onSelect }: FlightCa
         {/* Price + CTA */}
         <div className="shrink-0 text-right flex flex-col items-end gap-2 ms-2">
           <div>
-            <p className="text-lg font-bold text-emerald-700 leading-none">{fmtPrice(offer.price)}</p>
-            <p className="text-[11px] text-gray-400 mt-0.5">{t('perPerson')}</p>
+            <p className="text-lg font-bold text-emerald-700 leading-none">{fmtPrice(offer.price, offer.currency)}</p>
+            <p className="text-[11px] text-utu-text-muted mt-0.5">{t('perPerson')}</p>
           </div>
 
           <button
@@ -154,7 +158,7 @@ export default function FlightCard({ offer, isReturn, tags, onSelect }: FlightCa
               <span className="text-[10px] text-emerald-600 font-medium">{t('refundable')}</span>
             )}
             {offer.baggageIncluded && (
-              <span className="flex items-center gap-0.5 text-[10px] text-gray-500">
+              <span className="flex items-center gap-0.5 text-[10px] text-utu-text-muted">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M20 8h-3V6c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zM9 6h6v2H9V6zm11 13H4v-9h16v9z"/>
                 </svg>

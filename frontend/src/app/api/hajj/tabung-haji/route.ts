@@ -99,7 +99,7 @@ function estimateDeparture(q: number) {
 async function handleCheckBalance(ic: string) {
   const key    = `th:pilgrim:balance:${hashIc(ic)}`;
   const cached = await redis.get(key).catch(() => null);
-  if (cached) return JSON.parse(cached);
+  if (cached && cached.length < 10_000) return JSON.parse(cached);
 
   const raw = await thFetch<{
     account_number: string; balance_myr: number; required_myr: number; last_updated: string;
@@ -113,14 +113,14 @@ async function handleCheckBalance(ic: string) {
     isSufficient:      raw.balance_myr >= raw.required_myr,
     lastUpdated:       raw.last_updated,
   };
-  await redis.setEx(key, CACHE_TTL_SEC, JSON.stringify(result)).catch(() => null);
+  await redis.setex(key, CACHE_TTL_SEC, JSON.stringify(result)).catch(() => null);
   return result;
 }
 
 async function handleGetHajjStatus(ic: string) {
   const key    = `th:pilgrim:status:${hashIc(ic)}`;
   const cached = await redis.get(key).catch(() => null);
-  if (cached) return JSON.parse(cached);
+  if (cached && cached.length < 10_000) return JSON.parse(cached);
 
   const raw = await thFetch<{
     registration_status: string; queue_number: number | null;
@@ -152,7 +152,7 @@ async function handleGetHajjStatus(ic: string) {
     registrationDate:       raw.registration_date,
     lastHajjYear:           raw.last_hajj_year,
   };
-  await redis.setEx(key, CACHE_TTL_SEC, JSON.stringify(result)).catch(() => null);
+  await redis.setex(key, CACHE_TTL_SEC, JSON.stringify(result)).catch(() => null);
   return result;
 }
 

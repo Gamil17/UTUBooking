@@ -121,7 +121,7 @@ const TRANSLATIONS: Record<Lang, Strings> = {
   },
   fr: {
     title:         '🔒 Vos préférences de confidentialité',
-    intro:         'UTUBooking utilise des cookies et traite des données personnelles. Les données strictement nécessaires sont traitées sur la base de l'Art. 13 RGPD (exécution du contrat). Nous demandons votre consentement pour l'analyse et le marketing.',
+    intro:         'UTUBooking utilise des cookies et traite des données personnelles. Les données strictement nécessaires sont traitées sur la base de l\'Art. 13 RGPD (exécution du contrat). Nous demandons votre consentement pour l\'analyse et le marketing.',
     necessary:     'Strictement nécessaires',
     necessaryDesc: 'Requis pour les réservations, les paiements et la sécurité du compte. Ne peut pas être désactivé.',
     analytics:     'Analyse',
@@ -455,6 +455,8 @@ function Toggle({
   onChange: (v: boolean) => void;
   label: string;
 }) {
+  const isRtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
+  const knobPos = isRtl ? (checked ? 3 : 23) : (checked ? 23 : 3);
   return (
     <button
       id={id}
@@ -477,7 +479,7 @@ function Toggle({
           backgroundColor: '#fff',
           position:        'absolute',
           top:             3,
-          left:            checked ? 23 : 3,
+          left:            knobPos,
           transition:      'left 0.2s',
         }}
       />
@@ -499,6 +501,7 @@ export default function GDPRConsentBanner({ countryCode }: Props) {
 
   useEffect(() => {
     if (!isGdprRequired(tenant.locale, countryCode)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reads localStorage (SSR-unavailable), must run after hydration to avoid mismatch
       setState('hidden');
       return;
     }

@@ -31,10 +31,10 @@ export default async function HajjServicesPage() {
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {services.map((s) => (
-              <div key={s.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div key={s.title} className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-6">
                 <span className="text-3xl" aria-hidden="true">{s.icon}</span>
-                <h3 className="font-bold text-gray-900 mt-3 mb-2">{s.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
+                <h3 className="font-bold text-utu-text-primary mt-3 mb-2">{s.title}</h3>
+                <p className="text-sm text-utu-text-muted leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -45,7 +45,7 @@ export default async function HajjServicesPage() {
         <h2 className="text-2xl font-bold text-white mb-3">{t('ctaHeading')}</h2>
         <p className="text-emerald-100 mb-6 max-w-lg mx-auto">{t('ctaDesc')}</p>
         <Link
-          href="/"
+          href="/hotels/search"
           className="inline-block bg-amber-400 hover:bg-amber-300 text-emerald-900 font-bold px-8 py-3 rounded-xl transition-colors text-sm"
         >
           {t('searchBtn')}

@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 
 interface PoiResult {
   id:               string;
@@ -39,7 +40,7 @@ function StarRating({ rating }: { rating: number | null }) {
   return (
     <span className="text-amber-400 text-xs" aria-label={`${rating} out of 5 stars`}>
       {'★'.repeat(full)}{'☆'.repeat(5 - full)}
-      <span className="text-gray-500 ml-1">{rating.toFixed(1)}</span>
+      <span className="text-utu-text-muted ml-1">{rating.toFixed(1)}</span>
     </span>
   );
 }
@@ -47,7 +48,7 @@ function StarRating({ rating }: { rating: number | null }) {
 function PriceLevel({ level }: { level: number | null }) {
   if (level === null) return null;
   return (
-    <span className="text-gray-500 text-xs" aria-label={`Price level ${level} of 4`}>
+    <span className="text-utu-text-muted text-xs" aria-label={`Price level ${level} of 4`}>
       {'$'.repeat(level + 1)}
     </span>
   );
@@ -78,7 +79,7 @@ export default function HalalRestaurantList({ lat, lng, radius = 1500, cityName 
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8 gap-3 text-gray-400">
+      <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
         <span className="w-5 h-5 border-2 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />
         <span className="text-sm">{t('loadingRestaurants')}</span>
       </div>
@@ -102,7 +103,7 @@ export default function HalalRestaurantList({ lat, lng, radius = 1500, cityName 
 
   if (!results.length) {
     return (
-      <p className="text-sm text-gray-500 text-center py-6">{t('noRestaurants')}</p>
+      <p className="text-sm text-utu-text-muted text-center py-6">{t('noRestaurants')}</p>
     );
   }
 
@@ -111,17 +112,19 @@ export default function HalalRestaurantList({ lat, lng, radius = 1500, cityName 
       {results.map((place) => (
         <div
           key={place.id}
-          className="flex gap-3 rounded-xl border border-gray-100 bg-white p-3 hover:shadow-sm transition-shadow"
+          className="flex gap-3 rounded-xl border border-utu-border-default bg-utu-bg-card p-3 hover:shadow-sm transition-shadow"
           role="article"
           aria-label={place.name}
         >
           {/* Photo */}
           {place.photos[0] ? (
-            <img
+            <Image
               src={place.photos[0]}
               alt={place.name}
+              width={64}
+              height={64}
               className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
-              loading="lazy"
+              unoptimized
             />
           ) : (
             <div className="h-16 w-16 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0 text-xl">
@@ -131,12 +134,12 @@ export default function HalalRestaurantList({ lat, lng, radius = 1500, cityName 
 
           {/* Info */}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-900 truncate">{place.name}</p>
-            <p className="text-xs text-gray-500 truncate">{place.address}</p>
+            <p className="text-sm font-semibold text-utu-text-primary truncate">{place.name}</p>
+            <p className="text-xs text-utu-text-muted truncate">{place.address}</p>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
               <StarRating rating={place.rating} />
               {place.userRatingsTotal > 0 && (
-                <span className="text-xs text-gray-400">({place.userRatingsTotal.toLocaleString()})</span>
+                <span className="text-xs text-utu-text-muted">({place.userRatingsTotal.toLocaleString()})</span>
               )}
               <PriceLevel level={place.priceLevel} />
               {place.openNow !== null && (
@@ -148,7 +151,7 @@ export default function HalalRestaurantList({ lat, lng, radius = 1500, cityName 
           </div>
         </div>
       ))}
-      <p className="text-xs text-gray-400 text-center pt-1">
+      <p className="text-xs text-utu-text-muted text-center pt-1">
         Halal restaurants within {(radius / 1000).toFixed(1)} km · {cityName}
       </p>
     </div>

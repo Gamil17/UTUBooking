@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { LOCALE_CURRENCY } from '@/i18n/config';
 import { useQuery } from '@tanstack/react-query';
 import type { HotelOffer } from '@/lib/api';
 import HotelSearchCard from '@/components/hotels/HotelSearchCard';
@@ -43,23 +44,23 @@ function buildQS(p: HotelSearchParams) {
 // ─── Skeleton card ────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 overflow-hidden flex animate-pulse">
-      <div className="w-52 h-36 bg-gray-200 shrink-0" />
+    <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm mb-3 overflow-hidden flex animate-pulse">
+      <div className="w-52 h-36 bg-utu-border-default shrink-0" />
       <div className="flex-1 p-4 space-y-3">
         <div className="flex justify-between gap-4">
           <div className="space-y-2 flex-1">
-            <div className="h-4 bg-gray-200 rounded w-3/4" />
-            <div className="h-3 bg-gray-100 rounded w-1/4" />
+            <div className="h-4 bg-utu-border-default rounded w-3/4" />
+            <div className="h-3 bg-utu-bg-muted rounded w-1/4" />
           </div>
           <div className="space-y-1 items-end flex flex-col shrink-0">
-            <div className="h-5 bg-gray-200 rounded w-20" />
-            <div className="h-3 bg-gray-100 rounded w-14" />
+            <div className="h-5 bg-utu-border-default rounded w-20" />
+            <div className="h-3 bg-utu-bg-muted rounded w-14" />
           </div>
         </div>
-        <div className="h-3 bg-gray-100 rounded w-2/3" />
+        <div className="h-3 bg-utu-bg-muted rounded w-2/3" />
         <div className="flex gap-1">
           {[60, 48, 72].map((w, i) => (
-            <div key={i} className="h-5 bg-gray-100 rounded-full" style={{ width: `${w}px` }} />
+            <div key={i} className="h-5 bg-utu-bg-muted rounded-full" style={{ width: `${w}px` }} />
           ))}
         </div>
       </div>
@@ -71,10 +72,10 @@ function SkeletonCard() {
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="text-center py-20">
-      <svg className="w-14 h-14 mx-auto text-gray-200 mb-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <svg className="w-14 h-14 mx-auto text-utu-border-default mb-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M19 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V4a2 2 0 00-2-2zm-7 3a3 3 0 110 6 3 3 0 010-6zm6 14H6v-1a6 6 0 0112 0v1z"/>
       </svg>
-      <p className="text-gray-400 text-sm">{message}</p>
+      <p className="text-utu-text-muted text-sm">{message}</p>
     </div>
   );
 }
@@ -85,6 +86,8 @@ export default function HotelsSearchPage() {
   const router = useRouter();
   const t      = useTranslations('hotelResults');
   const tS     = useTranslations('search');
+  const locale = useLocale();
+  const currency = LOCALE_CURRENCY[locale as keyof typeof LOCALE_CURRENCY] ?? 'SAR';
 
   const [searchParams, setSearchParams] = useState<HotelSearchParams>(() => parseParams(rawSP));
   const [sortBy,      setSortBy]      = useState<SortKey>('recommended');
@@ -102,7 +105,7 @@ export default function HotelsSearchPage() {
         adults:      String(searchParams.adults),
         children:    String(searchParams.children),
         rooms:       String(searchParams.rooms),
-        currency:    'SAR',
+        currency,
         maxOffers:   '40',
       });
       const res = await fetch(`/api/hotels/search?${qs}`);
@@ -112,39 +115,39 @@ export default function HotelsSearchPage() {
     enabled: !!(searchParams.destination && searchParams.checkIn && searchParams.checkOut),
   });
 
-  // Initialise filters when data first loads
-  useEffect(() => {
-    if (data?.results?.length) {
-      setFilters(buildInitialHotelFilters(data.results));
-    }
-  }, [data]);
+  // Derive default filters from data — user overrides layered on top via setFilters
+  const defaultFilters = useMemo(
+    () => (data?.results?.length ? buildInitialHotelFilters(data.results) : null),
+    [data],
+  );
+  const effectiveFilters = filters ?? defaultFilters;
 
   // ── Filtered + sorted results ─────────────────────────────────────────────
   const displayedHotels = useMemo(() => {
-    if (!data?.results || !filters) return [];
+    if (!data?.results || !effectiveFilters) return [];
 
     let result = data.results.filter((o) => {
-      if (filters.stars.size > 0) {
+      if (effectiveFilters.stars.size > 0) {
         const s = o.stars ? Math.round(o.stars) : 0;
-        if (!filters.stars.has(s as 1 | 2 | 3 | 4 | 5)) return false;
+        if (!effectiveFilters.stars.has(s as 1 | 2 | 3 | 4 | 5)) return false;
       }
-      if (filters.reviewMin > 0) {
-        const score = (o as any).reviewScore ?? 0;
-        if (score < filters.reviewMin) return false;
+      if (effectiveFilters.reviewMin > 0) {
+        const score = o.reviewScore ?? 0;
+        if (score < effectiveFilters.reviewMin) return false;
       }
-      if (o.pricePerNight < filters.priceMin || o.pricePerNight > filters.priceMax) return false;
-      if (filters.distanceMax < filters.distanceCap && o.distanceHaramM != null) {
-        if (o.distanceHaramM > filters.distanceMax) return false;
+      if (o.pricePerNight < effectiveFilters.priceMin || o.pricePerNight > effectiveFilters.priceMax) return false;
+      if (effectiveFilters.distanceMax < effectiveFilters.distanceCap && o.distanceHaramM != null) {
+        if (o.distanceHaramM > effectiveFilters.distanceMax) return false;
       }
-      if (filters.propertyTypes.size > 0) {
-        if (!filters.propertyTypes.has((o as any).propertyType ?? '')) return false;
+      if (effectiveFilters.propertyTypes.size > 0) {
+        if (!effectiveFilters.propertyTypes.has(o.propertyType ?? '')) return false;
       }
-      if (filters.amenities.size > 0) {
-        for (const a of filters.amenities) {
+      if (effectiveFilters.amenities.size > 0) {
+        for (const a of effectiveFilters.amenities) {
           if (!o.amenities?.includes(a)) return false;
         }
       }
-      if (filters.freeCancelOnly && !o.freeCancellation) return false;
+      if (effectiveFilters.freeCancelOnly && !o.freeCancellation) return false;
       return true;
     });
 
@@ -158,14 +161,14 @@ export default function HotelsSearchPage() {
         return [...result].sort((a, b) => a.pricePerNight - b.pricePerNight);
       case 'topRated':
         return [...result].sort((a, b) =>
-          ((b as any).reviewScore ?? 0) - ((a as any).reviewScore ?? 0));
+          (b.reviewScore ?? 0) - (a.reviewScore ?? 0));
       case 'closest':
         return [...result].sort((a, b) =>
           (a.distanceHaramM ?? 999999) - (b.distanceHaramM ?? 999999));
       default:
         return result;
     }
-  }, [data, filters, sortBy, searchParams.freeCancelOnly]);
+  }, [data, effectiveFilters, sortBy, searchParams.freeCancelOnly]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleSearch = useCallback((p: HotelSearchParams) => {
@@ -206,7 +209,7 @@ export default function HotelsSearchPage() {
     <div className="min-h-screen bg-slate-50">
 
       {/* ── Sticky search bar ───────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white shadow-sm border-b border-slate-100">
+      <div className="sticky top-0 z-30 bg-utu-bg-card shadow-sm border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4">
           <HotelSearchBar
             initialParams={searchParams}
@@ -222,16 +225,16 @@ export default function HotelsSearchPage() {
 
           {/* ── Left sidebar (desktop) ─────────────────────────────────── */}
           <aside className="hidden lg:block w-72 shrink-0 sticky top-[5.5rem]">
-            {data?.results && filters ? (
+            {data?.results && effectiveFilters ? (
               <HotelFilters
                 offers={data.results}
-                filters={filters}
+                filters={effectiveFilters}
                 onChange={setFilters}
               />
             ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse space-y-3">
+              <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-5 animate-pulse space-y-3">
                 {[72, 56, 88, 48, 64].map((w, i) => (
-                  <div key={i} className="h-3 bg-gray-200 rounded" style={{ width: `${w}%` }} />
+                  <div key={i} className="h-3 bg-utu-border-default rounded" style={{ width: `${w}%` }} />
                 ))}
               </div>
             )}
@@ -242,7 +245,7 @@ export default function HotelsSearchPage() {
 
             {/* Sort bar */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-100 shadow-sm p-1">
+              <div className="flex items-center gap-1 bg-utu-bg-card rounded-xl border border-utu-border-default shadow-sm p-1">
                 {SORT_TABS.map(({ key, label }) => (
                   <button
                     key={key}
@@ -250,7 +253,7 @@ export default function HotelsSearchPage() {
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                       sortBy === key
                         ? 'bg-emerald-700 text-white'
-                        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                        : 'text-utu-text-muted hover:text-utu-text-primary hover:bg-utu-bg-muted'
                     }`}
                   >
                     {label}
@@ -261,13 +264,13 @@ export default function HotelsSearchPage() {
               {/* Result count + mobile filter button */}
               <div className="flex items-center gap-3">
                 {!isFetching && data && (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-utu-text-muted">
                     {displayedHotels.length} / {data.count ?? data.results.length} {t('resultsCount')}
                   </span>
                 )}
                 <button
                   onClick={() => setFiltersOpen(true)}
-                  className="lg:hidden flex items-center gap-1.5 text-xs font-semibold border border-gray-200 rounded-xl px-3 py-1.5 bg-white hover:bg-gray-50"
+                  className="lg:hidden flex items-center gap-1.5 text-xs font-semibold border border-utu-border-default rounded-xl px-3 py-1.5 bg-utu-bg-card hover:bg-utu-bg-muted"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 12h10M10 20h4"/>
@@ -321,10 +324,10 @@ export default function HotelsSearchPage() {
           <div className="absolute inset-0 bg-black/40" />
           <div className="absolute bottom-0 left-0 right-0 bg-slate-50 rounded-t-2xl max-h-[85vh] overflow-y-auto p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-gray-900">{t('filters')}</h2>
+              <h2 className="font-bold text-utu-text-primary">{t('filters')}</h2>
               <button
                 onClick={() => setFiltersOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-utu-bg-muted text-utu-text-muted hover:bg-utu-border-default"
               >
                 ✕
               </button>

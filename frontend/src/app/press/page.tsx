@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { SITE_CONFIG } from '@/lib/siteConfig';
 export const metadata: Metadata = {
   title: 'Press & Media — UTUBooking',
   description: 'Press releases, media resources, and brand assets for UTUBooking.com by AMEC Solutions.',
@@ -27,39 +28,39 @@ export default async function PressPage() {
 
         {/* Press releases */}
         <div className="md:col-span-2 space-y-6">
-          <h2 className="text-lg font-bold text-gray-900">{t('releasesHeading')}</h2>
+          <h2 className="text-lg font-bold text-utu-text-primary">{t('releasesHeading')}</h2>
           {releases.map((r) => (
-            <div key={r.headline} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+            <div key={r.headline} className="bg-utu-bg-card rounded-xl border border-utu-border-default shadow-sm p-6">
               <p className="text-xs text-emerald-700 font-semibold mb-2">{r.date}</p>
-              <h3 className="font-bold text-gray-900 mb-2 leading-snug">{r.headline}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{r.summary}</p>
+              <h3 className="font-bold text-utu-text-primary mb-2 leading-snug">{r.headline}</h3>
+              <p className="text-sm text-utu-text-muted leading-relaxed">{r.summary}</p>
             </div>
           ))}
         </div>
 
         {/* Media kit sidebar */}
         <div className="space-y-5">
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 className="font-bold text-gray-900 mb-3">{t('pressContactHeading')}</h3>
-            <p className="text-sm text-gray-500 mb-1">{t('pressContactDesc')}</p>
-            <a href="mailto:press@utubooking.com" className="text-sm text-emerald-700 underline">
-              press@utubooking.com
+          <div className="bg-utu-bg-card rounded-xl border border-utu-border-default shadow-sm p-5">
+            <h3 className="font-bold text-utu-text-primary mb-3">{t('pressContactHeading')}</h3>
+            <p className="text-sm text-utu-text-muted mb-1">{t('pressContactDesc')}</p>
+            <a href={`mailto:${SITE_CONFIG.pressEmail}`} className="text-sm text-emerald-700 underline">
+              {SITE_CONFIG.pressEmail}
             </a>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 className="font-bold text-gray-900 mb-3">{t('brandAssetsHeading')}</h3>
-            <p className="text-sm text-gray-500 mb-3">{t('brandAssetsDesc')}</p>
+          <div className="bg-utu-bg-card rounded-xl border border-utu-border-default shadow-sm p-5">
+            <h3 className="font-bold text-utu-text-primary mb-3">{t('brandAssetsHeading')}</h3>
+            <p className="text-sm text-utu-text-muted mb-3">{t('brandAssetsDesc')}</p>
             <a
-              href="mailto:press@utubooking.com"
+              href={`mailto:${SITE_CONFIG.pressEmail}`}
               className="inline-block bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
             >
               {t('downloadKit')}
             </a>
           </div>
 
-          <div className="bg-slate-50 rounded-xl border border-gray-100 p-5 text-sm text-gray-500 leading-relaxed">
-            <strong className="text-gray-900 block mb-1">{t('aboutHeading')}</strong>
+          <div className="bg-slate-50 rounded-xl border border-utu-border-default p-5 text-sm text-utu-text-muted leading-relaxed">
+            <strong className="text-utu-text-primary block mb-1">{t('aboutHeading')}</strong>
             {t('aboutText')}
           </div>
         </div>

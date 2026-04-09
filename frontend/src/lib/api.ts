@@ -52,6 +52,10 @@ export interface HotelOffer {
   freeCancellation: boolean;
   rateKey:          string | null;
   source:           string;
+  // Optional enrichment fields
+  reviewScore?:     number;
+  propertyType?:    string;
+  urgency?:         string;
 }
 
 export interface FlightOffer {
@@ -83,6 +87,20 @@ export interface CarOffer {
   currency:       string;
   supplier:       string;
   pickupLocation: string;
+  // Optional enrichment fields from CartTrawler
+  fuelType?:          string;
+  freeCancellation?:  boolean;
+  hasAC?:             boolean;
+  reviewCount?:       number;
+  // Extended enrichment fields
+  images?:            string[];
+  mileageIncluded?:   string | number;
+  bags?:              number;
+  doors?:             number;
+  fuelPolicy?:        string;
+  pickupType?:        string;
+  rating?:            number;
+  reviewLabel?:       string;
 }
 
 export interface SearchResponse<T> {
@@ -150,9 +168,12 @@ export const searchCars = (params: CarSearchParams) =>
   search<CarOffer>('/cars/search', params);
 
 // ─── Admin pricing API ────────────────────────────────────────────────────────
-// All admin endpoints require Bearer ADMIN_SECRET.
-// NEXT_PUBLIC_ADMIN_SECRET is safe to expose — it is not a user credential,
-// it is an ops-only token that only authorises the pricing admin dashboard.
+// TODO SECURITY: NEXT_PUBLIC_ADMIN_SECRET is embedded in the client JS bundle
+// and therefore visible to anyone inspecting browser network traffic or the JS
+// source. These calls should be moved to Next.js BFF routes (/api/admin/pricing/*)
+// that hold ADMIN_SECRET server-side and proxy the request, validating the
+// session cookie before forwarding. Until then, NEXT_PUBLIC_ADMIN_SECRET must be
+// a dedicated low-privilege ops token — NOT the same value as ADMIN_SECRET.
 
 const adminHeader = () => ({
   Authorization: `Bearer ${process.env.NEXT_PUBLIC_ADMIN_SECRET ?? ''}`,
@@ -234,6 +255,7 @@ const notifApi = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// TODO SECURITY: same issue as adminHeader() above — move to BFF proxy route.
 notifApi.interceptors.request.use((config) => {
   config.headers['Authorization'] = `Bearer ${process.env.NEXT_PUBLIC_ADMIN_SECRET ?? ''}`;
   return config;
@@ -359,3 +381,68 @@ export const deleteCampaign = (campaignId: string) =>
 
 export const getCampaignStats = (campaignId: string) =>
   notifApi.get<{ data: Campaign }>(`/campaigns/${campaignId}/stats`).then((r) => r.data);
+
+// ─── Admin BFF client — hits Next.js /api/admin/* routes (cookie-authenticated) ─
+
+/** Relative base so the browser sends the admin cookie automatically. */
+const adminBff = axios.create({ baseURL: '/api/admin', timeout: 15_000 });
+
+// ─── Admin: User Management ───────────────────────────────────────────────────
+
+export interface AdminUser {
+  id:           string;
+  email:        string;
+  name:         string | null;
+  locale:       string;
+  country:      string;
+  created_at:   string;
+  last_seen_at: string | null;
+  status:       'active' | 'suspended';
+  booking_count: number;
+  total_spent:   number;
+}
+
+export interface AdminUsersResponse {
+  data:  AdminUser[];
+  total: number;
+  page:  number;
+  limit: number;
+}
+
+export const getAdminUsers = (
+  params: { search?: string; status?: string; page?: number; limit?: number } = {},
+) =>
+  adminBff.get<AdminUsersResponse>('/users', { params: { limit: 25, ...params } }).then((r) => r.data);
+
+export const suspendUser = (userId: string, reason: string) =>
+  adminBff.post<{ data: AdminUser }>(`/users/${userId}/suspend`, { reason }).then((r) => r.data);
+
+export const unsuspendUser = (userId: string) =>
+  adminBff.post<{ data: AdminUser }>(`/users/${userId}/unsuspend`, {}).then((r) => r.data);
+
+// ─── Admin: Platform Settings ─────────────────────────────────────────────────
+
+export interface PlatformSettings {
+  notifications: {
+    recovery_delay_hours:    number;
+    reminder_hours_before:   number;
+    max_recovery_attempts:   number;
+    price_alert_threshold:   number;
+  };
+  pricing: {
+    hajj_surge_multiplier:   number;
+    umrah_peak_multiplier:   number;
+    demand_window_days:      number;
+    min_confidence_to_apply: number;
+  };
+  maintenance: {
+    mode:    boolean;
+    message: string;
+  };
+}
+
+export const getPlatformSettings = () =>
+  adminBff.get<{ data: PlatformSettings }>('/settings').then((r) => r.data);
+
+export const savePlatformSettings = (settings: PlatformSettings) =>
+  adminBff.put<{ data: PlatformSettings }>('/settings', settings).then((r) => r.data);

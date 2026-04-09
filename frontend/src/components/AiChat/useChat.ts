@@ -63,7 +63,7 @@ export function useChat() {
   // Load existing history from Redis on mount
   useEffect(() => {
     if (!sessionId.current) return;
-    fetch(`/api/chat/history?sessionId=${sessionId.current}`)
+    fetch(`/api/chat/history?sessionId=${sessionId.current}`, { signal: AbortSignal.timeout(5000) })
       .then(r => r.json())
       .then(({ messages: history }: { messages: { role: string; content: string }[] }) => {
         if (!Array.isArray(history) || history.length === 0) return;

@@ -23,7 +23,7 @@ export default async function UmrahPackagesPage() {
         <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">{t('heroHeading')}</h1>
         <p className="text-emerald-100 max-w-xl mx-auto text-lg mb-8">{t('heroDesc')}</p>
         <Link
-          href="/"
+          href="/hotels/search"
           className="inline-block bg-amber-400 hover:bg-amber-300 text-emerald-900 font-bold px-8 py-3 rounded-xl transition-colors text-sm"
         >
           {t('searchHotelsBtn')}
@@ -31,22 +31,21 @@ export default async function UmrahPackagesPage() {
       </section>
 
       <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('comingSoonHeading')}</h2>
-          <p className="text-gray-500 max-w-lg mx-auto mb-8">{t('comingSoonDesc')}</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-start">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {packages.map((pkg) => (
-              <div key={pkg.title} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h3 className="font-bold text-gray-900 mb-1">{pkg.title}</h3>
+              <div key={pkg.title} className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-6">
+                <h3 className="font-bold text-utu-text-primary mb-1">{pkg.title}</h3>
                 <div className="text-lg font-black text-emerald-700 mb-1">{pkg.price}</div>
-                <div className="text-xs text-gray-400 mb-3">{pkg.nights} {t('perPerson')}</div>
-                <p className="text-sm text-gray-500">{pkg.desc}</p>
-                <Link href="/" className="mt-4 block text-center bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold py-2 rounded-lg transition-colors">
+                <div className="text-xs text-utu-text-muted mb-3">{pkg.nights} {t('perPerson')}</div>
+                <p className="text-sm text-utu-text-muted">{pkg.desc}</p>
+                <Link href="/hotels/search" className="mt-4 block text-center bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold py-2 rounded-lg transition-colors">
                   {t('searchHotels')}
                 </Link>
               </div>
             ))}
           </div>
+          <p className="text-center text-sm text-utu-text-muted mt-10">{t('comingSoonDesc')}</p>
         </div>
       </section>
 

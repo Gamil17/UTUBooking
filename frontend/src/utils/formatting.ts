@@ -34,6 +34,17 @@ const INTL_LOCALE: Record<Locale, string> = {
   es: 'es-ES',
   'pt-BR': 'pt-BR',
   'es-419': 'es-419',
+  // Phase 9 — More Europe
+  sv: 'sv-SE',
+  ru: 'ru-RU',
+  // Phase 13 — East Asia & Southeast Asia
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+  th: 'th-TH',
+  vi: 'vi-VN',
+  'zh-CN': 'zh-CN',
+  'zh-HK': 'zh-HK',
+  'zh-TW': 'zh-TW',
 };
 
 // ── formatPrice ──────────────────────────────────────────────────────────────
@@ -130,6 +141,17 @@ const DISTANCE_UNIT_M: Record<Locale, string> = {
   es: 'm',
   'pt-BR': 'm',
   'es-419': 'm',
+  // Phase 9 — More Europe
+  sv: 'm',
+  ru: 'м',
+  // Phase 13 — East Asia & Southeast Asia
+  ja: 'm',
+  ko: 'm',
+  th: 'ม.',
+  vi: 'm',
+  'zh-CN': '米',
+  'zh-HK': '米',
+  'zh-TW': '公尺',
 };
 
 const DISTANCE_UNIT_KM: Record<Locale, string> = {
@@ -152,6 +174,17 @@ const DISTANCE_UNIT_KM: Record<Locale, string> = {
   es: 'km',
   'pt-BR': 'km',
   'es-419': 'km',
+  // Phase 9 — More Europe
+  sv: 'km',
+  ru: 'км',
+  // Phase 13 — East Asia & Southeast Asia
+  ja: 'km',
+  ko: 'km',
+  th: 'กม.',
+  vi: 'km',
+  'zh-CN': '公里',
+  'zh-HK': '公里',
+  'zh-TW': '公里',
 };
 
 // ── Country → currency map for Phase 4 MEANA markets ─────────────────────────

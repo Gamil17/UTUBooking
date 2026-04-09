@@ -62,10 +62,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Dynamic import so Next.js doesn't bundle Node-only deps (redis, https) into
   // the client bundle. This runs only on the server.
   try {
-    const { getNationalQuota } = await import(
-      /* webpackIgnore: true */
-      '../../../../../../../backend/adapters/hajj/nationalQuotas'
-    );
+    // Runtime-only import — path is outside TS project boundary (backend adapter).
+    // Using a variable prevents TS from attempting module resolution at build time.
+    const adapterPath =
+      '../../../../../../../backend/adapters/hajj/nationalQuotas' as string;
+    const { getNationalQuota } = await import(/* webpackIgnore: true */ adapterPath);
     const quota = await getNationalQuota(code, year);
     if (!quota) {
       return NextResponse.json({ error: 'Quota data unavailable' }, { status: 503 });
@@ -75,6 +76,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[national-quota] adapter error:', msg);
     // Return a graceful error so the widget can show a retry button
-    return NextResponse.json({ error: 'Failed to fetch quota data', detail: msg }, { status: 503 });
+    return NextResponse.json({ error: 'Failed to fetch quota data' }, { status: 503 });
   }
 }

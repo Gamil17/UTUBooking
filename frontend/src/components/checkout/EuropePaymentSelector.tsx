@@ -270,7 +270,7 @@ export default function EuropePaymentSelector({
     'flex items-center justify-center gap-2 transition-colors ';
 
   const btnActive  = 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800';
-  const btnDisabled = 'bg-gray-300 cursor-not-allowed';
+  const btnDisabled = 'bg-utu-border-strong cursor-not-allowed';
 
   return (
     <div className="w-full max-w-md mx-auto space-y-5">
@@ -279,7 +279,7 @@ export default function EuropePaymentSelector({
       <div className="text-center bg-emerald-50 rounded-2xl py-4 px-6 border border-emerald-100">
         <p className="text-xs text-emerald-600 mb-1">Total</p>
         <p className="text-2xl font-bold text-emerald-800">{formattedAmount}</p>
-        <p className="text-xs text-gray-500 mt-1">{methodHint}</p>
+        <p className="text-xs text-utu-text-muted mt-1">{methodHint}</p>
       </div>
 
       {/* Idle state — prompt to start */}
@@ -295,7 +295,7 @@ export default function EuropePaymentSelector({
 
       {/* Loading */}
       {phase === 'loading' && (
-        <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+        <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
           <span className="w-5 h-5 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
           <span className="text-sm">Loading secure payment form…</span>
         </div>
@@ -307,7 +307,7 @@ export default function EuropePaymentSelector({
           {/* The Payment Element renders inside this div */}
           <div ref={containerRef} className="min-h-[120px]" />
 
-          <p className="text-xs text-center text-gray-400 flex items-center justify-center gap-1.5">
+          <p className="text-xs text-center text-utu-text-muted flex items-center justify-center gap-1.5">
             <span aria-hidden>🔒</span>
             Secured by{' '}
             <a
@@ -348,7 +348,7 @@ export default function EuropePaymentSelector({
             type="button"
             onClick={onCancel}
             disabled={phase === 'loading' || phase === 'confirming'}
-            className="flex-1 border border-gray-300 text-gray-700 rounded-xl py-3 text-sm font-medium hover:bg-gray-50 min-h-[44px] disabled:opacity-50"
+            className="flex-1 border border-utu-border-strong text-utu-text-secondary rounded-xl py-3 text-sm font-medium hover:bg-utu-bg-muted min-h-[44px] disabled:opacity-50"
           >
             Cancel
           </button>

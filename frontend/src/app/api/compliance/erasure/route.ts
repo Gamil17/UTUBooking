@@ -36,11 +36,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const { userId, email, law = 'DPDP', reason } = body;
 
-  if (!userId?.trim()) {
-    return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+  const UUID_RE  = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const VALID_LAWS = new Set(['dpdp', 'gdpr', 'kvkk', 'lgpd', 'ccpa', 'pipeda', 'pdpa']);
+
+  if (!userId?.trim() || !UUID_RE.test(userId.trim())) {
+    return NextResponse.json({ error: 'userId must be a valid UUID' }, { status: 400 });
   }
-  if (!email?.trim() || !email.includes('@')) {
+  if (!email?.trim() || !EMAIL_RE.test(email.trim())) {
     return NextResponse.json({ error: 'valid email is required' }, { status: 400 });
+  }
+  if (!VALID_LAWS.has((law ?? '').toLowerCase())) {
+    return NextResponse.json({ error: `Unsupported law: ${law}` }, { status: 400 });
   }
 
   const ip = (
@@ -60,14 +67,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     status:    'pending',  // DPO updates this to 'completed' in DB
   });
 
-  const prefix = law.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const prefix      = law.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const safeUserId  = userId.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
 
   try {
     // Queue for DPO processing (permanent — no TTL)
     await redis.rpush(`${prefix}:erasure:queue`, record);
 
     // Per-user record — 365-day TTL (overwritten if user re-requests)
-    await redis.setex(`${prefix}:erasure:${userId}`, 60 * 60 * 24 * 365, record);
+    await redis.setex(`${prefix}:erasure:${safeUserId}`, 60 * 60 * 24 * 365, record);
   } catch (err) {
     console.error('[erasure] Redis write failed:', err);
     return NextResponse.json({ ok: false, warning: 'Queue unavailable' }, { status: 207 });

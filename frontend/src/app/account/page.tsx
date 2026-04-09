@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ProductType = 'hotel' | 'flight' | 'car';
@@ -28,22 +28,22 @@ function fmtDate(iso: string): string {
 }
 
 function fmtPrice(amount: number, currency: string): string {
-  return amount.toLocaleString('en-SA', {
+  return amount.toLocaleString(undefined, {
     style: 'currency', currency, maximumFractionDigits: 0,
   });
 }
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: BookingStatus }) {
-  const cfg: Record<BookingStatus, { label: string; cls: string }> = {
-    confirmed: { label: 'Confirmed',  cls: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
-    pending:   { label: 'Pending',    cls: 'bg-amber-50  text-amber-700  border-amber-100'  },
-    cancelled: { label: 'Cancelled',  cls: 'bg-red-50    text-red-600    border-red-100'    },
+function StatusBadge({ status, t }: { status: BookingStatus; t: ReturnType<typeof useTranslations> }) {
+  const cfg: Record<BookingStatus, { labelKey: string; cls: string }> = {
+    confirmed: { labelKey: 'statusConfirmed', cls: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+    pending:   { labelKey: 'statusPending',   cls: 'bg-amber-50  text-amber-700  border-amber-100'  },
+    cancelled: { labelKey: 'statusCancelled', cls: 'bg-red-50    text-red-600    border-red-100'    },
   };
-  const { label, cls } = cfg[status] ?? cfg.pending;
+  const { labelKey, cls } = cfg[status] ?? cfg.pending;
   return (
     <span className={`inline-flex items-center text-[10px] font-semibold border px-2 py-0.5 rounded-full ${cls}`}>
-      {label}
+      {t(labelKey as Parameters<typeof t>[0])}
     </span>
   );
 }
@@ -81,22 +81,22 @@ function BookingCard({
   locale,
   onCancel,
   cancelling,
+  t,
 }: {
   booking:    Booking;
   locale:     string;
   onCancel:   (id: string) => void;
   cancelling: string | null;
+  t:          ReturnType<typeof useTranslations>;
 }) {
   const meta = booking.meta ?? {};
 
-  // Type-specific title
   const title = (() => {
-    if (booking.productType === 'hotel')  return (meta.name as string)     ?? 'Hotel Stay';
+    if (booking.productType === 'hotel')  return (meta.name as string)     ?? t('hotelStay');
     if (booking.productType === 'flight') return `${meta.from ?? '?'} → ${meta.to ?? '?'}`;
-    return (meta.name as string) ?? 'Car Rental';
+    return (meta.name as string) ?? t('carRental');
   })();
 
-  // Subtitle
   const subtitle = (() => {
     if (booking.productType === 'hotel')  return `${meta.checkIn ?? ''} – ${meta.checkOut ?? ''}`;
     if (booking.productType === 'flight') return `${meta.airline ?? ''} ${meta.flightNum ?? ''} · ${String(meta.cabin ?? '').replace(/_/g,' ')}`;
@@ -106,7 +106,7 @@ function BookingCard({
   const isCancelling = cancelling === booking.id;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-5">
       <div className="flex items-start gap-4">
 
         {/* Icon */}
@@ -117,13 +117,13 @@ function BookingCard({
         {/* Main info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <p className="font-semibold text-gray-900 text-sm truncate">{title}</p>
-            <StatusBadge status={booking.status} />
+            <p className="font-semibold text-utu-text-primary text-sm truncate">{title}</p>
+            <StatusBadge status={booking.status} t={t} />
           </div>
-          {subtitle && <p className="text-xs text-gray-500 mb-1">{subtitle}</p>}
-          <p className="text-xs text-gray-400">
-            Ref: <span className="font-mono font-medium text-gray-600">{booking.referenceNo}</span>
-            {' · '}Booked {fmtDate(booking.createdAt)}
+          {subtitle && <p className="text-xs text-utu-text-muted mb-1">{subtitle}</p>}
+          <p className="text-xs text-utu-text-muted">
+            {t('ref')}: <span className="font-mono font-medium text-utu-text-secondary">{booking.referenceNo}</span>
+            {' · '}{t('booked')} {fmtDate(booking.createdAt)}
           </p>
         </div>
 
@@ -134,7 +134,6 @@ function BookingCard({
           </p>
 
           <div className="flex items-center gap-2 justify-end">
-            {/* PDF download — confirmed bookings */}
             {booking.status === 'confirmed' && (
               <a
                 href={`/api/bookings/confirmation-pdf?ref=${booking.referenceNo}&locale=${locale}`}
@@ -145,14 +144,13 @@ function BookingCard({
               </a>
             )}
 
-            {/* Cancel — pending only */}
             {booking.status === 'pending' && (
               <button
                 onClick={() => onCancel(booking.id)}
                 disabled={!!cancelling}
                 className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 transition-colors"
               >
-                {isCancelling ? 'Cancelling…' : 'Cancel'}
+                {isCancelling ? t('cancelling') : t('cancel')}
               </button>
             )}
           </div>
@@ -167,6 +165,7 @@ function BookingCard({
 export default function AccountPage() {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations('account');
 
   const [bookings,   setBookings]   = useState<Booking[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -174,7 +173,6 @@ export default function AccountPage() {
   const [authed,     setAuthed]     = useState<boolean | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
 
-  // Read token client-side (sessionStorage not available on server)
   useEffect(() => {
     const token = typeof window !== 'undefined'
       ? sessionStorage.getItem('utu_access_token')
@@ -198,9 +196,9 @@ export default function AccountPage() {
       .then((data) => {
         if (data) setBookings(data.results ?? []);
       })
-      .catch(() => setError('Could not load bookings. Please try again.'))
+      .catch(() => setError(t('loadError')))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const handleSignOut = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -222,36 +220,38 @@ export default function AccountPage() {
         setBookings((prev) =>
           prev.map((b) => b.id === id ? { ...b, status: 'cancelled' } : b)
         );
+      } else {
+        setError(t('cancelError'));
       }
+    } catch {
+      setError(t('cancelError'));
     } finally {
       setCancelling(null);
     }
-  }, []);
+  }, [t]);
 
   // ── Not logged in ───────────────────────────────────────────────────────────
   if (authed === false) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full text-center bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+        <div className="max-w-md w-full text-center bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-8">
           <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Sign in to view your trips</h1>
-          <p className="text-sm text-gray-500 mb-6">
-            Your booking history and upcoming trips are saved to your account.
-          </p>
+          <h1 className="text-xl font-bold text-utu-text-primary mb-2">{t('signInToView')}</h1>
+          <p className="text-sm text-utu-text-muted mb-6">{t('signInDesc')}</p>
           <Link
             href="/login"
             className="w-full inline-block bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
           >
-            Sign In
+            {t('signIn')}
           </Link>
-          <p className="mt-4 text-xs text-gray-400">
-            Don&apos;t have an account?{' '}
-            <Link href="/contact" className="text-emerald-700 hover:underline">Contact us</Link>
+          <p className="mt-4 text-xs text-utu-text-muted">
+            {t('noAccount')}{' '}
+            <Link href="/contact" className="text-emerald-700 hover:underline">{t('contactUs')}</Link>
           </p>
         </div>
       </div>
@@ -263,14 +263,14 @@ export default function AccountPage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <div className="max-w-3xl mx-auto px-4 py-8">
-          <div className="h-8 w-40 bg-gray-200 rounded animate-pulse mb-6" />
+          <div className="h-8 w-40 bg-utu-border-default rounded animate-pulse mb-6" />
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-3 animate-pulse">
+            <div key={i} className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-5 mb-3 animate-pulse">
               <div className="flex gap-4">
-                <div className="w-10 h-10 bg-gray-200 rounded-xl shrink-0" />
+                <div className="w-10 h-10 bg-utu-border-default rounded-xl shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
-                  <div className="h-3 bg-gray-100 rounded w-1/3" />
+                  <div className="h-4 bg-utu-border-default rounded w-1/2" />
+                  <div className="h-3 bg-utu-bg-muted rounded w-1/3" />
                 </div>
               </div>
             </div>
@@ -279,6 +279,13 @@ export default function AccountPage() {
       </div>
     );
   }
+
+  // ── Group labels ─────────────────────────────────────────────────────────────
+  const groupLabel: Record<string, string> = {
+    confirmed: t('upcoming'),
+    pending:   t('awaitingPayment'),
+    cancelled: t('cancelled'),
+  };
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // MAIN TRIPS VIEW
@@ -290,20 +297,20 @@ export default function AccountPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Trips</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {bookings.length} booking{bookings.length !== 1 ? 's' : ''}
+            <h1 className="text-2xl font-bold text-utu-text-primary">{t('myTrips')}</h1>
+            <p className="text-sm text-utu-text-muted mt-0.5">
+              {bookings.length === 1 ? t('bookingsCount', { count: 1 }) : t('bookingsCountPlural', { count: bookings.length })}
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-sm text-emerald-700 font-medium hover:underline">
-              Book a trip
+            <Link href="/hotels/search" className="text-sm text-emerald-700 font-medium hover:underline">
+              {t('bookATrip')}
             </Link>
             <button
               onClick={handleSignOut}
               className="text-sm text-red-500 hover:text-red-700 font-medium hover:underline"
             >
-              Sign out
+              {t('signOut')}
             </button>
           </div>
         </div>
@@ -318,16 +325,16 @@ export default function AccountPage() {
         {/* Empty state */}
         {!error && bookings.length === 0 && (
           <div className="text-center py-20">
-            <svg className="w-16 h-16 mx-auto text-gray-200 mb-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <svg className="w-16 h-16 mx-auto text-utu-border-default mb-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
             </svg>
-            <p className="text-gray-500 font-medium mb-1">No trips yet</p>
-            <p className="text-sm text-gray-400 mb-6">Your confirmed bookings will appear here.</p>
+            <p className="text-utu-text-muted font-medium mb-1">{t('noTrips')}</p>
+            <p className="text-sm text-utu-text-muted mb-6">{t('noTripsDesc')}</p>
             <Link
-              href="/"
+              href="/hotels/search"
               className="inline-block bg-emerald-700 hover:bg-emerald-600 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
             >
-              Plan your next trip
+              {t('planNextTrip')}
             </Link>
           </div>
         )}
@@ -335,20 +342,13 @@ export default function AccountPage() {
         {/* Booking list grouped by status */}
         {bookings.length > 0 && (
           <div className="space-y-3">
-            {/* Upcoming / confirmed first */}
             {['confirmed', 'pending', 'cancelled'].map((status) => {
               const group = bookings.filter((b) => b.status === status);
               if (group.length === 0) return null;
 
-              const groupLabel: Record<string, string> = {
-                confirmed: 'Upcoming',
-                pending:   'Awaiting Payment',
-                cancelled: 'Cancelled',
-              };
-
               return (
                 <div key={status}>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 mt-4 first:mt-0">
+                  <p className="text-xs font-semibold text-utu-text-muted uppercase tracking-wide mb-2 mt-4 first:mt-0">
                     {groupLabel[status]}
                   </p>
                   {group.map((b) => (
@@ -358,6 +358,7 @@ export default function AccountPage() {
                         locale={locale}
                         onCancel={handleCancel}
                         cancelling={cancelling}
+                        t={t}
                       />
                     </div>
                   ))}

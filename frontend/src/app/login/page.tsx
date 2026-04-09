@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function LoginPage() {
+  const t = useTranslations('auth');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,14 +23,14 @@ export default function LoginPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.message || 'Invalid email or password.');
+        setError(data.message || t('invalidCredentials'));
       } else {
         const token = (await res.json().catch(() => ({}))).accessToken;
         if (token) sessionStorage.setItem('utu_access_token', token);
         window.location.href = '/account';
       }
     } catch {
-      setError('Unable to connect. Please try again.');
+      setError(t('connectError'));
     } finally {
       setLoading(false);
     }
@@ -46,12 +48,12 @@ export default function LoginPage() {
             </div>
             <span className="font-black text-emerald-900 text-xl tracking-tight">UTUBooking</span>
           </Link>
-          <p className="mt-3 text-sm text-gray-500">Sign in to your account</p>
+          <p className="mt-3 text-sm text-utu-text-muted">{t('signInToAccount')}</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-          <h1 className="text-xl font-bold text-gray-900 mb-6">Welcome back</h1>
+        <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-8">
+          <h1 className="text-xl font-bold text-utu-text-primary mb-6">{t('welcomeBack')}</h1>
 
           {error && (
             <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
@@ -61,8 +63,8 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email address
+              <label htmlFor="email" className="block text-sm font-medium text-utu-text-secondary mb-1">
+                {t('emailAddress')}
               </label>
               <input
                 id="email"
@@ -71,14 +73,14 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
-                placeholder="you@example.com"
+                className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                placeholder={t('emailPlaceholder')}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+              <label htmlFor="password" className="block text-sm font-medium text-utu-text-secondary mb-1">
+                {t('password')}
               </label>
               <input
                 id="password"
@@ -87,14 +89,14 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
-                placeholder="••••••••"
+                className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                placeholder={t('passwordPlaceholder')}
               />
             </div>
 
             <div className="flex items-center justify-end">
-              <Link href="/contact" className="text-xs text-emerald-700 hover:underline">
-                Forgot password?
+              <Link href="/forgot-password" className="text-xs text-emerald-700 hover:underline">
+                {t('forgotPassword')}
               </Link>
             </div>
 
@@ -103,23 +105,23 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? t('signingIn') : t('signIn')}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-gray-500">
-            Don&apos;t have an account?{' '}
+          <p className="mt-6 text-center text-xs text-utu-text-muted">
+            {t('noAccount')}{' '}
             <Link href="/register" className="text-emerald-700 font-medium hover:underline">
-              Create one
+              {t('createOne')}
             </Link>
           </p>
         </div>
 
-        <p className="mt-6 text-center text-xs text-gray-400">
-          By signing in you agree to our{' '}
-          <Link href="/terms" className="hover:underline">Terms</Link>
-          {' '}and{' '}
-          <Link href="/privacy" className="hover:underline">Privacy Policy</Link>.
+        <p className="mt-6 text-center text-xs text-utu-text-muted">
+          {t('agreeSignIn')}{' '}
+          <Link href="/terms" className="hover:underline">{t('terms')}</Link>
+          {' '}{t('and')}{' '}
+          <Link href="/privacy" className="hover:underline">{t('privacyPolicy')}</Link>.
         </p>
       </div>
     </div>

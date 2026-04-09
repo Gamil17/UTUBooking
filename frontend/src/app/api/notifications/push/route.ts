@@ -6,10 +6,15 @@ import redis from '@/lib/redis';
 let vapidConfigured = false;
 function ensureVapidConfigured() {
   if (!vapidConfigured) {
+    const publicKey  = process.env.VAPID_PUBLIC_KEY;
+    const privateKey = process.env.VAPID_PRIVATE_KEY;
+    if (!publicKey || !privateKey) {
+      throw new Error('VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY are required');
+    }
     webpush.setVapidDetails(
       `mailto:${process.env.VAPID_EMAIL ?? 'push@utubooking.com'}`,
-      process.env.VAPID_PUBLIC_KEY!,
-      process.env.VAPID_PRIVATE_KEY!
+      publicKey,
+      privateKey,
     );
     vapidConfigured = true;
   }
@@ -192,12 +197,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, sent: true });
   } catch (err: unknown) {
     // 410 Gone — subscription expired; clean up to avoid future failures
-    if (
-      typeof err === 'object' &&
-      err !== null &&
-      'statusCode' in err &&
-      (err as { statusCode: number }).statusCode === 410
-    ) {
+    const statusCode = (err as Record<string, unknown>)?.statusCode ?? (err as Record<string, unknown>)?.status;
+    if (statusCode === 410) {
       await redis.del(`push:sub:${userId}`);
       return NextResponse.json({ ok: true, sent: false, reason: 'subscription_expired' });
     }

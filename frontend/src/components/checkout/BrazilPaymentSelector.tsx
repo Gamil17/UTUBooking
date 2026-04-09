@@ -16,6 +16,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 
 type Method = 'pix' | 'boleto' | 'card';
 type Phase  = 'idle' | 'loading' | 'qr_shown' | 'pending_boleto' | 'success' | 'error';
@@ -178,7 +179,7 @@ export default function BrazilPaymentSelector({
 
   const tabCls = (active: boolean) =>
     ['flex-1 py-2.5 text-xs font-semibold rounded-xl transition-colors min-h-[44px]',
-     active ? 'text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'].join(' ');
+     active ? 'text-white shadow-sm' : 'text-utu-text-secondary hover:bg-utu-bg-muted'].join(' ');
 
   return (
     <div className="w-full max-w-md mx-auto space-y-4">
@@ -191,7 +192,7 @@ export default function BrazilPaymentSelector({
       </div>
 
       {/* Method tabs */}
-      <div className="bg-gray-100 rounded-2xl p-1 flex gap-1">
+      <div className="bg-utu-bg-muted rounded-2xl p-1 flex gap-1">
         {(['pix', 'boleto', 'card'] as Method[]).map((m) => (
           <button
             key={m}
@@ -214,8 +215,8 @@ export default function BrazilPaymentSelector({
               <span className="font-black text-base tracking-tight" style={{ color: PIX_COLOR }}>Pix</span>
               <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">Instantâneo</span>
             </div>
-            <p className="text-sm font-semibold text-gray-800">Pague com Pix — qualquer banco</p>
-            <p className="text-xs text-gray-600">Escaneie o QR code com o app do seu banco. O pagamento é confirmado em segundos.</p>
+            <p className="text-sm font-semibold text-utu-text-primary">Pague com Pix — qualquer banco</p>
+            <p className="text-xs text-utu-text-secondary">Escaneie o QR code com o app do seu banco. O pagamento é confirmado em segundos.</p>
           </div>
           <button
             type="button"
@@ -229,7 +230,7 @@ export default function BrazilPaymentSelector({
       )}
 
       {method === 'pix' && phase === 'loading' && (
-        <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+        <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
           <span className="w-5 h-5 border-2 border-t-[#32BCAD] rounded-full animate-spin" style={{ borderColor: '#b2f0ea', borderTopColor: PIX_COLOR }} />
           <span className="text-sm">Gerando código Pix…</span>
         </div>
@@ -238,12 +239,12 @@ export default function BrazilPaymentSelector({
       {method === 'pix' && phase === 'qr_shown' && (
         <div className="space-y-3">
           {/* QR code */}
-          <div className="flex flex-col items-center gap-3 bg-white rounded-2xl border p-4" style={{ borderColor: '#b2f0ea' }}>
+          <div className="flex flex-col items-center gap-3 bg-utu-bg-card rounded-2xl border p-4" style={{ borderColor: '#b2f0ea' }}>
             {qrImageUrl && (
-              <img src={qrImageUrl} alt="QR Code Pix" width={200} height={200} className="rounded-lg" />
+              <Image src={qrImageUrl} alt="QR Code Pix" width={200} height={200} className="rounded-lg" unoptimized />
             )}
             <div className="text-center">
-              <p className="text-xs text-gray-500">Expira em</p>
+              <p className="text-xs text-utu-text-muted">Expira em</p>
               <p className="text-lg font-bold tabular-nums" style={{ color: countdown < 60 ? '#ef4444' : PIX_COLOR }}>
                 {formatCountdown(countdown)}
               </p>
@@ -251,12 +252,12 @@ export default function BrazilPaymentSelector({
           </div>
           {/* Pix Copia e Cola */}
           <div className="space-y-1">
-            <p className="text-xs text-gray-500 font-medium">Pix Copia e Cola</p>
+            <p className="text-xs text-utu-text-muted font-medium">Pix Copia e Cola</p>
             <div className="flex gap-2">
               <input
                 readOnly
                 value={pixCopyCola}
-                className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 font-mono truncate"
+                className="flex-1 text-xs bg-utu-bg-muted border border-utu-border-default rounded-lg px-3 py-2 font-mono truncate"
                 aria-label="Código Pix Copia e Cola"
               />
               <button
@@ -269,16 +270,16 @@ export default function BrazilPaymentSelector({
               </button>
             </div>
           </div>
-          <p className="text-xs text-center text-gray-400">Aguardando confirmação do pagamento…</p>
+          <p className="text-xs text-center text-utu-text-muted">Aguardando confirmação do pagamento…</p>
         </div>
       )}
 
       {/* ── BOLETO ──────────────────────────────────────────────────────── */}
       {method === 'boleto' && phase === 'idle' && (
         <div className="space-y-3">
-          <div className="rounded-xl px-4 py-4 border border-gray-200 bg-gray-50 space-y-2">
-            <p className="text-sm font-semibold text-gray-800">Boleto Bancário</p>
-            <p className="text-xs text-gray-600">Pague em qualquer banco, lotérica ou app bancário. Vence em 3 dias úteis.</p>
+          <div className="rounded-xl px-4 py-4 border border-utu-border-default bg-utu-bg-muted space-y-2">
+            <p className="text-sm font-semibold text-utu-text-primary">Boleto Bancário</p>
+            <p className="text-xs text-utu-text-secondary">Pague em qualquer banco, lotérica ou app bancário. Vence em 3 dias úteis.</p>
             <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">⚠ A reserva será confirmada após a compensação do boleto (1–2 dias úteis).</p>
           </div>
           <button
@@ -292,8 +293,8 @@ export default function BrazilPaymentSelector({
       )}
 
       {method === 'boleto' && phase === 'loading' && (
-        <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
-          <span className="w-5 h-5 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+        <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
+          <span className="w-5 h-5 border-2 border-utu-border-default border-t-gray-600 rounded-full animate-spin" />
           <span className="text-sm">Gerando boleto…</span>
         </div>
       )}
@@ -301,8 +302,8 @@ export default function BrazilPaymentSelector({
       {method === 'boleto' && phase === 'pending_boleto' && (
         <div className="space-y-3 text-center">
           <div className="bg-green-50 rounded-xl px-4 py-4 border border-green-100">
-            <p className="text-sm font-semibold text-gray-800 mb-2">Boleto gerado com sucesso</p>
-            <p className="text-xs text-gray-600 mb-3">
+            <p className="text-sm font-semibold text-utu-text-primary mb-2">Boleto gerado com sucesso</p>
+            <p className="text-xs text-utu-text-secondary mb-3">
               Vencimento: <strong>{boletoExp ? new Date(boletoExp).toLocaleDateString('pt-BR') : '3 dias'}</strong>
             </p>
             <a
@@ -314,7 +315,7 @@ export default function BrazilPaymentSelector({
               Abrir / Imprimir Boleto (PDF)
             </a>
           </div>
-          <p className="text-xs text-gray-400">Sua reserva será confirmada após a compensação bancária (1–2 dias úteis).</p>
+          <p className="text-xs text-utu-text-muted">Sua reserva será confirmada após a compensação bancária (1–2 dias úteis).</p>
         </div>
       )}
 
@@ -335,8 +336,8 @@ export default function BrazilPaymentSelector({
 
       {/* Card method */}
       {method === 'card' && (
-        <div className="bg-gray-50 rounded-2xl px-4 py-5 text-sm text-gray-500 text-center border border-gray-200">
-          <p className="font-medium text-gray-700 mb-1">Cartão de crédito / débito</p>
+        <div className="bg-utu-bg-muted rounded-2xl px-4 py-5 text-sm text-utu-text-muted text-center border border-utu-border-default">
+          <p className="font-medium text-utu-text-secondary mb-1">Cartão de crédito / débito</p>
           <p className="text-xs">Visa, Mastercard, Elo, Hipercard. Seguro via Stripe.</p>
         </div>
       )}
@@ -346,13 +347,13 @@ export default function BrazilPaymentSelector({
         <button
           type="button"
           onClick={onCancel}
-          className="w-full border border-gray-300 text-gray-700 rounded-xl py-3 text-sm font-medium hover:bg-gray-50 min-h-[44px]"
+          className="w-full border border-utu-border-strong text-utu-text-secondary rounded-xl py-3 text-sm font-medium hover:bg-utu-bg-muted min-h-[44px]"
         >
           Cancelar
         </button>
       )}
 
-      <p className="text-xs text-center text-gray-400">
+      <p className="text-xs text-center text-utu-text-muted">
         {method === 'pix' ? 'Pix é regulamentado pelo Banco Central do Brasil.' : method === 'boleto' ? 'Boleto Bancário — sistema bancário brasileiro.' : 'Pagamentos seguros via Stripe.'}
       </p>
     </div>

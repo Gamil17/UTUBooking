@@ -3,6 +3,8 @@
 /**
  * SwitzerlandPaymentSelector
  *
+ * EXCEPTION: bg-[#FFD700] and text-[#1A1A1A] are TWINT's official brand colors.
+ * Per TWINT brand guidelines these must be used exactly for the payment button.
  * Payment selector for Swiss (CH) users.
  * TWINT is the dominant mobile payment (80% of Swiss mobile transactions).
  *
@@ -65,7 +67,11 @@ function useCountdown(expiresAt: string | null): string {
   const [remaining, setRemaining] = useState('');
 
   useEffect(() => {
-    if (!expiresAt) { setRemaining(''); return; }
+    if (!expiresAt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset remaining when expiry clears; required SSR-safe init pattern
+      setRemaining('');
+      return;
+    }
 
     const tick = () => {
       const ms  = new Date(expiresAt).getTime() - Date.now();
@@ -176,7 +182,7 @@ export default function SwitzerlandPaymentSelector({
   const tabCls = (active: boolean) =>
     [
       'flex-1 py-2.5 text-sm font-semibold rounded-xl transition-colors min-h-[44px]',
-      active ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100',
+      active ? 'bg-emerald-600 text-white shadow-sm' : 'text-utu-text-secondary hover:bg-utu-bg-muted',
     ].join(' ');
 
   return (
@@ -189,7 +195,7 @@ export default function SwitzerlandPaymentSelector({
       </div>
 
       {/* Method tabs */}
-      <div className="bg-gray-100 rounded-2xl p-1 flex gap-1">
+      <div className="bg-utu-bg-muted rounded-2xl p-1 flex gap-1">
         <button
           type="button"
           onClick={() => { setMethod('twint'); setPhase('idle'); setError(''); }}
@@ -236,7 +242,7 @@ export default function SwitzerlandPaymentSelector({
 
           {/* Loading */}
           {phase === 'loading' && (
-            <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+            <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
               <span className="w-5 h-5 border-2 border-[#FFD700]/40 border-t-[#FFD700] rounded-full animate-spin" />
               <span className="text-sm">TWINT-Zahlung wird vorbereitet…</span>
             </div>
@@ -248,7 +254,7 @@ export default function SwitzerlandPaymentSelector({
               {mobile ? (
                 // Mobile: app deep-link button
                 <div className="space-y-3 text-center">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-utu-text-secondary">
                     Tippen Sie auf den Button, um die TWINT-App zu öffnen:
                   </p>
                   <a
@@ -259,27 +265,27 @@ export default function SwitzerlandPaymentSelector({
                   >
                     📱 TWINT App öffnen
                   </a>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-utu-text-muted">
                     Warten auf Zahlungsbestätigung…
                   </p>
                 </div>
               ) : (
                 // Desktop: QR code
                 <div className="space-y-3 text-center">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-utu-text-secondary">
                     QR-Code mit der TWINT-App scannen:
                   </p>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={checkout.qrCodeUrl}
                     alt="TWINT QR-Code für die Zahlung"
-                    className="mx-auto w-48 h-48 rounded-xl border border-gray-200 shadow-sm"
+                    className="mx-auto w-48 h-48 rounded-xl border border-utu-border-default shadow-sm"
                     width={192}
                     height={192}
                   />
                   {countdown && countdown !== 'Expired' && (
-                    <p className="text-xs text-gray-400">
-                      QR gültig für <span className="font-mono text-gray-600">{countdown}</span>
+                    <p className="text-xs text-utu-text-muted">
+                      QR gültig für <span className="font-mono text-utu-text-secondary">{countdown}</span>
                     </p>
                   )}
                   {countdown === 'Expired' && (
@@ -298,8 +304,8 @@ export default function SwitzerlandPaymentSelector({
               )}
 
               {/* Waiting indicator */}
-              <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                <span className="w-3 h-3 border-2 border-gray-300 border-t-emerald-500 rounded-full animate-spin" />
+              <div className="flex items-center justify-center gap-2 text-sm text-utu-text-muted">
+                <span className="w-3 h-3 border-2 border-utu-border-strong border-t-emerald-500 rounded-full animate-spin" />
                 Warte auf Zahlung in TWINT-App…
               </div>
             </div>
@@ -318,16 +324,16 @@ export default function SwitzerlandPaymentSelector({
       {/* ── Card fallback (Stripe Payment Element) ────────────────────────── */}
       {method === 'card' && (
         <div className="space-y-3">
-          <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-700 space-y-1 border border-gray-200">
+          <div className="bg-utu-bg-muted rounded-xl px-4 py-3 text-sm text-utu-text-secondary space-y-1 border border-utu-border-default">
             <p className="font-semibold">Kreditkarte / Debitkarte</p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-utu-text-muted">
               Visa · Mastercard · American Express
               <br />
               3D Secure erzwungen. Sicheres Stripe-Formular wird geladen.
             </p>
           </div>
           {/* Card checkout delegates to the Europe selector with CHF */}
-          <p className="text-xs text-center text-gray-400">
+          <p className="text-xs text-center text-utu-text-muted">
             Klicken Sie auf «Weiter zur Kartenzahlung» um das Stripe-Formular zu öffnen.
           </p>
           <button
@@ -365,14 +371,14 @@ export default function SwitzerlandPaymentSelector({
             if (pollRef.current) clearInterval(pollRef.current);
             onCancel();
           }}
-          className="w-full border border-gray-300 text-gray-700 rounded-xl py-3 text-sm font-medium hover:bg-gray-50 min-h-[44px]"
+          className="w-full border border-utu-border-strong text-utu-text-secondary rounded-xl py-3 text-sm font-medium hover:bg-utu-bg-muted min-h-[44px]"
         >
           Abbrechen / Cancel
         </button>
       )}
 
       {/* Trust badge */}
-      <p className="text-xs text-center text-gray-400">
+      <p className="text-xs text-center text-utu-text-muted">
         TWINT ist die sichere Schweizer Zahlungsmethode — kein Konto nötig.
       </p>
     </div>

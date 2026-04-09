@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const AUTH_SERVICE = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+const AUTH_SERVICE = process.env.AUTH_SERVICE_URL ?? 'http://localhost:3001';
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(8000),
     });
 
     const data = await upstream.json().catch(() => ({}));

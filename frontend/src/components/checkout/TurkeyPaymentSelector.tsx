@@ -3,6 +3,8 @@
 /**
  * TurkeyPaymentSelector
  *
+ * EXCEPTION: bg-[#1A1D6E], hover:bg-[#23278A], active:bg-[#111450] are iyzico's
+ * official brand navy colors. Do not replace with design system tokens.
  * Shown for TR country code users (currency = TRY) at checkout.
  * Gateway: iyzico — Turkey's leading payment provider
  *
@@ -188,22 +190,22 @@ export default function TurkeyPaymentSelector({
     <div className="space-y-5" lang="tr">
 
       {/* ── Amount summary ──────────────────────────────────────────────── */}
-      <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 flex items-center justify-between">
-        <span className="text-sm text-gray-500">Ödenecek Tutar</span>
-        <span className="text-lg font-bold text-gray-900">{formattedAmount}</span>
+      <div className="rounded-xl bg-utu-bg-muted border border-utu-border-default px-4 py-3 flex items-center justify-between">
+        <span className="text-sm text-utu-text-muted">Ödenecek Tutar</span>
+        <span className="text-lg font-bold text-utu-text-primary">{formattedAmount}</span>
       </div>
 
       {/* ── Ready — show pay button ─────────────────────────────────────── */}
       {step === 'ready' && (
         <div className="space-y-4">
           {/* iyzico brand info */}
-          <div className="rounded-xl border border-gray-100 bg-white p-4 flex items-center gap-3">
+          <div className="rounded-xl border border-utu-border-default bg-utu-bg-card p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#1A1D6E] flex items-center justify-center flex-shrink-0">
               <span className="text-white text-xs font-black">iyz</span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">iyzico ile Güvenli Ödeme</p>
-              <p className="text-xs text-gray-500">Visa · Mastercard · TROY · Taksit seçenekleri</p>
+              <p className="text-sm font-semibold text-utu-text-primary">iyzico ile Güvenli Ödeme</p>
+              <p className="text-xs text-utu-text-muted">Visa · Mastercard · TROY · Taksit seçenekleri</p>
             </div>
           </div>
 
@@ -211,7 +213,7 @@ export default function TurkeyPaymentSelector({
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 border border-gray-200 text-gray-600 rounded-xl py-3 text-sm font-medium hover:bg-gray-50 transition-colors"
+              className="flex-1 border border-utu-border-default text-utu-text-secondary rounded-xl py-3 text-sm font-medium hover:bg-utu-bg-muted transition-colors"
               style={{ minHeight: 48 }}
             >
               İptal
@@ -232,7 +234,7 @@ export default function TurkeyPaymentSelector({
       {step === 'loading' && (
         <div className="flex flex-col items-center gap-3 py-10">
           <span className="w-8 h-8 border-[3px] border-[#E8E9F5] border-t-[#1A1D6E] rounded-full animate-spin" />
-          <p className="text-sm text-gray-500">Ödeme sayfası hazırlanıyor…</p>
+          <p className="text-sm text-utu-text-muted">Ödeme sayfası hazırlanıyor…</p>
         </div>
       )}
 
@@ -243,14 +245,14 @@ export default function TurkeyPaymentSelector({
           <div id="iyzico-checkout-container" />
 
           <div className="flex flex-col items-center gap-2 py-4 text-center">
-            <span className="w-6 h-6 border-2 border-gray-300 border-t-[#1A1D6E] rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">
+            <span className="w-6 h-6 border-2 border-utu-border-strong border-t-[#1A1D6E] rounded-full animate-spin" />
+            <p className="text-sm text-utu-text-muted">
               {step === 'verifying'
                 ? 'Ödeme doğrulanıyor, lütfen bekleyin…'
                 : 'iyzico ödeme formu yükleniyor…'}
             </p>
             {token && (
-              <p className="text-xs text-gray-400 font-mono">Ref: {token.slice(0, 12)}…</p>
+              <p className="text-xs text-utu-text-muted font-mono">Ref: {token.slice(0, 12)}…</p>
             )}
           </div>
         </div>
@@ -266,7 +268,7 @@ export default function TurkeyPaymentSelector({
             <button
               type="button"
               onClick={onCancel}
-              className="text-sm text-gray-500 underline underline-offset-2 hover:text-gray-700"
+              className="text-sm text-utu-text-muted underline underline-offset-2 hover:text-utu-text-secondary"
             >
               İptal
             </button>

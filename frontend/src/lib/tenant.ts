@@ -54,9 +54,10 @@ export function parseTenantHeader(headerValue: string | null): TenantConfig {
 
 /** Return HTML lang and dir attributes based on tenant locale. */
 export function getLocaleAttrs(locale: string): { lang: string; dir: 'ltr' | 'rtl' } {
-  const rtlLocales = ['ar', 'ar-SA', 'ar-JO', 'ar-EG', 'ar-MA', 'ar-TN'];
+  const base = locale.split('-')[0].toLowerCase();
+  const rtlBases = ['ar', 'ur', 'fa', 'he', 'yi'];
   return {
     lang: locale,
-    dir:  rtlLocales.includes(locale) ? 'rtl' : 'ltr',
+    dir:  rtlBases.includes(base) ? 'rtl' : 'ltr',
   };
 }

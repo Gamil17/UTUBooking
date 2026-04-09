@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import AffiliateApplyForm from './AffiliateApplyForm';
 export const metadata: Metadata = {
   title: 'Affiliate Program — UTUBooking',
   description: 'Earn commissions by referring travelers to UTUBooking.com. Join our affiliate program and grow your revenue.',
@@ -56,15 +56,15 @@ export default async function AffiliatesPage() {
       {/* How it works */}
       <section className="py-14 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl font-bold text-gray-900 text-center mb-10">{t('howItWorksHeading')}</h2>
+          <h2 className="text-xl font-bold text-utu-text-primary text-center mb-10">{t('howItWorksHeading')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
             {steps.map((s) => (
               <div key={s.n} className="text-center">
                 <div className="w-10 h-10 bg-emerald-100 text-emerald-700 font-black text-sm rounded-full flex items-center justify-center mx-auto mb-3">
                   {s.n}
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1">{s.title}</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">{s.desc}</p>
+                <h3 className="font-semibold text-utu-text-primary mb-1">{s.title}</h3>
+                <p className="text-xs text-utu-text-muted leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -72,9 +72,9 @@ export default async function AffiliatesPage() {
       </section>
 
       {/* Tiers */}
-      <section className="bg-white py-14 px-4 border-y border-gray-100">
+      <section className="bg-utu-bg-card py-14 px-4 border-y border-utu-border-default">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-xl font-bold text-gray-900 text-center mb-10">{t('tiersHeading')}</h2>
+          <h2 className="text-xl font-bold text-utu-text-primary text-center mb-10">{t('tiersHeading')}</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {tiers.map((tier) => (
               <div
@@ -82,7 +82,7 @@ export default async function AffiliatesPage() {
                 className={`rounded-2xl border p-6 ${
                   tier.featured
                     ? 'border-emerald-500 bg-emerald-50 shadow-md'
-                    : 'border-gray-100 bg-white shadow-sm'
+                    : 'border-utu-border-default bg-utu-bg-card shadow-sm'
                 }`}
               >
                 {tier.featured && (
@@ -90,12 +90,12 @@ export default async function AffiliatesPage() {
                     {t('mostPopular')}
                   </span>
                 )}
-                <h3 className="font-bold text-gray-900 text-lg">{tier.name}</h3>
+                <h3 className="font-bold text-utu-text-primary text-lg">{tier.name}</h3>
                 <div className="text-3xl font-black text-emerald-700 my-2">{tier.commission}</div>
-                <p className="text-xs text-gray-400 mb-4">{t('from')} {tier.threshold} {t('referrals')}</p>
+                <p className="text-xs text-utu-text-muted mb-4">{t('from')} {tier.threshold} {t('referrals')}</p>
                 <ul className="space-y-2">
                   {tier.perks.map((p) => (
-                    <li key={p} className="text-sm text-gray-600 flex items-start gap-2">
+                    <li key={p} className="text-sm text-utu-text-secondary flex items-start gap-2">
                       <span className="text-emerald-600 mt-0.5" aria-hidden="true">&#10003;</span>
                       {p}
                     </li>
@@ -107,18 +107,32 @@ export default async function AffiliatesPage() {
         </div>
       </section>
 
-      {/* Apply form placeholder */}
+      {/* Apply form */}
       <section id="apply" className="py-14 px-4">
-        <div className="max-w-xl mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">{t('applyHeading')}</h2>
-          <p className="text-sm text-gray-500 mb-6">{t('applyDesc')}</p>
-          <Link
-            href="/contact"
-            className="block w-full text-center bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-3 rounded-xl transition-colors"
-          >
-            {t('contactApplyBtn')}
-          </Link>
-        </div>
+        <AffiliateApplyForm labels={{
+          applyHeading: t('applyHeading'),
+          applyDesc: t('applyDesc'),
+          formName: t('formName'),
+          formEmail: t('formEmail'),
+          formWebsite: t('formWebsite'),
+          formPlatform: t('formPlatform'),
+          formPlatformBlog: t('formPlatformBlog'),
+          formPlatformYoutube: t('formPlatformYoutube'),
+          formPlatformInstagram: t('formPlatformInstagram'),
+          formPlatformTwitter: t('formPlatformTwitter'),
+          formPlatformTelegram: t('formPlatformTelegram'),
+          formPlatformOther: t('formPlatformOther'),
+          formAudience: t('formAudience'),
+          formAudience1k: t('formAudience1k'),
+          formAudience10k: t('formAudience10k'),
+          formAudience100k: t('formAudience100k'),
+          formAudience100kplus: t('formAudience100kplus'),
+          formMessage: t('formMessage'),
+          formSubmit: t('formSubmit'),
+          formSubmitting: t('formSubmitting'),
+          formSuccess: t('formSuccess'),
+          formError: t('formError'),
+        }} />
       </section>
 
     </div>

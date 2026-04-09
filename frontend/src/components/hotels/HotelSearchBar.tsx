@@ -70,7 +70,7 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
           className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
             params.freeCancelOnly
               ? 'bg-emerald-700 border-emerald-700'
-              : 'border-gray-300 bg-white'
+              : 'border-utu-border-strong bg-utu-bg-card'
           }`}
         >
           {params.freeCancelOnly && (
@@ -79,7 +79,7 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
             </svg>
           )}
         </button>
-        <span className="text-xs text-gray-600">{t('freeCancelOnly')}</span>
+        <span className="text-xs text-utu-text-secondary">{t('freeCancelOnly')}</span>
       </div>
 
       {/* Search inputs */}
@@ -129,7 +129,7 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
           <button
             type="button"
             onClick={() => setGuestsOpen((v) => !v)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 text-start bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 flex items-center justify-between"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 text-start bg-utu-bg-card focus:outline-none focus:ring-2 focus:ring-emerald-500 flex items-center justify-between"
           >
             <span className="truncate">{guestSummary}</span>
             <svg className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${guestsOpen ? 'rotate-180' : ''}`}
@@ -139,21 +139,21 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
           </button>
 
           {guestsOpen && (
-            <div className="absolute top-full mt-1 start-0 end-0 min-w-[220px] bg-white rounded-2xl border border-gray-100 shadow-xl z-50 p-4 space-y-3">
+            <div className="absolute top-full mt-1 start-0 end-0 min-w-[220px] bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-xl z-50 p-4 space-y-3">
               {/* Adults */}
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-gray-800">{t('adultsLabel')}</div>
-                  <div className="text-[10px] text-gray-400">Ages 18+</div>
+                  <div className="text-sm font-medium text-utu-text-primary">{t('adultsLabel')}</div>
+                  <div className="text-[10px] text-utu-text-muted">Ages 18+</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => set('adults', Math.max(1, params.adults - 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M5 12h14"/></svg>
                   </button>
-                  <span className="w-5 text-center text-sm font-semibold text-gray-800">{params.adults}</span>
+                  <span className="w-5 text-center text-sm font-semibold text-utu-text-primary">{params.adults}</span>
                   <button type="button" onClick={() => set('adults', Math.min(12, params.adults + 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
                   </button>
                 </div>
@@ -162,17 +162,17 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
               {/* Children */}
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-gray-800">{t('childrenLabel')}</div>
-                  <div className="text-[10px] text-gray-400">Ages 0–17</div>
+                  <div className="text-sm font-medium text-utu-text-primary">{t('childrenLabel')}</div>
+                  <div className="text-[10px] text-utu-text-muted">Ages 0–17</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => set('children', Math.max(0, params.children - 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M5 12h14"/></svg>
                   </button>
-                  <span className="w-5 text-center text-sm font-semibold text-gray-800">{params.children}</span>
+                  <span className="w-5 text-center text-sm font-semibold text-utu-text-primary">{params.children}</span>
                   <button type="button" onClick={() => set('children', Math.min(6, params.children + 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
                   </button>
                 </div>
@@ -180,15 +180,15 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
 
               {/* Rooms */}
               <div className="flex items-center justify-between">
-                <div className="text-sm font-medium text-gray-800">{t('roomsLabel')}</div>
+                <div className="text-sm font-medium text-utu-text-primary">{t('roomsLabel')}</div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => set('rooms', Math.max(1, params.rooms - 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M5 12h14"/></svg>
                   </button>
-                  <span className="w-5 text-center text-sm font-semibold text-gray-800">{params.rooms}</span>
+                  <span className="w-5 text-center text-sm font-semibold text-utu-text-primary">{params.rooms}</span>
                   <button type="button" onClick={() => set('rooms', Math.min(8, params.rooms + 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
                   </button>
                 </div>

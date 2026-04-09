@@ -138,7 +138,7 @@ export default function LocaleDatePicker({
       className={`relative flex flex-col gap-1 ${className}`}
     >
       {/* Label */}
-      <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+      <label className="text-xs font-medium text-utu-text-secondary uppercase tracking-wide">
         {label}
       </label>
 
@@ -148,14 +148,14 @@ export default function LocaleDatePicker({
         onClick={() => setOpen(o => !o)}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white flex items-center justify-between gap-2 min-h-[44px]"
+        className="w-full border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-primary focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-utu-bg-card flex items-center justify-between gap-2 min-h-[44px]"
         style={isUrdu ? { fontFamily: "'Noto Nastaliq Urdu', serif", fontSize: '1rem', lineHeight: 1.8 } : undefined}
       >
-        <span className={selected ? 'text-gray-900' : 'text-gray-400'}>
+        <span className={selected ? 'text-utu-text-primary' : 'text-utu-text-muted'}>
           {selected ? formatDisplay(selected, lang) : '—'}
         </span>
         {/* Calendar icon */}
-        <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <svg className="w-4 h-4 text-utu-text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
           <rect x="3" y="4" width="18" height="18" rx="2" />
           <path strokeLinecap="round" d="M16 2v4M8 2v4M3 10h18" />
         </svg>
@@ -167,7 +167,7 @@ export default function LocaleDatePicker({
           role="dialog"
           aria-label={label}
           className={[
-            'absolute z-50 top-full mt-1 bg-white rounded-2xl shadow-xl border border-gray-200 p-3',
+            'absolute z-50 top-full mt-1 bg-utu-bg-card rounded-2xl shadow-xl border border-utu-border-default p-3',
             isRTL ? 'right-0' : 'left-0',
           ].join(' ')}
           style={calendarFont}

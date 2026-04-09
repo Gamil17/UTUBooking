@@ -95,7 +95,6 @@ export default function HalalBadge({ isHalalFriendly, amenities, compact = true 
               aria-label={t(key as keyof typeof t)}
             >
               <span aria-hidden="true">{AMENITY_ICONS[key]}</span>
-              {/* @ts-expect-error dynamic key */}
               {t(key)}
             </li>
           ))}

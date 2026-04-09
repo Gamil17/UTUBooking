@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const PAYMENT_SERVICE_URL =
-  process.env.PAYMENT_SERVICE_URL ?? 'http://payment-service:3007';
+  process.env.PAYMENT_SERVICE_URL ?? 'http://localhost:3007';
 
 /**
  * POST /api/payments/midtrans/charge

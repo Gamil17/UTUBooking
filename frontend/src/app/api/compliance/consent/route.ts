@@ -35,6 +35,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'consentGiven must be boolean' }, { status: 400 });
   }
 
+  const VALID_LAWS = new Set(['kvkk', 'gdpr', 'dpdp', 'ccpa', 'lgpd', 'pipeda', 'pdpa']);
+  if (!VALID_LAWS.has((law ?? '').toLowerCase())) {
+    return NextResponse.json({ error: `Unsupported law: ${law}` }, { status: 400 });
+  }
+
   // Resolve visitor IP for audit record
   const ip =
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??

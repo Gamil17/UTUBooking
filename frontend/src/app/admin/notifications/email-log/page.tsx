@@ -2,25 +2,9 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { getEmailLog, type EmailLogRow } from '@/lib/api';
 
-const EMAIL_TYPES = [
-  { value: '',                           label: 'All types' },
-  { value: 'abandoned_booking_recovery', label: 'Abandoned booking' },
-  { value: 'check_in_reminder',          label: 'Check-in reminder' },
-  { value: 'price_change_alert',         label: 'Price alert' },
-  { value: 'monthly_deal_digest',        label: 'Campaign' },
-];
-
-const DELIVERY_STATUSES = [
-  { value: '',          label: 'All statuses' },
-  { value: 'queued',    label: 'Queued' },
-  { value: 'sent',      label: 'Sent' },
-  { value: 'delivered', label: 'Delivered' },
-  { value: 'opened',    label: 'Opened' },
-  { value: 'bounced',   label: 'Bounced' },
-  { value: 'failed',    label: 'Failed' },
-];
 
 const TYPE_COLORS: Record<string, string> = {
   abandoned_booking_recovery: 'bg-amber-100 text-amber-700',
@@ -30,7 +14,7 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  queued:    'bg-gray-100   text-gray-600',
+  queued:    'bg-utu-bg-muted   text-utu-text-secondary',
   sent:      'bg-blue-100   text-blue-700',
   delivered: 'bg-emerald-100 text-emerald-700',
   opened:    'bg-green-100  text-green-700',
@@ -53,6 +37,27 @@ function truncateEmail(email: string) {
 }
 
 export default function EmailLogPage() {
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
+
+  const EMAIL_TYPES = [
+    { value: '',                           label: t('typeAll') },
+    { value: 'abandoned_booking_recovery', label: t('typeAbandonedBooking') },
+    { value: 'check_in_reminder',          label: t('typeCheckInReminder') },
+    { value: 'price_change_alert',         label: t('typePriceAlert') },
+    { value: 'monthly_deal_digest',        label: t('typeCampaign') },
+  ];
+
+  const DELIVERY_STATUSES = [
+    { value: '',          label: t('statusAll') },
+    { value: 'queued',    label: t('statusQueued') },
+    { value: 'sent',      label: t('statusSent') },
+    { value: 'delivered', label: t('statusDelivered') },
+    { value: 'opened',    label: t('statusOpened') },
+    { value: 'bounced',   label: t('statusBounced') },
+    { value: 'failed',    label: t('statusFailed') },
+  ];
+
   const [page, setPage] = useState(1);
   const [emailType,      setEmailType]      = useState('');
   const [deliveryStatus, setDeliveryStatus] = useState('');
@@ -72,14 +77,14 @@ export default function EmailLogPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#111827]">Email Log</h1>
+      <h1 className="text-2xl font-bold text-utu-text-primary">{t('emailLog')}</h1>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <select
           value={emailType}
           onChange={handleFilterChange(setEmailType)}
-          className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#10B981]"
+          className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2 text-sm text-utu-text-secondary focus:outline-none focus:ring-2 focus:ring-emerald-600"
         >
           {EMAIL_TYPES.map((t) => (
             <option key={t.value} value={t.value}>{t.label}</option>
@@ -89,7 +94,7 @@ export default function EmailLogPage() {
         <select
           value={deliveryStatus}
           onChange={handleFilterChange(setDeliveryStatus)}
-          className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#10B981]"
+          className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2 text-sm text-utu-text-secondary focus:outline-none focus:ring-2 focus:ring-emerald-600"
         >
           {DELIVERY_STATUSES.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>
@@ -98,62 +103,62 @@ export default function EmailLogPage() {
 
         <input
           type="text"
-          placeholder="Booking ref…"
+          placeholder={t('bookingRefPlaceholder')}
           value={bookingRef}
           onChange={handleFilterChange(setBookingRef)}
-          className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#10B981]"
+          className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2 text-sm text-utu-text-secondary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-emerald-600"
         />
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-utu-border-default bg-utu-bg-card shadow-sm">
         {isLoading && (
-          <div className="p-8 text-center text-sm text-[#6B7280]">Loading…</div>
+          <div className="p-8 text-center text-sm text-utu-text-muted">{tCommon('loading')}</div>
         )}
         {isError && (
-          <div className="p-8 text-center text-sm text-red-500">Failed to load email log.</div>
+          <div className="p-8 text-center text-sm text-red-500">{t('failLoadEmailLog')}</div>
         )}
         {data && (
           <table className="min-w-full divide-y divide-[#E5E7EB] text-sm">
-            <thead className="bg-[#F9FAFB]">
+            <thead className="bg-utu-bg-muted">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Recipient</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Type</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Booking ref</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Sent at</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Locale</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colRecipient')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colType')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colBookingRef')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colSentAt')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colStatus')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colLocale')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E7EB]">
               {data.data.map((row: EmailLogRow) => (
-                <tr key={row.id} className="hover:bg-[#F9FAFB]">
-                  <td className="px-4 py-3 font-mono text-xs text-[#374151]">
+                <tr key={row.id} className="hover:bg-utu-bg-muted">
+                  <td className="px-4 py-3 font-mono text-xs text-utu-text-secondary">
                     {truncateEmail(row.recipient_email)}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLORS[row.email_type] ?? 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLORS[row.email_type] ?? 'bg-utu-bg-muted text-utu-text-secondary'}`}>
                       {row.email_type.replace(/_/g, ' ')}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-[#6B7280]">
+                  <td className="px-4 py-3 font-mono text-xs text-utu-text-muted">
                     {row.booking_ref ?? '—'}
                   </td>
-                  <td className="px-4 py-3 text-xs text-[#6B7280]">
+                  <td className="px-4 py-3 text-xs text-utu-text-muted">
                     {formatSentAt(row.sent_at)}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[row.delivery_status] ?? 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[row.delivery_status] ?? 'bg-utu-bg-muted text-utu-text-secondary'}`}>
                       {row.delivery_status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-[#6B7280] uppercase">{row.locale}</td>
+                  <td className="px-4 py-3 text-xs text-utu-text-muted uppercase">{row.locale}</td>
                 </tr>
               ))}
               {data.data.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-[#6B7280]">
-                    No emails match your filters.
+                  <td colSpan={6} className="px-4 py-8 text-center text-utu-text-muted">
+                    {t('noEmailsMatch')}
                   </td>
                 </tr>
               )}
@@ -168,17 +173,17 @@ export default function EmailLogPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="rounded border border-[#E5E7EB] px-3 py-1.5 text-sm text-[#374151] hover:bg-[#F3F4F6] disabled:opacity-40"
+            className="rounded border border-utu-border-default px-3 py-1.5 text-sm text-utu-text-secondary hover:bg-utu-bg-muted disabled:opacity-40"
           >
-            Previous
+            {t('previous')}
           </button>
-          <span className="flex items-center px-3 text-sm text-[#6B7280]">Page {page}</span>
+          <span className="flex items-center px-3 text-sm text-utu-text-muted">{t('page', { n: page })}</span>
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={data.data.length < 50}
-            className="rounded border border-[#E5E7EB] px-3 py-1.5 text-sm text-[#374151] hover:bg-[#F3F4F6] disabled:opacity-40"
+            className="rounded border border-utu-border-default px-3 py-1.5 text-sm text-utu-text-secondary hover:bg-utu-bg-muted disabled:opacity-40"
           >
-            Next
+            {t('next')}
           </button>
         </div>
       )}

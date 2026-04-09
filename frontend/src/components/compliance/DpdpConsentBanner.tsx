@@ -151,6 +151,7 @@ export default function DpdpConsentBanner({ countryCode }: Props) {
 
   useEffect(() => {
     if (!isDpdpRequired(tenant.locale, countryCode)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reads cookie (SSR-unavailable), must run after hydration to avoid mismatch
       setState('hidden');
       return;
     }
@@ -239,7 +240,7 @@ export default function DpdpConsentBanner({ countryCode }: Props) {
       {/* English body */}
       <p style={styles.body}>
         <strong style={styles.highlight}>UTUBooking</strong> processes your personal data
-        under India's <strong>Digital Personal Data Protection Act 2023</strong>.
+        under India&apos;s <strong>Digital Personal Data Protection Act 2023</strong>.
       </p>
 
       <p style={styles.body}>

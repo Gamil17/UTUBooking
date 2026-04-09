@@ -56,6 +56,8 @@ function mapTenantLocaleToUI(tenantLocale: string): Locale {
   if (base === 'nl') return 'nl';
   if (base === 'pl') return 'pl';
   if (base === 'es') return 'es';
+  if (base === 'sv') return 'sv';
+  if (base === 'ru') return 'ru';
   if (base === 'tr') return 'tr';
   if (base === 'id') return 'id';
   if (base === 'ms') return 'ms';
@@ -65,6 +67,14 @@ function mapTenantLocaleToUI(tenantLocale: string): Locale {
   if (base === 'fr') return 'fr';
   if (base === 'ar') return 'ar';
   if (base === 'en') return 'en';
+  if (base === 'ja') return 'ja';
+  if (base === 'ko') return 'ko';
+  if (base === 'th') return 'th';
+  if (base === 'vi') return 'vi';
+  if (lower === 'zh-cn') return 'zh-CN';
+  if (lower === 'zh-hk') return 'zh-HK';
+  if (lower === 'zh-tw') return 'zh-TW';
+  if (base === 'zh') return 'zh-CN'; // default Chinese to Simplified
 
   return DEFAULT_LOCALE;
 }
@@ -94,19 +104,46 @@ export function countryCodeToLocale(countryCode: string): Locale | null {
   return map[countryCode] ?? null;
 }
 
+/** Deep-merge locale messages over English base so partial translations never break the UI. */
+function deepMerge(base: Record<string, unknown>, override: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...base };
+  for (const key of Object.keys(override)) {
+    const ov = override[key];
+    const bv = base[key];
+    if (ov && typeof ov === 'object' && !Array.isArray(ov) && bv && typeof bv === 'object' && !Array.isArray(bv)) {
+      result[key] = deepMerge(bv as Record<string, unknown>, ov as Record<string, unknown>);
+    } else {
+      result[key] = ov;
+    }
+  }
+  return result;
+}
+
+async function loadMessages(locale: string): Promise<Record<string, unknown>> {
+  const enBase = (await import('../../locales/en.json')).default as Record<string, unknown>;
+  if (locale === 'en') return enBase;
+  try {
+    const localeMessages = (await import(`../../locales/${locale}.json`)).default as Record<string, unknown>;
+    return deepMerge(enBase, localeMessages);
+  } catch {
+    // No translation file yet — use English as fallback
+    return enBase;
+  }
+}
+
 export default getRequestConfig(async () => {
   const headersList = await headers();
 
-  // x-locale-override: set by middleware for Quebec French (fr) and Canadian English (en-US)
+  // x-locale-override: set by middleware for Quebec French, Canadian English, or user cookie preference
   const localeOverride = headersList.get('x-locale-override');
   if (localeOverride && LOCALES.includes(localeOverride as Locale)) {
-    const messages = (await import(`../../locales/${localeOverride}.json`)).default;
+    const messages = await loadMessages(localeOverride);
     return { locale: localeOverride as Locale, messages };
   }
 
   const tenantConfig = parseTenantHeader(headersList.get('x-tenant-config'));
   const locale = mapTenantLocaleToUI(tenantConfig.locale);
-  const messages = (await import(`../../locales/${locale}.json`)).default;
+  const messages = await loadMessages(locale);
 
   return { locale, messages };
 });

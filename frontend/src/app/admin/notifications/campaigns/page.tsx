@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import {
   getCampaigns,
   createCampaign,
@@ -12,7 +13,7 @@ import {
 } from '@/lib/api';
 
 const STATUS_COLORS: Record<string, string> = {
-  draft:     'bg-gray-100   text-gray-600',
+  draft:     'bg-utu-bg-muted   text-utu-text-secondary',
   scheduled: 'bg-blue-100   text-blue-700',
   sending:   'bg-amber-100  text-amber-700',
   sent:      'bg-emerald-100 text-emerald-700',
@@ -32,11 +33,12 @@ const emptyDeal = (): DealItem => ({
 });
 
 export default function CampaignsPage() {
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const [panelOpen, setPanelOpen] = useState(false);
 
-  // Create campaign form state
   const [form, setForm] = useState({
     name: '', subjectEn: '', subjectAr: '', scheduledFor: '',
   });
@@ -88,30 +90,30 @@ export default function CampaignsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#111827]">Campaigns</h1>
+        <h1 className="text-2xl font-bold text-utu-text-primary">{t('campaigns')}</h1>
         <button
           onClick={() => setPanelOpen(true)}
-          className="rounded-lg bg-[#10B981] px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600"
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600"
         >
-          + Create Campaign
+          {t('createCampaign')}
         </button>
       </div>
 
       {/* Campaigns table */}
-      <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-sm">
-        {isLoading && <div className="p-8 text-center text-sm text-[#6B7280]">Loading…</div>}
-        {isError && <div className="p-8 text-center text-sm text-red-500">Failed to load campaigns.</div>}
+      <div className="overflow-hidden rounded-xl border border-utu-border-default bg-utu-bg-card shadow-sm">
+        {isLoading && <div className="p-8 text-center text-sm text-utu-text-muted">{tCommon('loading')}</div>}
+        {isError && <div className="p-8 text-center text-sm text-red-500">{t('failLoadCampaigns')}</div>}
         {data && (
           <table className="min-w-full divide-y divide-[#E5E7EB] text-sm">
-            <thead className="bg-[#F9FAFB]">
+            <thead className="bg-utu-bg-muted">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Name</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Scheduled</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Recipients</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Sent / Failed</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Open rate</th>
-                <th className="px-4 py-3 text-left font-medium text-[#6B7280]">Actions</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colName')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colStatus')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colScheduled')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colRecipients')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colSentFailed')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colOpenRate')}</th>
+                <th className="px-4 py-3 text-left font-medium text-utu-text-muted">{t('colActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E7EB]">
@@ -120,24 +122,24 @@ export default function CampaignsPage() {
                   ? ((c.opened_count / c.sent_count) * 100).toFixed(1)
                   : '—';
                 return (
-                  <tr key={c.id} className="hover:bg-[#F9FAFB]">
+                  <tr key={c.id} className="hover:bg-utu-bg-muted">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-[#111827]">{c.name}</p>
-                      <p className="text-xs text-[#6B7280]">{c.subject_en}</p>
+                      <p className="font-medium text-utu-text-primary">{c.name}</p>
+                      <p className="text-xs text-utu-text-muted">{c.subject_en}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[c.status] ?? 'bg-utu-bg-muted text-utu-text-secondary'}`}>
                         {c.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-[#6B7280]">{formatDate(c.scheduled_for)}</td>
-                    <td className="px-4 py-3 text-[#374151]">{c.total_recipients ?? '—'}</td>
-                    <td className="px-4 py-3 text-[#374151]">
+                    <td className="px-4 py-3 text-xs text-utu-text-muted">{formatDate(c.scheduled_for)}</td>
+                    <td className="px-4 py-3 text-utu-text-secondary">{c.total_recipients ?? '—'}</td>
+                    <td className="px-4 py-3 text-utu-text-secondary">
                       <span className="text-emerald-600">{c.sent_count}</span>
                       {' / '}
                       <span className="text-red-500">{c.failed_count}</span>
                     </td>
-                    <td className="px-4 py-3 text-[#374151]">
+                    <td className="px-4 py-3 text-utu-text-secondary">
                       {typeof openRate === 'string' && openRate !== '—' ? `${openRate}%` : openRate}
                     </td>
                     <td className="px-4 py-3">
@@ -146,20 +148,20 @@ export default function CampaignsPage() {
                           <button
                             onClick={() => sendMutation.mutate(c.id)}
                             disabled={sendMutation.isPending}
-                            className="rounded bg-[#10B981] px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
+                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
                           >
-                            Send Now
+                            {t('sendNow')}
                           </button>
                         )}
                         {canDelete(c) && (
                           <button
                             onClick={() => {
-                              if (confirm(`Delete campaign "${c.name}"?`)) deleteMutation.mutate(c.id);
+                              if (confirm(t('confirmDeleteCampaign', { name: c.name }))) deleteMutation.mutate(c.id);
                             }}
                             disabled={deleteMutation.isPending}
-                            className="rounded border border-[#E5E7EB] px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-40"
+                            className="rounded border border-utu-border-default px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-40"
                           >
-                            Delete
+                            {t('delete')}
                           </button>
                         )}
                       </div>
@@ -169,8 +171,8 @@ export default function CampaignsPage() {
               })}
               {data.data.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-[#6B7280]">
-                    No campaigns yet. Create one to get started.
+                  <td colSpan={7} className="px-4 py-8 text-center text-utu-text-muted">
+                    {t('noCampaigns')}
                   </td>
                 </tr>
               )}
@@ -185,17 +187,17 @@ export default function CampaignsPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="rounded border border-[#E5E7EB] px-3 py-1.5 text-sm text-[#374151] hover:bg-[#F3F4F6] disabled:opacity-40"
+            className="rounded border border-utu-border-default px-3 py-1.5 text-sm text-utu-text-secondary hover:bg-utu-bg-muted disabled:opacity-40"
           >
-            Previous
+            {t('previous')}
           </button>
-          <span className="flex items-center px-3 text-sm text-[#6B7280]">Page {page}</span>
+          <span className="flex items-center px-3 text-sm text-utu-text-muted">{t('page', { n: page })}</span>
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={data.data.length < 20}
-            className="rounded border border-[#E5E7EB] px-3 py-1.5 text-sm text-[#374151] hover:bg-[#F3F4F6] disabled:opacity-40"
+            className="rounded border border-utu-border-default px-3 py-1.5 text-sm text-utu-text-secondary hover:bg-utu-bg-muted disabled:opacity-40"
           >
-            Next
+            {t('next')}
           </button>
         </div>
       )}
@@ -203,130 +205,125 @@ export default function CampaignsPage() {
       {/* Create campaign slide-in panel */}
       {panelOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/40">
-          <div className="flex h-full w-full max-w-lg flex-col overflow-y-auto bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#E5E7EB] px-6 py-4">
-              <h2 className="text-lg font-semibold text-[#111827]">New Campaign</h2>
-              <button onClick={() => setPanelOpen(false)} className="text-[#6B7280] hover:text-[#111827]">✕</button>
+          <div className="flex h-full w-full max-w-lg flex-col overflow-y-auto bg-utu-bg-card shadow-xl">
+            <div className="flex items-center justify-between border-b border-utu-border-default px-6 py-4">
+              <h2 className="text-lg font-semibold text-utu-text-primary">{t('newCampaign')}</h2>
+              <button onClick={() => setPanelOpen(false)} className="text-utu-text-muted hover:text-utu-text-primary">✕</button>
             </div>
 
             <div className="flex-1 space-y-5 px-6 py-5">
-              {/* Name */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-[#374151]">Campaign name</label>
+                <label className="mb-1 block text-sm font-medium text-utu-text-secondary">{t('campaignName')}</label>
                 <input
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#10B981]"
-                  placeholder="e.g. Ramadan 2026 Deals"
+                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  placeholder={t('campaignNamePlaceholder')}
                 />
               </div>
 
-              {/* Subject EN */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-[#374151]">Subject (English)</label>
+                <label className="mb-1 block text-sm font-medium text-utu-text-secondary">{t('subjectEn')}</label>
                 <input
                   type="text"
                   value={form.subjectEn}
                   onChange={(e) => setForm((f) => ({ ...f, subjectEn: e.target.value }))}
-                  className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#10B981]"
-                  placeholder="Best travel deals this month"
+                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  placeholder={t('subjectEnPlaceholder')}
                 />
               </div>
 
-              {/* Subject AR */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-[#374151]">Subject (Arabic — optional)</label>
+                <label className="mb-1 block text-sm font-medium text-utu-text-secondary">{t('subjectAr')}</label>
                 <input
                   type="text"
                   dir="rtl"
                   value={form.subjectAr}
                   onChange={(e) => setForm((f) => ({ ...f, subjectAr: e.target.value }))}
-                  className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#10B981]"
-                  placeholder="أفضل عروض السفر هذا الشهر"
+                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  placeholder={t('subjectArPlaceholder')}
                 />
               </div>
 
-              {/* Scheduled for */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-[#374151]">Schedule for (optional — leave blank to save as draft)</label>
+                <label className="mb-1 block text-sm font-medium text-utu-text-secondary">{t('scheduleFor')}</label>
                 <input
                   type="datetime-local"
                   value={form.scheduledFor}
                   onChange={(e) => setForm((f) => ({ ...f, scheduledFor: e.target.value }))}
-                  className="w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#10B981]"
+                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
                 />
               </div>
 
-              {/* Deal items */}
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <label className="text-sm font-medium text-[#374151]">Deal items</label>
+                  <label className="text-sm font-medium text-utu-text-secondary">{t('dealItems')}</label>
                   <button
                     onClick={() => setDeals((d) => [...d, emptyDeal()])}
-                    className="text-xs font-medium text-[#10B981] hover:underline"
+                    className="text-xs font-medium text-emerald-600 hover:underline"
                   >
-                    + Add deal
+                    {t('addDeal')}
                   </button>
                 </div>
                 <div className="space-y-3">
                   {deals.map((deal, i) => (
-                    <div key={i} className="rounded-lg border border-[#E5E7EB] p-3 space-y-2">
+                    <div key={i} className="rounded-lg border border-utu-border-default p-3 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-[#6B7280]">Deal {i + 1}</span>
+                        <span className="text-xs font-medium text-utu-text-muted">{t('deal')} {i + 1}</span>
                         {deals.length > 1 && (
                           <button
                             onClick={() => setDeals((d) => d.filter((_, idx) => idx !== i))}
                             className="text-xs text-red-400 hover:text-red-600"
                           >
-                            Remove
+                            {t('remove')}
                           </button>
                         )}
                       </div>
                       <input
                         type="text"
-                        placeholder="Title (English)"
+                        placeholder={t('dealTitleEnPlaceholder')}
                         value={deal.title_en}
                         onChange={(e) => updateDeal(i, 'title_en', e.target.value)}
-                        className="w-full rounded border border-[#E5E7EB] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
                       />
                       <input
                         type="text"
                         dir="rtl"
-                        placeholder="العنوان (عربي)"
+                        placeholder={t('dealTitleArPlaceholder')}
                         value={deal.title_ar ?? ''}
                         onChange={(e) => updateDeal(i, 'title_ar', e.target.value)}
-                        className="w-full rounded border border-[#E5E7EB] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
                       />
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           type="number"
-                          placeholder="Price"
+                          placeholder={t('dealPricePlaceholder')}
                           value={deal.price || ''}
                           onChange={(e) => updateDeal(i, 'price', parseFloat(e.target.value) || 0)}
-                          className="rounded border border-[#E5E7EB] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                          className="rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
                         />
                         <input
                           type="text"
-                          placeholder="Currency (SAR)"
+                          placeholder={t('dealCurrencyPlaceholder')}
                           value={deal.currency}
                           onChange={(e) => updateDeal(i, 'currency', e.target.value)}
-                          className="rounded border border-[#E5E7EB] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                          className="rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
                         />
                       </div>
                       <input
                         type="text"
-                        placeholder="Destination (e.g. Makkah)"
+                        placeholder={t('dealDestinationPlaceholder')}
                         value={deal.destination}
                         onChange={(e) => updateDeal(i, 'destination', e.target.value)}
-                        className="w-full rounded border border-[#E5E7EB] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
                       />
                       <input
                         type="url"
-                        placeholder="CTA URL"
+                        placeholder={t('dealCtaUrlPlaceholder')}
                         value={deal.cta_url}
                         onChange={(e) => updateDeal(i, 'cta_url', e.target.value)}
-                        className="w-full rounded border border-[#E5E7EB] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#10B981]"
+                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
                       />
                     </div>
                   ))}
@@ -335,23 +332,23 @@ export default function CampaignsPage() {
             </div>
 
             {/* Panel footer */}
-            <div className="border-t border-[#E5E7EB] px-6 py-4">
+            <div className="border-t border-utu-border-default px-6 py-4">
               {createMutation.isError && (
-                <p className="mb-3 text-xs text-red-500">Failed to create campaign. Check all required fields.</p>
+                <p className="mb-3 text-xs text-red-500">{t('failCreate')}</p>
               )}
               <div className="flex gap-3">
                 <button
                   onClick={() => setPanelOpen(false)}
-                  className="flex-1 rounded-lg border border-[#E5E7EB] py-2.5 text-sm font-medium text-[#374151] hover:bg-[#F3F4F6]"
+                  className="flex-1 rounded-lg border border-utu-border-default py-2.5 text-sm font-medium text-utu-text-secondary hover:bg-utu-bg-muted"
                 >
-                  Cancel
+                  {tCommon('cancel')}
                 </button>
                 <button
                   onClick={() => createMutation.mutate()}
-                  disabled={createMutation.isPending || !form.name || !form.subjectEn}
-                  className="flex-1 rounded-lg bg-[#10B981] py-2.5 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
+                  disabled={createMutation.isPending || !form.name || !form.subjectEn || deals.filter((d) => d.title_en).length === 0}
+                  className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
                 >
-                  {createMutation.isPending ? 'Saving…' : 'Save Campaign'}
+                  {createMutation.isPending ? t('saving') : t('saveCampaign')}
                 </button>
               </div>
             </div>

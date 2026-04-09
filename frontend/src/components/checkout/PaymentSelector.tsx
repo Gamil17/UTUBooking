@@ -78,14 +78,6 @@ function localeToCountryCode(locale: string): string {
   return map[locale] ?? 'GB';
 }
 
-// EU + global Stripe currencies
-const STRIPE_CURRENCIES = new Set([
-  'EUR', 'GBP', 'PLN', 'SEK', 'NOK', 'DKK', 'CZK', 'HUF', 'RON',
-  'BRL', 'CAD', 'AUD', 'NZD', 'SGD', 'HKD', 'USD',
-]);
-
-// GCC currencies handled by STC Pay / Mada / legacy Stripe flow
-const GCC_CURRENCIES = new Set(['SAR', 'AED', 'KWD', 'JOD', 'BHD', 'OMR', 'QAR']);
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
@@ -150,9 +142,8 @@ export default function PaymentSelector({
     return (
       <IndonesianPaymentSelector
         bookingId={bookingId}
-        amountIDR={amount}
+        amountIdr={amount}
         onSuccess={onSuccess}
-        onCancel={onCancel}
       />
     );
   }

@@ -42,7 +42,7 @@ export default function BrCityGuidePage({ params }: { params: { cidade: string }
     <article className="max-w-2xl mx-auto px-4 py-8 space-y-10" lang="pt-BR">
 
       {/* ── Breadcrumb ─────────────────────────────────────────────── */}
-      <nav aria-label="Navegação" className="text-xs text-gray-400">
+      <nav aria-label="Navegação" className="text-xs text-utu-text-muted">
         <Link href="/br/comunidade-arabe" className="hover:underline">
           Comunidade Árabe no Brasil
         </Link>
@@ -55,14 +55,14 @@ export default function BrCityGuidePage({ params }: { params: { cidade: string }
         <div className="flex items-center gap-2">
           <span className="text-3xl" aria-hidden="true">🕌</span>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-utu-text-primary">
               Comunidade Árabe em {guide.name}
             </h1>
-            <p className="text-sm text-gray-500">{guide.state}</p>
+            <p className="text-sm text-utu-text-muted">{guide.state}</p>
           </div>
         </div>
         <p className="text-lg font-medium text-emerald-700 italic">{guide.tagline}</p>
-        <p className="text-sm text-gray-600 leading-relaxed">{guide.heroDescription}</p>
+        <p className="text-sm text-utu-text-secondary leading-relaxed">{guide.heroDescription}</p>
 
         {/* Stats pills */}
         <div className="flex flex-wrap gap-2">
@@ -103,7 +103,7 @@ export default function BrCityGuidePage({ params }: { params: { cidade: string }
       <section aria-labelledby="mesquitas-heading" className="space-y-3">
         <h2
           id="mesquitas-heading"
-          className="text-base font-semibold text-gray-900 flex items-center gap-2"
+          className="text-base font-semibold text-utu-text-primary flex items-center gap-2"
         >
           <span aria-hidden="true">🕌</span> Mesquitas
         </h2>
@@ -111,10 +111,10 @@ export default function BrCityGuidePage({ params }: { params: { cidade: string }
           {guide.mosques.map((mosque) => (
             <li
               key={mosque.name}
-              className="rounded-xl border border-gray-100 bg-white p-4 hover:shadow-sm transition-shadow"
+              className="rounded-xl border border-utu-border-default bg-utu-bg-card p-4 hover:shadow-sm transition-shadow"
             >
-              <p className="text-sm font-semibold text-gray-900">{mosque.name}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{mosque.address}</p>
+              <p className="text-sm font-semibold text-utu-text-primary">{mosque.name}</p>
+              <p className="text-xs text-utu-text-muted mt-0.5">{mosque.address}</p>
               <a
                 href={mosque.mapsUrl}
                 target="_blank"
@@ -133,21 +133,21 @@ export default function BrCityGuidePage({ params }: { params: { cidade: string }
       <section aria-labelledby="servicos-heading" className="space-y-4">
         <h2
           id="servicos-heading"
-          className="text-base font-semibold text-gray-900 flex items-center gap-2"
+          className="text-base font-semibold text-utu-text-primary flex items-center gap-2"
         >
           <span aria-hidden="true">🌙</span> Serviços árabes e islâmicos
         </h2>
         {guide.arabServices.map((group) => (
           <div
             key={group.category}
-            className="rounded-xl border border-gray-100 bg-gray-50 p-4"
+            className="rounded-xl border border-utu-border-default bg-utu-bg-muted p-4"
           >
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">{group.category}</h3>
+            <h3 className="text-sm font-semibold text-utu-text-secondary mb-2">{group.category}</h3>
             <ul className="space-y-1" role="list">
               {group.items.map((item) => (
                 <li
                   key={item}
-                  className="text-sm text-gray-600 flex items-start gap-2"
+                  className="text-sm text-utu-text-secondary flex items-start gap-2"
                 >
                   <span className="text-emerald-500 mt-0.5" aria-hidden="true">•</span>
                   {item}
@@ -163,7 +163,7 @@ export default function BrCityGuidePage({ params }: { params: { cidade: string }
         <p className="text-base font-semibold">
           Encontre hotéis halal próximos ao Haram
         </p>
-        <p className="text-sm text-gray-300">
+        <p className="text-sm text-utu-text-muted">
           Filtre por comida halal, sala de oração, distância ao Masjid Al-Haram e mais.
         </p>
         <Link
@@ -175,7 +175,7 @@ export default function BrCityGuidePage({ params }: { params: { cidade: string }
       </section>
 
       {/* ── Disclaimer ─────────────────────────────────────────────── */}
-      <footer className="text-xs text-gray-400 border-t border-gray-100 pt-4">
+      <footer className="text-xs text-utu-text-muted border-t border-utu-border-default pt-4">
         <p>
           Conteúdo revisado anualmente com assessoria de líderes comunitários.
           As informações sobre estabelecimentos são fornecidas para fins informativos —

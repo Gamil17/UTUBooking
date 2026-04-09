@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 
 const PaymentSelector = dynamic(
@@ -46,7 +47,7 @@ function Stars({ count }: { count: number }) {
   return (
     <span className="flex gap-px">
       {[0, 1, 2, 3, 4].map((i) => (
-        <svg key={i} className={`w-3.5 h-3.5 ${i < n ? 'text-amber-400' : 'text-gray-200'}`}
+        <svg key={i} className={`w-3.5 h-3.5 ${i < n ? 'text-amber-400' : 'text-utu-border-default'}`}
           viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
         </svg>
@@ -82,6 +83,7 @@ export default function HotelCheckoutPage() {
   const router = useRouter();
   const t      = useTranslations('booking');
   const tHR    = useTranslations('hotelResults');
+  const tCO    = useTranslations('checkout');
   const locale = useLocale();
 
   // ── Parse URL params ────────────────────────────────────────────────────────
@@ -100,11 +102,11 @@ export default function HotelCheckoutPage() {
   const currency     = sp.get('currency')     ?? 'SAR';
 
   // ── State ────────────────────────────────────────────────────────────────────
-  const [step,      setStep]      = useState<Step>('form');
-  const [form,      setForm]      = useState<GuestForm>(EMPTY_FORM);
-  const [localRef]  = useState(() => `BOOK-${Date.now().toString(36).toUpperCase()}`);
-  const [bookingRef, setBookingRef] = useState('');
-  const [paymentId, setPaymentId]   = useState('');
+  const [step,        setStep]        = useState<Step>('form');
+  const [form,        setForm]        = useState<GuestForm>(EMPTY_FORM);
+  const [localRef]    = useState(() => `BOOK-${Date.now().toString(36).toUpperCase()}`);
+  const [bookingRef,  setBookingRef]  = useState('');
+  const [persistError, setPersistError] = useState(false);
 
   function setField<K extends keyof GuestForm>(key: K, value: GuestForm[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -114,8 +116,7 @@ export default function HotelCheckoutPage() {
     form.firstName && form.lastName && form.email && form.phone && form.agreed
   );
 
-  const handlePaymentSuccess = useCallback(async (pid: string) => {
-    setPaymentId(pid);
+  const handlePaymentSuccess = useCallback(async () => {
     // Persist booking to backend if user is logged in
     const token = typeof window !== 'undefined'
       ? sessionStorage.getItem('utu_access_token')
@@ -137,16 +138,16 @@ export default function HotelCheckoutPage() {
           const data = await res.json();
           if (data.referenceNo) setBookingRef(data.referenceNo);
         }
-      } catch { /* non-fatal — guest checkout still works */ }
+      } catch (err) { console.error('[checkout] booking persistence failed:', err); setPersistError(true); }
     }
     setStep('confirmed');
-  }, [rateKey, totalPrice, name, checkIn, checkOut, nights, city, stars, image, rooms, adults]);
+  }, [rateKey, totalPrice, currency, name, checkIn, checkOut, nights, city, stars, image, rooms, adults]);
 
   // ── Redirect if no offer ─────────────────────────────────────────────────────
   if (!rateKey && !name) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500 text-sm">No offer selected. <button onClick={() => router.back()} className="text-emerald-700 underline">Go back</button></p>
+        <p className="text-utu-text-muted text-sm">{tCO('noOfferSelected')} <button onClick={() => router.back()} className="text-emerald-700 underline">{tCO('goBack')}</button></p>
       </div>
     );
   }
@@ -157,20 +158,23 @@ export default function HotelCheckoutPage() {
   if (step === 'confirmed') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+        <div className="max-w-md w-full bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-8 text-center">
           <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-7 h-7 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-1">{t('success')}</h1>
-          <p className="text-sm text-gray-500 mb-6">{t('ref')}: <span className="font-semibold text-gray-800">{bookingRef || localRef}</span></p>
+          <h1 className="text-xl font-bold text-utu-text-primary mb-1">{t('success')}</h1>
+          <p className="text-sm text-utu-text-muted mb-1">{t('ref')}: <span className="font-semibold text-utu-text-primary">{bookingRef || localRef}</span></p>
+          {!bookingRef && persistError && (
+            <p className="text-xs text-amber-600 mb-5">{tCO('bookingNotSaved')}</p>
+          )}
 
           <div className="bg-slate-50 rounded-xl p-4 text-left text-sm mb-6 space-y-1.5">
-            <div className="font-semibold text-gray-800">{name}</div>
-            <div className="text-gray-500">{city}</div>
-            <div className="text-gray-600">{fmtDate(checkIn)} → {fmtDate(checkOut)}</div>
-            <div className="text-gray-600">{nights} nights · {rooms} room{rooms > 1 ? 's' : ''} · {adults} adult{adults > 1 ? 's' : ''}</div>
+            <div className="font-semibold text-utu-text-primary">{name}</div>
+            <div className="text-utu-text-muted">{city}</div>
+            <div className="text-utu-text-secondary">{fmtDate(checkIn)} → {fmtDate(checkOut)}</div>
+            <div className="text-utu-text-secondary">{nights} nights · {rooms} room{rooms > 1 ? 's' : ''} · {adults} adult{adults > 1 ? 's' : ''}</div>
             <div className="font-semibold text-emerald-700 pt-1">{fmtPrice(totalPrice, currency)}</div>
           </div>
 
@@ -182,18 +186,18 @@ export default function HotelCheckoutPage() {
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3"/>
             </svg>
-            Download PDF
+            {tCO('downloadPdf')}
           </a>
 
           <Link href="/account" className="w-full inline-block text-center border border-emerald-200 text-emerald-700 font-semibold py-2.5 rounded-xl text-sm transition-colors hover:bg-emerald-50 mb-3">
-            View in My Trips
+            {tCO('viewInMyTrips')}
           </Link>
 
           <button
             onClick={() => router.push('/')}
             className="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
           >
-            Back to Home
+            {tCO('backToHome')}
           </button>
         </div>
       </div>
@@ -207,39 +211,41 @@ export default function HotelCheckoutPage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <div className="max-w-2xl mx-auto px-4 py-8">
-          <button onClick={() => setStep('form')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-6">
+          <button onClick={() => setStep('form')} className="flex items-center gap-1.5 text-sm text-utu-text-muted hover:text-utu-text-primary mb-6">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
             </svg>
-            Back
+            {tCO('back')}
           </button>
 
           {/* Offer summary */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
+          <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-5 mb-6">
             <div className="flex gap-4">
               {image && (
-                <img src={image} alt={name} className="w-20 h-16 object-cover rounded-xl shrink-0" />
+                <div className="relative w-20 h-16 rounded-xl overflow-hidden shrink-0">
+                  <Image src={image} alt={name} fill className="object-cover" unoptimized />
+                </div>
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-semibold text-gray-900 text-sm leading-tight truncate">{name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{city}</p>
+                    <p className="font-semibold text-utu-text-primary text-sm leading-tight truncate">{name}</p>
+                    <p className="text-xs text-utu-text-muted mt-0.5">{city}</p>
                     {stars > 0 && <Stars count={stars} />}
                   </div>
                   <div className="text-right shrink-0">
                     <p className="font-bold text-emerald-700">{fmtPrice(totalPrice, currency)}</p>
-                    <p className="text-[11px] text-gray-400">{fmtPrice(pricePerNight, currency)} {tHR('perNight')}</p>
+                    <p className="text-[11px] text-utu-text-muted">{fmtPrice(pricePerNight, currency)} {tHR('perNight')}</p>
                   </div>
                 </div>
-                <div className="mt-2 text-xs text-gray-500">
+                <div className="mt-2 text-xs text-utu-text-muted">
                   {fmtDate(checkIn)} → {fmtDate(checkOut)} · {nights} night{nights > 1 ? 's' : ''}
                 </div>
               </div>
             </div>
           </div>
 
-          <h2 className="font-bold text-gray-900 mb-4">{t('payment')}</h2>
+          <h2 className="font-bold text-utu-text-primary mb-4">{t('payment')}</h2>
           <PaymentSelector
             bookingId={localRef}
             amount={totalPrice}
@@ -259,22 +265,22 @@ export default function HotelCheckoutPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
 
         {/* Back */}
-        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-6">
+        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-utu-text-muted hover:text-utu-text-primary mb-6">
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
           </svg>
-          Back to results
+          {tCO('backToResults')}
         </button>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('title')}</h1>
+        <h1 className="text-2xl font-bold text-utu-text-primary mb-6">{t('title')}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* ── Left: Form ───────────────────────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-5">
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h2 className="font-semibold text-gray-900 mb-4">{t('guestDetails')}</h2>
+            <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-5">
+              <h2 className="font-semibold text-utu-text-primary mb-4">{t('guestDetails')}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label={t('firstName')}   value={form.firstName}   onChange={(v) => setField('firstName', v)} />
                 <Field label={t('lastName')}    value={form.lastName}    onChange={(v) => setField('lastName', v)} />
@@ -293,7 +299,7 @@ export default function HotelCheckoutPage() {
                   aria-checked={form.agreed}
                   onClick={() => setField('agreed', !form.agreed)}
                   className={`mt-0.5 w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors ${
-                    form.agreed ? 'bg-emerald-700 border-emerald-700' : 'border-gray-300 bg-white'
+                    form.agreed ? 'bg-emerald-700 border-emerald-700' : 'border-utu-border-strong bg-utu-bg-card'
                   }`}
                 >
                   {form.agreed && (
@@ -302,7 +308,7 @@ export default function HotelCheckoutPage() {
                     </svg>
                   )}
                 </button>
-                <span className="text-xs text-gray-500 leading-relaxed">{t('terms')}</span>
+                <span className="text-xs text-utu-text-muted leading-relaxed">{t('terms')}</span>
               </label>
             </div>
 
@@ -318,40 +324,42 @@ export default function HotelCheckoutPage() {
 
           {/* ── Right: Booking summary ───────────────────────────────────────── */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sticky top-6">
+            <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-5 sticky top-6">
               {image && (
-                <img src={image} alt={name} className="w-full h-36 object-cover rounded-xl mb-4" />
+                <div className="relative w-full h-36 rounded-xl overflow-hidden mb-4">
+                  <Image src={image} alt={name} fill className="object-cover" unoptimized />
+                </div>
               )}
               <div className="space-y-2 text-sm">
-                <p className="font-bold text-gray-900 leading-tight">{name}</p>
-                {city && <p className="text-gray-500 text-xs">{city}</p>}
+                <p className="font-bold text-utu-text-primary leading-tight">{name}</p>
+                {city && <p className="text-utu-text-muted text-xs">{city}</p>}
                 {stars > 0 && <Stars count={stars} />}
 
-                <div className="pt-3 border-t border-gray-100 space-y-1.5 text-xs text-gray-600">
+                <div className="pt-3 border-t border-utu-border-default space-y-1.5 text-xs text-utu-text-secondary">
                   <div className="flex justify-between">
-                    <span>Check-in</span>
-                    <span className="font-medium text-gray-800">{fmtDate(checkIn)}</span>
+                    <span>{tCO('checkIn')}</span>
+                    <span className="font-medium text-utu-text-primary">{fmtDate(checkIn)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Check-out</span>
-                    <span className="font-medium text-gray-800">{fmtDate(checkOut)}</span>
+                    <span>{tCO('checkOut')}</span>
+                    <span className="font-medium text-utu-text-primary">{fmtDate(checkOut)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Duration</span>
-                    <span className="font-medium text-gray-800">{nights} night{nights > 1 ? 's' : ''}</span>
+                    <span>{tCO('duration')}</span>
+                    <span className="font-medium text-utu-text-primary">{nights} night{nights > 1 ? 's' : ''}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Guests</span>
-                    <span className="font-medium text-gray-800">{adults} adult{adults > 1 ? 's' : ''}, {rooms} room{rooms > 1 ? 's' : ''}</span>
+                    <span>{tCO('guests')}</span>
+                    <span className="font-medium text-utu-text-primary">{adults} adult{adults > 1 ? 's' : ''}, {rooms} room{rooms > 1 ? 's' : ''}</span>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-gray-100">
-                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <div className="pt-3 border-t border-utu-border-default">
+                  <div className="flex justify-between text-xs text-utu-text-muted mb-1">
                     <span>{fmtPrice(pricePerNight, currency)} × {nights} nights</span>
                     <span>{fmtPrice(pricePerNight * nights, currency)}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-gray-900">
+                  <div className="flex justify-between font-bold text-utu-text-primary">
                     <span>{tHR('totalPrice')}</span>
                     <span className="text-emerald-700">{fmtPrice(totalPrice, currency)}</span>
                   </div>

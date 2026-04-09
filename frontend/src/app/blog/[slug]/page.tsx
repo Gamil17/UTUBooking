@@ -1,21 +1,25 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
-// ─── Static post data ─────────────────────────────────────────────────────────
+// ─── Slug → translation key index ─────────────────────────────────────────────
+// Maps each post slug to the numeric suffix used in blog.* translation keys.
+// e.g. 'hajj-2026-guide' → 1 → t('post1Title'), t('post1Category'), etc.
+
+const SLUG_INDEX: Record<string, number> = {
+  'hajj-2026-guide':              1,
+  'umrah-hotels-makkah':          2,
+  'madinah-travel-tips':          3,
+  'muslim-travel-southeast-asia': 4,
+};
+
+// ─── Static post data (article content — not localised) ───────────────────────
 
 const POSTS: Record<string, {
-  category: string;
-  title: string;
-  date: string;
-  readTime: string;
   sections: { heading: string; body: string }[];
 }> = {
   'hajj-2026-guide': {
-    category: 'Hajj',
-    title: 'Complete Hajj 2026 Travel Guide',
-    date: 'March 2026',
-    readTime: '8 min read',
     sections: [
       {
         heading: 'Before You Travel',
@@ -41,10 +45,6 @@ const POSTS: Record<string, {
   },
 
   'umrah-hotels-makkah': {
-    category: 'Umrah',
-    title: 'Best Hotels Near the Grand Mosque in Makkah',
-    date: 'February 2026',
-    readTime: '6 min read',
     sections: [
       {
         heading: 'Why Location Matters',
@@ -70,10 +70,6 @@ const POSTS: Record<string, {
   },
 
   'madinah-travel-tips': {
-    category: 'Destinations',
-    title: 'Madinah Travel Tips for First-Time Visitors',
-    date: 'January 2026',
-    readTime: '5 min read',
     sections: [
       {
         heading: 'Visiting Masjid al-Nabawi',
@@ -99,10 +95,6 @@ const POSTS: Record<string, {
   },
 
   'muslim-travel-southeast-asia': {
-    category: 'Destinations',
-    title: 'Muslim-Friendly Travel in Southeast Asia',
-    date: 'December 2025',
-    readTime: '7 min read',
     sections: [
       {
         heading: 'Why Southeast Asia for Muslim Travelers',
@@ -134,11 +126,13 @@ export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
   const { slug } = await params;
-  const post = POSTS[slug];
-  if (!post) return { title: 'Article Not Found — UTUBooking' };
+  if (!POSTS[slug]) return { title: 'Article Not Found — UTUBooking' };
+  const t = await getTranslations('blog');
+  const idx = SLUG_INDEX[slug];
+  const title = idx ? t(`post${idx}Title` as Parameters<typeof t>[0]) : slug;
   return {
-    title: `${post.title} — UTUBooking Blog`,
-    description: post.sections[0]?.body.slice(0, 155),
+    title: `${title} — UTUBooking Blog`,
+    description: POSTS[slug].sections[0]?.body.slice(0, 155),
   };
 }
 
@@ -155,6 +149,15 @@ export default async function BlogPostPage(
   const post = POSTS[slug];
   if (!post) notFound();
 
+  const t = await getTranslations('blog');
+  const idx = SLUG_INDEX[slug];
+
+  // Use translated title/category/date/readTime when available; fall back to slug
+  const title    = idx ? t(`post${idx}Title`    as Parameters<typeof t>[0]) : slug;
+  const category = idx ? t(`post${idx}Category` as Parameters<typeof t>[0]) : '';
+  const date     = idx ? t(`post${idx}Date`     as Parameters<typeof t>[0]) : '';
+  const readTime = idx ? t(`post${idx}ReadTime` as Parameters<typeof t>[0]) : '';
+
   return (
     <div className="min-h-screen bg-slate-50">
 
@@ -168,46 +171,46 @@ export default async function BlogPostPage(
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Blog
+            {t('backToBlog')}
           </Link>
           <span className="inline-block bg-amber-400 text-emerald-900 text-xs font-semibold px-2.5 py-1 rounded-full mb-4">
-            {post.category}
+            {category}
           </span>
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-snug">{post.title}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-snug">{title}</h1>
           <div className="flex items-center gap-3 text-emerald-300 text-sm">
-            <span>{post.date}</span>
+            <span>{date}</span>
             <span className="w-1 h-1 rounded-full bg-emerald-500" />
-            <span>{post.readTime}</span>
+            <span>{readTime}</span>
           </div>
         </div>
       </section>
 
       {/* Article body */}
       <article className="max-w-3xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-8">
+        <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-8 space-y-8">
           {post.sections.map((section) => (
             <section key={section.heading}>
-              <h2 className="text-lg font-bold text-gray-900 mb-3">{section.heading}</h2>
-              <p className="text-gray-600 leading-relaxed text-base">{section.body}</p>
+              <h2 className="text-lg font-bold text-utu-text-primary mb-3">{section.heading}</h2>
+              <p className="text-utu-text-secondary leading-relaxed text-base">{section.body}</p>
             </section>
           ))}
         </div>
 
         {/* CTA */}
         <div className="mt-10 bg-emerald-900 rounded-2xl p-8 text-center">
-          <p className="text-emerald-200 text-sm font-semibold uppercase tracking-widest mb-2">Ready to travel?</p>
-          <h3 className="text-xl font-bold text-white mb-4">Book your next journey with UTUBooking</h3>
+          <p className="text-emerald-200 text-sm font-semibold uppercase tracking-widest mb-2">{t('readyToTravel')}</p>
+          <h3 className="text-xl font-bold text-white mb-4">{t('bookNextJourney')}</h3>
           <Link
-            href="/"
+            href="/hotels/search"
             className="inline-block bg-amber-400 hover:bg-amber-300 text-emerald-900 font-semibold text-sm px-6 py-2.5 rounded-full transition-colors"
           >
-            Search hotels and flights
+            {t('searchHotelsFlights')}
           </Link>
         </div>
 
         <div className="mt-8 text-center">
           <Link href="/blog" className="text-sm text-emerald-700 hover:underline font-medium">
-            Read more travel guides
+            {t('readMoreGuides')}
           </Link>
         </div>
       </article>

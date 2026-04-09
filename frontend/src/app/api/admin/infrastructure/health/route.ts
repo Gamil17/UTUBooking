@@ -216,7 +216,7 @@ async function probeRegion(region: Region): Promise<RegionHealth> {
       base.status = 'degraded';   // DB issue
     }
 
-  } catch (err) {
+  } catch {
     base.latencyMs = Date.now() - start;
     base.status    = 'unreachable';
   }

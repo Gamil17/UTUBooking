@@ -106,7 +106,7 @@ export default function PIPEDAPrivacyNotice({
       aria-labelledby="pipeda-title"
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-utu-bg-card rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
 
         {/* Header */}
         <div className="bg-red-700 rounded-t-2xl px-5 py-4 flex items-center gap-3">
@@ -123,7 +123,7 @@ export default function PIPEDAPrivacyNotice({
         {/* Content */}
         <div className="px-5 py-5 space-y-4">
 
-          <p className="text-sm text-gray-700">{t.intro}</p>
+          <p className="text-sm text-utu-text-secondary">{t.intro}</p>
 
           {/* Data stored in Canada */}
           <div className="flex gap-2 bg-green-50 rounded-xl px-3 py-2.5 border border-green-100">
@@ -133,13 +133,13 @@ export default function PIPEDAPrivacyNotice({
 
           {/* Purposes */}
           <div>
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+            <p className="text-xs font-semibold text-utu-text-secondary uppercase tracking-wide mb-2">
               {locale === 'fr' ? 'Finalités de traitement' : 'Why we collect your data'}
             </p>
             <ul className="space-y-1">
               {t.purposes.map((p, i) => (
-                <li key={i} className="flex gap-2 text-xs text-gray-600">
-                  <span className="text-gray-400 flex-shrink-0" aria-hidden="true">•</span>
+                <li key={i} className="flex gap-2 text-xs text-utu-text-secondary">
+                  <span className="text-utu-text-muted flex-shrink-0" aria-hidden="true">•</span>
                   {p}
                 </li>
               ))}
@@ -147,7 +147,7 @@ export default function PIPEDAPrivacyNotice({
           </div>
 
           {/* Third parties */}
-          <p className="text-xs text-gray-500">{t.thirdParty}</p>
+          <p className="text-xs text-utu-text-muted">{t.thirdParty}</p>
 
           {/* Quebec Law 25 additional disclosure */}
           {isQuebec && (
@@ -166,9 +166,9 @@ export default function PIPEDAPrivacyNotice({
           )}
 
           {/* Rights + Privacy Officer */}
-          <div className="border-t border-gray-100 pt-3 space-y-1">
-            <p className="text-xs text-gray-500">{t.rights}</p>
-            <p className="text-xs text-gray-500 font-medium">{t.officer}</p>
+          <div className="border-t border-utu-border-default pt-3 space-y-1">
+            <p className="text-xs text-utu-text-muted">{t.rights}</p>
+            <p className="text-xs text-utu-text-muted font-medium">{t.officer}</p>
           </div>
         </div>
 
@@ -187,7 +187,7 @@ export default function PIPEDAPrivacyNotice({
             <button
               type="button"
               onClick={onSettings}
-              className="w-full border border-gray-200 text-gray-700 rounded-xl py-2.5 text-sm hover:bg-gray-50 min-h-[44px]"
+              className="w-full border border-utu-border-default text-utu-text-secondary rounded-xl py-2.5 text-sm hover:bg-utu-bg-muted min-h-[44px]"
             >
               {t.manage}
             </button>

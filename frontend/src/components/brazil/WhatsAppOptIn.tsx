@@ -3,6 +3,9 @@
 /**
  * WhatsAppOptIn — Brazil
  *
+ * EXCEPTION: bg-[#25D366] and hover:bg-[#128C7E] are WhatsApp's official brand colors.
+ * Per WhatsApp brand guidelines these must not be replaced with design system tokens.
+ * Reference: https://developers.facebook.com/docs/whatsapp/brand
  * Allows Brazilian users to subscribe to WhatsApp marketing messages
  * (Ramadan greetings, Umrah price alerts, booking confirmations).
  *
@@ -37,7 +40,10 @@ export default function WhatsAppOptIn({ countryCode, authToken }: Props) {
   useEffect(() => {
     if (countryCode !== 'BR') return;
     const d = localStorage.getItem('wa_optin_dismissed');
-    if (!d) setDismissed(false);
+    if (!d) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reads localStorage (SSR-unavailable), must run after hydration
+      setDismissed(false);
+    }
   }, [countryCode]);
 
   if (countryCode !== 'BR' || dismissed) return null;
@@ -115,7 +121,7 @@ export default function WhatsAppOptIn({ countryCode, authToken }: Props) {
 
   return (
     <div
-      className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 bg-white border border-gray-200 rounded-2xl shadow-xl z-50"
+      className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 bg-utu-bg-card border border-utu-border-default rounded-2xl shadow-xl z-50"
       role="dialog"
       aria-labelledby="wa-optin-title"
     >
@@ -136,18 +142,18 @@ export default function WhatsAppOptIn({ countryCode, authToken }: Props) {
 
       {/* Body */}
       <div className="p-4 space-y-3">
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-utu-text-secondary">
           Receba no WhatsApp: preços especiais para hotéis perto do Haram,
           alertas da temporada de Umrah e saudações de Ramadan. 🕌
         </p>
 
         {/* Phone input */}
         <div>
-          <label htmlFor="wa-phone" className="block text-xs font-medium text-gray-700 mb-1">
+          <label htmlFor="wa-phone" className="block text-xs font-medium text-utu-text-secondary mb-1">
             Número de WhatsApp
           </label>
           <div className="flex gap-2">
-            <span className="inline-flex items-center px-2.5 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-xs">
+            <span className="inline-flex items-center px-2.5 rounded-l-lg border border-r-0 border-utu-border-strong bg-utu-bg-muted text-utu-text-muted text-xs">
               🇧🇷 +55
             </span>
             <input
@@ -158,7 +164,7 @@ export default function WhatsAppOptIn({ countryCode, authToken }: Props) {
               placeholder="(11) 99999-8888"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="flex-1 rounded-r-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] min-h-[44px]"
+              className="flex-1 rounded-r-lg border border-utu-border-strong px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#25D366] min-h-[44px]"
               aria-required="true"
             />
           </div>
@@ -173,7 +179,7 @@ export default function WhatsAppOptIn({ countryCode, authToken }: Props) {
             className="mt-0.5 accent-[#25D366]"
             aria-required="true"
           />
-          <span className="text-xs text-gray-500 leading-relaxed">
+          <span className="text-xs text-utu-text-muted leading-relaxed">
             Concordo em receber mensagens de marketing pelo WhatsApp.
             Posso cancelar a qualquer momento respondendo{' '}
             <strong>PARAR</strong>. (LGPD Art. 7)
@@ -195,7 +201,7 @@ export default function WhatsAppOptIn({ countryCode, authToken }: Props) {
           {state === 'loading' ? 'Inscrevendo…' : 'Quero receber ofertas'}
         </button>
 
-        <p className="text-[10px] text-gray-400 text-center">
+        <p className="text-[10px] text-utu-text-muted text-center">
           Apenas para usuários no Brasil. Dados protegidos pela LGPD.
         </p>
       </div>

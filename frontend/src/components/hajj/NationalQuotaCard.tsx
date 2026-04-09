@@ -77,7 +77,7 @@ export function NationalQuotaCard({ countryCode, year, className }: Props) {
 
   const [state, setState]   = useState<LoadState>('idle');
   const [data, setData]     = useState<QuotaStatus | null>(null);
-  const [errMsg, setErrMsg] = useState<string>('');
+  const [, setErrMsg] = useState<string>('');
 
   const fetchQuota = useCallback(async () => {
     setState('loading');
@@ -147,7 +147,6 @@ export function NationalQuotaCard({ countryCode, year, className }: Props) {
           onClick={fetchQuota}
           aria-label={t('retry')}
           type="button"
-          minHeight={44}
         >
           {t('retry')}
         </button>

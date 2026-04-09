@@ -54,6 +54,8 @@ export default async function Footer() {
         { label: t('carRentals'),    href: '/?tab=cars' },
         { label: t('umrahPackages'), href: '/umrah-packages' },
         { label: t('hajjServices'),  href: '/hajj-services' },
+        { label: t('loyalty'),       href: '/loyalty' },
+        { label: t('promoCodes'),    href: '/promo-codes' },
         { label: t('travelGuides'),  href: '/blog' },
       ],
     },
@@ -89,7 +91,7 @@ export default async function Footer() {
   ];
 
   return (
-    <footer className="bg-gray-950 text-gray-400">
+    <footer className="bg-gray-950 text-utu-text-muted"> {/* EXCEPTION: bg-gray-950 / border-gray-800 — intentional dark footer; not a page surface */}
 
       {/* Main grid */}
       <div className="max-w-6xl mx-auto px-4 py-14">
@@ -101,7 +103,7 @@ export default async function Footer() {
               </h3>
               <ul className="space-y-3">
                 {col.links.map((link) => (
-                  <li key={link.href}>
+                  <li key={`${link.href}-${link.label}`}>
                     <Link
                       href={link.href}
                       className="text-sm hover:text-white transition-colors"
@@ -121,13 +123,13 @@ export default async function Footer() {
 
       {/* Bottom bar */}
       <div className="max-w-6xl mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="text-xs text-gray-500 text-center sm:text-start">
+        <div className="text-xs text-utu-text-muted text-center sm:text-start">
           <p>{t('copyright', { year })}</p>
           <p className="mt-0.5 text-start">{t('license')}</p>
         </div>
 
         {/* Social icons */}
-        <div className="flex items-center gap-4 text-gray-500">
+        <div className="flex items-center gap-4 text-utu-text-muted">
           <a href="https://www.facebook.com/UTUBooking"          target="_blank" rel="noopener noreferrer" aria-label="Facebook"    className="hover:text-white transition-colors"><IconFacebook /></a>
           <a href="https://twitter.com/UTUBooking"               target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)" className="hover:text-white transition-colors"><IconX /></a>
           <a href="https://www.instagram.com/utubooking"         target="_blank" rel="noopener noreferrer" aria-label="Instagram"   className="hover:text-white transition-colors"><IconInstagram /></a>

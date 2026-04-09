@@ -3,6 +3,9 @@
 /**
  * CanadaPaymentSelector
  *
+ * EXCEPTION: bg-[#D32F2F] is Interac's official brand red (RAL 3020).
+ * Per Interac brand guidelines this color is mandatory for Interac e-Transfer UI.
+ * Do not replace with design system tokens or Tailwind red-* classes.
  * Payment selector for Canadian users (Phase 11).
  * Two methods:
  *   1. Interac Online (primary) — redirect-based via Bambora/Worldline
@@ -159,7 +162,7 @@ export default function CanadaPaymentSelector({
   const tabCls = (active: boolean) =>
     [
       'flex-1 py-2.5 text-sm font-semibold rounded-xl transition-colors min-h-[44px]',
-      active ? 'bg-[#D32F2F] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100',
+      active ? 'bg-[#D32F2F] text-white shadow-sm' : 'text-utu-text-secondary hover:bg-utu-bg-muted',
     ].join(' ');
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -174,7 +177,7 @@ export default function CanadaPaymentSelector({
       </div>
 
       {/* Method tabs */}
-      <div className="bg-gray-100 rounded-2xl p-1 flex gap-1">
+      <div className="bg-utu-bg-muted rounded-2xl p-1 flex gap-1">
         <button
           type="button"
           onClick={() => switchMethod('interac')}
@@ -208,9 +211,9 @@ export default function CanadaPaymentSelector({
                   </span>
                   <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">Online</span>
                 </div>
-                <p className="text-sm font-semibold text-gray-800">{t.interacTitle}</p>
-                <p className="text-xs text-gray-600">{t.interacSubtitle}</p>
-                <p className="text-xs text-gray-500 pt-1">{t.bankList}</p>
+                <p className="text-sm font-semibold text-utu-text-primary">{t.interacTitle}</p>
+                <p className="text-xs text-utu-text-secondary">{t.interacSubtitle}</p>
+                <p className="text-xs text-utu-text-muted pt-1">{t.bankList}</p>
               </div>
 
               <button
@@ -229,14 +232,14 @@ export default function CanadaPaymentSelector({
           )}
 
           {phase === 'loading' && (
-            <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+            <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
               <span className="w-5 h-5 border-2 border-red-200 border-t-[#D32F2F] rounded-full animate-spin" />
               <span className="text-sm">{t.connecting}</span>
             </div>
           )}
 
           {phase === 'redirecting' && (
-            <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+            <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
               <span className="w-5 h-5 border-2 border-red-200 border-t-[#D32F2F] rounded-full animate-spin" />
               <span className="text-sm">{t.redirecting}</span>
             </div>
@@ -256,8 +259,8 @@ export default function CanadaPaymentSelector({
 
       {/* ── Card (Stripe placeholder) ────────────────────────────────────────── */}
       {method === 'card' && (
-        <div className="bg-gray-50 rounded-2xl px-4 py-5 text-sm text-gray-500 text-center border border-gray-200">
-          <p className="font-medium text-gray-700 mb-1">{t.card}</p>
+        <div className="bg-utu-bg-muted rounded-2xl px-4 py-5 text-sm text-utu-text-muted text-center border border-utu-border-default">
+          <p className="font-medium text-utu-text-secondary mb-1">{t.card}</p>
           <p className="text-xs">{t.cardInfo}</p>
           <p className="text-xs mt-1">{t.cardSub}</p>
         </div>
@@ -275,14 +278,14 @@ export default function CanadaPaymentSelector({
         <button
           type="button"
           onClick={onCancel}
-          className="w-full border border-gray-300 text-gray-700 rounded-xl py-3 text-sm font-medium hover:bg-gray-50 min-h-[44px]"
+          className="w-full border border-utu-border-strong text-utu-text-secondary rounded-xl py-3 text-sm font-medium hover:bg-utu-bg-muted min-h-[44px]"
         >
           {t.cancel}
         </button>
       )}
 
       {/* Trust badge */}
-      <p className="text-xs text-center text-gray-400">
+      <p className="text-xs text-center text-utu-text-muted">
         {method === 'interac' ? t.trust_interac : t.trust_card}
       </p>
     </div>

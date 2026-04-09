@@ -19,13 +19,13 @@ export default function ContactSearch({ placeholder, btnLabel }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center bg-white rounded-xl overflow-hidden shadow-lg">
+    <form onSubmit={handleSubmit} className="flex items-center bg-utu-bg-card rounded-xl overflow-hidden shadow-lg">
       <input
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
-        className="flex-1 px-4 py-3 text-sm text-gray-800 outline-none"
+        className="flex-1 px-4 py-3 text-sm text-utu-text-primary outline-none"
       />
       <button
         type="submit"

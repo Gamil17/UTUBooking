@@ -3,6 +3,8 @@
 /**
  * USAPaymentSelector
  *
+ * EXCEPTION: bg-[#003087] and bg-[#FFC439] are PayPal's official brand colors.
+ * bg-[#1A3055] is Stripe's brand navy. Do not replace with design system tokens.
  * Payment selector for US users (Phase 10).
  * Three methods:
  *   1. Card (Stripe)    — dispatches `utu:switch-to-stripe` CustomEvent; PaymentSelector mounts StripeElement
@@ -190,7 +192,7 @@ export default function USAPaymentSelector({
   const tabCls = (active: boolean) =>
     [
       'flex-1 py-2.5 text-sm font-semibold rounded-xl transition-colors min-h-[44px]',
-      active ? 'bg-[#003087] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100',
+      active ? 'bg-[#003087] text-white shadow-sm' : 'text-utu-text-secondary hover:bg-utu-bg-muted',
     ].join(' ');
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -204,7 +206,7 @@ export default function USAPaymentSelector({
       </div>
 
       {/* Method tabs */}
-      <div className="bg-gray-100 rounded-2xl p-1 flex gap-1">
+      <div className="bg-utu-bg-muted rounded-2xl p-1 flex gap-1">
         <button
           type="button"
           onClick={() => switchMethod('card')}
@@ -235,8 +237,8 @@ export default function USAPaymentSelector({
 
       {/* ── Card (placeholder — PaymentSelector will mount StripeElement) ──── */}
       {method === 'card' && (
-        <div className="bg-gray-50 rounded-2xl px-4 py-5 text-sm text-gray-500 text-center border border-gray-200">
-          <p className="font-medium text-gray-700 mb-1">Credit / Debit Card</p>
+        <div className="bg-utu-bg-muted rounded-2xl px-4 py-5 text-sm text-utu-text-muted text-center border border-utu-border-default">
+          <p className="font-medium text-utu-text-secondary mb-1">Credit / Debit Card</p>
           <p className="text-xs">Secure card payment powered by Stripe.</p>
           <p className="text-xs mt-1">Apple Pay and Google Pay also available.</p>
         </div>
@@ -251,7 +253,7 @@ export default function USAPaymentSelector({
               <div className="bg-blue-50 rounded-xl px-4 py-3 text-sm text-blue-800 space-y-1">
                 <p className="font-semibold">Pay with PayPal</p>
                 <p className="text-xs text-blue-600">
-                  You'll be redirected to PayPal to sign in and confirm your payment.
+                  You&apos;ll be redirected to PayPal to sign in and confirm your payment.
                   Fast, secure, and buyer-protected.
                 </p>
               </div>
@@ -270,21 +272,21 @@ export default function USAPaymentSelector({
           )}
 
           {phase === 'loading' && (
-            <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+            <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
               <span className="w-5 h-5 border-2 border-[#FFC439]/40 border-t-[#FFC439] rounded-full animate-spin" />
               <span className="text-sm">Connecting to PayPal…</span>
             </div>
           )}
 
           {phase === 'redirecting' && (
-            <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+            <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
               <span className="w-5 h-5 border-2 border-blue-200 border-t-[#003087] rounded-full animate-spin" />
               <span className="text-sm">Redirecting to PayPal…</span>
             </div>
           )}
 
           {phase === 'capturing' && (
-            <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+            <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
               <span className="w-5 h-5 border-2 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />
               <span className="text-sm">Confirming payment…</span>
             </div>
@@ -338,21 +340,21 @@ export default function USAPaymentSelector({
           )}
 
           {phase === 'loading' && (
-            <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+            <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
               <span className="w-5 h-5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
               <span className="text-sm">Connecting to Affirm…</span>
             </div>
           )}
 
           {phase === 'redirecting' && (
-            <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+            <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
               <span className="w-5 h-5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
               <span className="text-sm">Redirecting to Affirm checkout…</span>
             </div>
           )}
 
           {phase === 'capturing' && (
-            <div className="flex items-center justify-center py-8 gap-3 text-gray-500">
+            <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
               <span className="w-5 h-5 border-2 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />
               <span className="text-sm">Confirming your Affirm plan…</span>
             </div>
@@ -363,7 +365,7 @@ export default function USAPaymentSelector({
               <p className="text-2xl mb-1">✓</p>
               <p className="text-base font-semibold text-emerald-800">Affirm plan confirmed</p>
               <p className="text-xs text-emerald-600 mt-1">
-                You'll receive a payment schedule from Affirm by email.
+                You&apos;ll receive a payment schedule from Affirm by email.
               </p>
             </div>
           )}
@@ -382,14 +384,14 @@ export default function USAPaymentSelector({
         <button
           type="button"
           onClick={onCancel}
-          className="w-full border border-gray-300 text-gray-700 rounded-xl py-3 text-sm font-medium hover:bg-gray-50 min-h-[44px]"
+          className="w-full border border-utu-border-strong text-utu-text-secondary rounded-xl py-3 text-sm font-medium hover:bg-utu-bg-muted min-h-[44px]"
         >
           Cancel
         </button>
       )}
 
       {/* Trust badge */}
-      <p className="text-xs text-center text-gray-400">
+      <p className="text-xs text-center text-utu-text-muted">
         {method === 'affirm'
           ? 'Buy Now, Pay Later by Affirm. Subject to eligibility. US only.'
           : method === 'paypal'

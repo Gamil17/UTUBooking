@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import { LOCALE_CURRENCY } from '@/i18n/config';
 import { useQuery } from '@tanstack/react-query';
 import type { FlightOffer } from '@/lib/api';
 import FlightCard from '@/components/flights/FlightCard';
@@ -37,20 +38,20 @@ function buildQS(p: SearchBarParams) {
 // ─── Skeleton card ────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3 animate-pulse">
+    <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-4 mb-3 animate-pulse">
       <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-xl bg-gray-200 shrink-0" />
+        <div className="w-10 h-10 rounded-xl bg-utu-border-default shrink-0" />
         <div className="flex-1 space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-4 bg-gray-200 rounded" />
-            <div className="flex-1 h-2 bg-gray-100 rounded" />
-            <div className="w-10 h-4 bg-gray-200 rounded" />
+            <div className="w-10 h-4 bg-utu-border-default rounded" />
+            <div className="flex-1 h-2 bg-utu-bg-muted rounded" />
+            <div className="w-10 h-4 bg-utu-border-default rounded" />
           </div>
-          <div className="w-2/3 h-2 bg-gray-100 rounded" />
+          <div className="w-2/3 h-2 bg-utu-bg-muted rounded" />
         </div>
         <div className="shrink-0 flex flex-col items-end gap-2">
-          <div className="w-20 h-5 bg-gray-200 rounded" />
-          <div className="w-16 h-8 bg-gray-200 rounded-xl" />
+          <div className="w-20 h-5 bg-utu-border-default rounded" />
+          <div className="w-16 h-8 bg-utu-border-default rounded-xl" />
         </div>
       </div>
     </div>
@@ -61,10 +62,10 @@ function SkeletonCard() {
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="text-center py-20">
-      <svg className="w-14 h-14 mx-auto text-gray-200 mb-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <svg className="w-14 h-14 mx-auto text-utu-border-default mb-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
       </svg>
-      <p className="text-gray-400 text-sm">{message}</p>
+      <p className="text-utu-text-muted text-sm">{message}</p>
     </div>
   );
 }
@@ -73,9 +74,10 @@ function EmptyState({ message }: { message: string }) {
 export default function FlightsSearchPage() {
   const rawSP  = useSearchParams();
   const router = useRouter();
-  const locale = useLocale();
-  const t      = useTranslations('flightResults');
-  const tSearch = useTranslations('search');
+  const locale   = useLocale();
+  const currency = LOCALE_CURRENCY[locale as keyof typeof LOCALE_CURRENCY] ?? 'SAR';
+  const t        = useTranslations('flightResults');
+  const tSearch  = useTranslations('search');
 
   const [searchParams, setSearchParams] = useState<SearchBarParams>(() => parseParams(rawSP));
   const [sortBy,   setSortBy]   = useState<SortKey>('recommended');
@@ -92,7 +94,7 @@ export default function FlightsSearchPage() {
         date:        searchParams.depart,
         adults:      String(searchParams.adults),
         cabinClass:  searchParams.cabin.toUpperCase().replace('_', '_'),
-        currency:    'SAR',
+        currency,
         maxOffers:   '50',
         ...(searchParams.tripType === 'roundtrip' && searchParams.return
           ? { returnDate: searchParams.return } : {}),
@@ -104,12 +106,12 @@ export default function FlightsSearchPage() {
     enabled: !!(searchParams.from && searchParams.to && searchParams.depart),
   });
 
-  // Initialise filters when data first loads
-  useEffect(() => {
-    if (data?.results?.length) {
-      setFilters(buildInitialFilters(data.results));
-    }
-  }, [data]);
+  // Derive default filters from data — user overrides layered on top via setFilters
+  const defaultFilters = useMemo(
+    () => (data?.results?.length ? buildInitialFilters(data.results) : null),
+    [data],
+  );
+  const effectiveFilters = filters ?? defaultFilters;
 
   // ── Tag computation ────────────────────────────────────────────────────
   const offerTags = useMemo(() => {
@@ -127,21 +129,21 @@ export default function FlightsSearchPage() {
 
   // ── Filtered + sorted results ──────────────────────────────────────────
   const displayedOffers = useMemo(() => {
-    if (!data?.results || !filters) return [];
+    if (!data?.results || !effectiveFilters) return [];
 
-    let result = data.results.filter((o) => {
-      if (filters.stops.size > 0) {
+    const result = data.results.filter((o) => {
+      if (effectiveFilters.stops.size > 0) {
         const k = o.stops >= 2 ? 2 : o.stops as 0 | 1 | 2;
-        if (!filters.stops.has(k)) return false;
+        if (!effectiveFilters.stops.has(k)) return false;
       }
-      if (o.price < filters.priceMin || o.price > filters.priceMax) return false;
-      if (filters.departureBlocks.size > 0) {
+      if (o.price < effectiveFilters.priceMin || o.price > effectiveFilters.priceMax) return false;
+      if (effectiveFilters.departureBlocks.size > 0) {
         const block = Math.floor(new Date(o.departureAt).getHours() / 6) as 0 | 1 | 2 | 3;
-        if (!filters.departureBlocks.has(block)) return false;
+        if (!effectiveFilters.departureBlocks.has(block)) return false;
       }
-      if (filters.airlines.size > 0 && !filters.airlines.has(o.airlineCode)) return false;
-      if (o.durationMinutes > filters.maxDuration) return false;
-      if (filters.baggageOnly && !o.baggageIncluded) return false;
+      if (effectiveFilters.airlines.size > 0 && !effectiveFilters.airlines.has(o.airlineCode)) return false;
+      if (o.durationMinutes > effectiveFilters.maxDuration) return false;
+      if (effectiveFilters.baggageOnly && !o.baggageIncluded) return false;
       return true;
     });
 
@@ -152,7 +154,7 @@ export default function FlightsSearchPage() {
         new Date(a.departureAt).getTime() - new Date(b.departureAt).getTime());
       default:           return result;
     }
-  }, [data, filters, sortBy]);
+  }, [data, effectiveFilters, sortBy]);
 
   // ── Handlers ───────────────────────────────────────────────────────────
   const handleSearch = useCallback((p: SearchBarParams) => {
@@ -196,7 +198,7 @@ export default function FlightsSearchPage() {
     <div className="min-h-screen bg-slate-50">
 
       {/* ── Sticky search bar ──────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white shadow-sm border-b border-slate-100">
+      <div className="sticky top-0 z-30 bg-utu-bg-card shadow-sm border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4">
           <FlightSearchBar
             initialParams={searchParams}
@@ -212,16 +214,16 @@ export default function FlightsSearchPage() {
 
           {/* ── Left sidebar (desktop) ──────────────────────────────────── */}
           <aside className="hidden lg:block w-72 shrink-0 sticky top-[5.5rem]">
-            {data?.results && filters ? (
+            {data?.results && effectiveFilters ? (
               <FlightFilters
                 offers={data.results}
-                filters={filters}
+                filters={effectiveFilters}
                 onChange={setFilters}
               />
             ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse space-y-3">
+              <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-5 animate-pulse space-y-3">
                 {[72, 56, 88, 48].map((w, i) => (
-                  <div key={i} className={`h-3 bg-gray-200 rounded`} style={{ width: `${w}%` }} />
+                  <div key={i} className={`h-3 bg-utu-border-default rounded`} style={{ width: `${w}%` }} />
                 ))}
               </div>
             )}
@@ -232,7 +234,7 @@ export default function FlightsSearchPage() {
 
             {/* Sort bar */}
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-100 shadow-sm p-1">
+              <div className="flex items-center gap-1 bg-utu-bg-card rounded-xl border border-utu-border-default shadow-sm p-1">
                 {SORT_TABS.map(({ key, label }) => (
                   <button
                     key={key}
@@ -240,7 +242,7 @@ export default function FlightsSearchPage() {
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                       sortBy === key
                         ? 'bg-emerald-700 text-white'
-                        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                        : 'text-utu-text-muted hover:text-utu-text-primary hover:bg-utu-bg-muted'
                     }`}
                   >
                     {label}
@@ -251,13 +253,13 @@ export default function FlightsSearchPage() {
               {/* Result count + mobile filter button */}
               <div className="flex items-center gap-3">
                 {!isFetching && data && (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-utu-text-muted">
                     {displayedOffers.length} / {data.count ?? data.results.length} {t('resultsCount').replace('{count}', '')}
                   </span>
                 )}
                 <button
                   onClick={() => setFiltersOpen(true)}
-                  className="lg:hidden flex items-center gap-1.5 text-xs font-semibold border border-gray-200 rounded-xl px-3 py-1.5 bg-white hover:bg-gray-50"
+                  className="lg:hidden flex items-center gap-1.5 text-xs font-semibold border border-utu-border-default rounded-xl px-3 py-1.5 bg-utu-bg-card hover:bg-utu-bg-muted"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 12h10M10 20h4" />
@@ -313,10 +315,10 @@ export default function FlightsSearchPage() {
           <div className="absolute inset-0 bg-black/40" />
           <div className="absolute bottom-0 left-0 right-0 bg-slate-50 rounded-t-2xl max-h-[85vh] overflow-y-auto p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-gray-900">{t('filters')}</h2>
+              <h2 className="font-bold text-utu-text-primary">{t('filters')}</h2>
               <button
                 onClick={() => setFiltersOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-utu-bg-muted text-utu-text-muted hover:bg-utu-border-default"
               >
                 ✕
               </button>

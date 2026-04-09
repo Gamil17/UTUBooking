@@ -1,3 +1,4 @@
+import { getTranslations }                from 'next-intl/server';
 import { RevParWidget }                  from '@/components/admin/RevParWidget';
 import { ConversionFunnelWidget }         from '@/components/admin/ConversionFunnelWidget';
 import { PricingRecommendationsWidget }   from '@/components/admin/PricingRecommendationsWidget';
@@ -10,14 +11,14 @@ import { PricingRecommendationsWidget }   from '@/components/admin/PricingRecomm
  *  2. Conversion funnel by country + device
  *  3. AI pricing recommendations with Accept / Reject actions
  */
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  const t = await getTranslations('admin');
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#111827]">Revenue Optimization</h1>
-        <p className="mt-1 text-sm text-[#6B7280]">
-          AI-powered pricing insights for Makkah &amp; Madinah hotels · Updated every 6 hours
-        </p>
+        <h1 className="text-2xl font-bold text-utu-text-primary">{t('revenueOptimization')}</h1>
+        <p className="mt-1 text-sm text-utu-text-muted">{t('revenueOptimizationSubtitle')}</p>
       </div>
 
       {/* Row 1 — RevPAR */}

@@ -16,17 +16,6 @@ import ConditionalHeader from '@/components/ConditionalHeader';
 import './globals.css';
 import '@/styles/urdu.css';
 import '@/styles/hindi.css';
-import '@fontsource/inter/400.css';
-import '@fontsource/inter/500.css';
-import '@fontsource/inter/600.css';
-import '@fontsource/inter/700.css';
-import '@fontsource/noto-sans-arabic/400.css';
-import '@fontsource/noto-sans-arabic/600.css';
-import '@fontsource/noto-nastaliq-urdu/400.css';
-import '@fontsource/noto-sans-devanagari/400.css';
-import '@fontsource/noto-sans-devanagari/600.css';
-import '@fontsource/vazirmatn/400.css';
-import '@fontsource/vazirmatn/600.css';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -118,8 +107,23 @@ export default async function RootLayout({
   return (
     <html lang={lang} dir={dir} suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#10B981" />
+        <meta name="theme-color" content="#1E3A5F" />
         <link rel="apple-touch-icon" href="/icons/icon-180x180.png" />
+        {/* CJK & Thai fonts via Google Fonts CDN.
+            NOT loaded via @fontsource CSS imports in globals.css — each CJK
+            fontsource package contains ~124 @font-face subsets (~250 file refs
+            per weight) which overwhelms Turbopack's dev-mode watcher and causes
+            "An unexpected Turbopack error". Google Fonts serves the same
+            optimized unicode-range subsets without that overhead.
+            eslint-disable-next-line is intentional: next/font cannot replace
+            multi-family CJK+Thai subsets without triggering Turbopack watcher OOM. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+SC:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Noto+Sans+Thai:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body
         className={`${inter.variable} ${notoKufiArabic.variable} antialiased`}

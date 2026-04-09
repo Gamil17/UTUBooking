@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import { SITE_CONFIG } from '@/lib/siteConfig';
 export const metadata: Metadata = {
   title: 'Careers — UTUBooking | AMEC Solutions',
   description: 'Join the team building the best travel platform for Muslim travelers. Explore open roles at UTUBooking.com.',
@@ -36,15 +37,15 @@ export default async function CareersPage() {
       </section>
 
       {/* Perks */}
-      <section className="bg-white py-14 px-4 border-b border-gray-100">
+      <section className="bg-utu-bg-card py-14 px-4 border-b border-utu-border-default">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-xl font-bold text-gray-900 text-center mb-8">{t('perksHeading')}</h2>
+          <h2 className="text-xl font-bold text-utu-text-primary text-center mb-8">{t('perksHeading')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
             {perks.map((p) => (
-              <div key={p.title} className="bg-slate-50 rounded-xl p-5 border border-gray-100">
+              <div key={p.title} className="bg-slate-50 rounded-xl p-5 border border-utu-border-default">
                 <span className="text-2xl" aria-hidden="true">{p.icon}</span>
-                <h3 className="font-semibold text-gray-900 mt-2 mb-1">{p.title}</h3>
-                <p className="text-sm text-gray-500">{p.desc}</p>
+                <h3 className="font-semibold text-utu-text-primary mt-2 mb-1">{p.title}</h3>
+                <p className="text-sm text-utu-text-muted">{p.desc}</p>
               </div>
             ))}
           </div>
@@ -54,19 +55,19 @@ export default async function CareersPage() {
       {/* Open roles */}
       <section className="py-14 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">{t('openingsHeading')}</h2>
+          <h2 className="text-xl font-bold text-utu-text-primary mb-6">{t('openingsHeading')}</h2>
           <div className="space-y-3">
             {openings.map((role) => (
               <div
                 key={role.title}
-                className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="bg-utu-bg-card rounded-xl border border-utu-border-default shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div>
-                  <h3 className="font-semibold text-gray-900">{role.title}</h3>
+                  <h3 className="font-semibold text-utu-text-primary">{role.title}</h3>
                   <div className="flex flex-wrap gap-2 mt-1.5">
                     <span className="text-xs bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full">{role.team}</span>
-                    <span className="text-xs text-gray-400">{role.location}</span>
-                    <span className="text-xs text-gray-400">{role.type}</span>
+                    <span className="text-xs text-utu-text-muted">{role.location}</span>
+                    <span className="text-xs text-utu-text-muted">{role.type}</span>
                   </div>
                 </div>
                 <Link
@@ -79,10 +80,10 @@ export default async function CareersPage() {
             ))}
           </div>
 
-          <p className="text-sm text-gray-500 mt-6 text-center">
+          <p className="text-sm text-utu-text-muted mt-6 text-center">
             {t('noFitText')}{' '}
-            <a href="mailto:careers@utubooking.com" className="text-emerald-700 underline">
-              careers@utubooking.com
+            <a href={`mailto:${SITE_CONFIG.careersEmail}`} className="text-emerald-700 underline">
+              {SITE_CONFIG.careersEmail}
             </a>
           </p>
         </div>

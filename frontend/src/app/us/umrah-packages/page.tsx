@@ -20,7 +20,7 @@ export default function UmrahPackagesPage() {
     <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
 
       {/* ── Breadcrumb ──────────────────────────────────────────────── */}
-      <nav aria-label="Breadcrumb" className="text-xs text-gray-400">
+      <nav aria-label="Breadcrumb" className="text-xs text-utu-text-muted">
         <Link href="/us/muslim-guide" className="hover:underline">US Muslim Guide</Link>
         {' / '}
         <span>Umrah Packages</span>
@@ -31,11 +31,11 @@ export default function UmrahPackagesPage() {
         <div className="flex items-center gap-3">
           <span className="text-4xl" aria-hidden="true">🕌</span>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Umrah Packages from the US</h1>
-            <p className="text-sm text-gray-500">Flight + halal-friendly hotel · Makkah &amp; Madinah</p>
+            <h1 className="text-2xl font-bold text-utu-text-primary">Umrah Packages from the US</h1>
+            <p className="text-sm text-utu-text-muted">Flight + halal-friendly hotel · Makkah &amp; Madinah</p>
           </div>
         </div>
-        <p className="text-sm text-gray-600 leading-relaxed">
+        <p className="text-sm text-utu-text-secondary leading-relaxed">
           Search and compare complete Umrah travel packages — round-trip flight from your nearest
           US city paired with a verified halal-friendly hotel near the Haram in Makkah. All packages
           connect through a Gulf or European hub (16–22 hours total journey time).
@@ -51,7 +51,7 @@ export default function UmrahPackagesPage() {
               {iata}
             </span>
           ))}
-          <span className="text-xs text-gray-400 self-center">→ JED</span>
+          <span className="text-xs text-utu-text-muted self-center">→ JED</span>
         </div>
       </header>
 
@@ -59,8 +59,8 @@ export default function UmrahPackagesPage() {
       <HajjPackageBuilder />
 
       {/* ── Why book a package? ─────────────────────────────────────── */}
-      <section aria-labelledby="why-heading" className="rounded-2xl bg-gray-50 border border-gray-100 p-6 space-y-4">
-        <h2 id="why-heading" className="text-base font-semibold text-gray-900">
+      <section aria-labelledby="why-heading" className="rounded-2xl bg-utu-bg-muted border border-utu-border-default p-6 space-y-4">
+        <h2 id="why-heading" className="text-base font-semibold text-utu-text-primary">
           Why Book a Package?
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
@@ -71,8 +71,8 @@ export default function UmrahPackagesPage() {
           ].map((item) => (
             <div key={item.title} className="flex flex-col gap-1">
               <span className="text-2xl">{item.icon}</span>
-              <p className="font-semibold text-gray-800">{item.title}</p>
-              <p className="text-gray-500 text-xs leading-relaxed">{item.body}</p>
+              <p className="font-semibold text-utu-text-primary">{item.title}</p>
+              <p className="text-utu-text-muted text-xs leading-relaxed">{item.body}</p>
             </div>
           ))}
         </div>

@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const AUTH_SERVICE = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+const AUTH_SERVICE = process.env.AUTH_SERVICE_URL ?? 'http://localhost:3001';
 
 export async function POST(req: NextRequest) {
   try {
     // Forward the refresh-token cookie so the auth service can invalidate it
-    const cookie = req.headers.get('cookie') || '';
+    const cookie = req.headers.get('cookie') ?? '';
 
     const upstream = await fetch(`${AUTH_SERVICE}/api/auth/logout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', cookie },
+      signal: AbortSignal.timeout(5000),
     });
 
     const res = NextResponse.json({ ok: true }, { status: 200 });

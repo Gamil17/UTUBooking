@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export default function AdminLoginPage() {
+  const t = useTranslations('admin');
   const router = useRouter();
   const [token,   setToken]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,30 +24,30 @@ export default function AdminLoginPage() {
       if (res.ok) {
         router.replace('/admin');
       } else {
-        setError('Invalid admin token.');
+        setError(t('invalidToken'));
       }
     } catch {
-      setError('Connection error. Please try again.');
+      setError(t('connectionError'));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-utu-bg-muted flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2">
             <div className="w-9 h-9 bg-emerald-700 rounded-xl flex items-center justify-center">
               <span className="text-white font-black text-sm">U</span>
             </div>
-            <span className="font-black text-gray-900 text-lg">UTUBooking</span>
+            <span className="font-black text-utu-text-primary text-lg">UTUBooking</span>
           </div>
-          <p className="mt-2 text-sm text-gray-500">Revenue Admin</p>
+          <p className="mt-2 text-sm text-utu-text-muted">{t('revenueAdmin')}</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-          <h1 className="text-lg font-bold text-gray-900 mb-6">Admin Access</h1>
+        <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-8">
+          <h1 className="text-lg font-bold text-utu-text-primary mb-6">{t('adminAccess')}</h1>
 
           {error && (
             <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
@@ -55,8 +57,8 @@ export default function AdminLoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="token" className="block text-sm font-medium text-gray-700 mb-1">
-                Admin Token
+              <label htmlFor="token" className="block text-sm font-medium text-utu-text-secondary mb-1">
+                {t('adminToken')}
               </label>
               <input
                 id="token"
@@ -65,8 +67,8 @@ export default function AdminLoginPage() {
                 required
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
-                placeholder="Enter ADMIN_SECRET"
+                className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                placeholder={t('enterSecret')}
               />
             </div>
 
@@ -75,7 +77,7 @@ export default function AdminLoginPage() {
               disabled={!token || loading}
               className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60"
             >
-              {loading ? 'Authenticating…' : 'Access Dashboard'}
+              {loading ? t('authenticating') : t('accessDashboard')}
             </button>
           </form>
         </div>

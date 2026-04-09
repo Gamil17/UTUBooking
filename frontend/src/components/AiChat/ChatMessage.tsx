@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { ChatMessage as ChatMessageType } from './useChat';
 
 interface Props {
@@ -24,15 +25,14 @@ function renderText(text: string) {
 }
 
 function ToolPill({ name, done }: { name: string; done: boolean }) {
-  const label = name === 'search_hotels'
-    ? 'hotels'
-    : name === 'search_flights'
-    ? 'flights'
-    : 'trip';
+  const tc = useTranslations('common');
+  const label = done
+    ? (name === 'search_hotels' ? tc('foundHotels') : name === 'search_flights' ? tc('foundFlights') : tc('foundTrip'))
+    : (name === 'search_hotels' ? tc('searchingHotels') : name === 'search_flights' ? tc('searchingFlights') : tc('searchingTrip'));
 
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 me-1 mb-1">
-      {done ? '✅' : '🔍'} {done ? `Found ${label}` : `Searching ${label}…`}
+      {done ? '✅' : '🔍'} {label}
     </span>
   );
 }
@@ -81,11 +81,11 @@ export default function ChatMessage({ message, dir }: Props) {
             'px-3 py-2 rounded-2xl text-sm leading-relaxed',
             isUser
               ? 'bg-emerald-500 text-white rounded-br-sm'
-              : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm',
+              : 'bg-utu-bg-card text-utu-text-primary border border-utu-border-default rounded-bl-sm shadow-sm',
           ].join(' ')}
         >
           {message.pending && !message.content ? (
-            <span className="inline-flex gap-1 items-center text-gray-400">
+            <span className="inline-flex gap-1 items-center text-utu-text-muted">
               <span className="animate-bounce delay-0">•</span>
               <span className="animate-bounce delay-75">•</span>
               <span className="animate-bounce delay-150">•</span>
@@ -97,7 +97,7 @@ export default function ChatMessage({ message, dir }: Props) {
       </div>
 
       {isUser && (
-        <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-bold flex-shrink-0 ms-2 mt-0.5">
+        <div className="w-7 h-7 rounded-full bg-utu-border-default flex items-center justify-center text-utu-text-secondary text-xs font-bold flex-shrink-0 ms-2 mt-0.5">
           U
         </div>
       )}

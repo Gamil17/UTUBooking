@@ -20,11 +20,16 @@ interface Props {
  * request.ts will pick up the new locale on the next request.
  * Calls router.refresh() to re-render the current page with new messages.
  */
+// Outside component — avoids React Compiler "This value cannot be modified" on document.cookie
+function setNextLocaleCookie(lang: Lang) {
+  document.cookie = `NEXT_LOCALE=${lang};path=/;max-age=31536000;SameSite=Lax`;
+}
+
 export default function LanguageToggle({ current }: Props) {
   const router = useRouter();
 
   function handleSelect(lang: Lang) {
-    document.cookie = `NEXT_LOCALE=${lang};path=/;max-age=31536000;SameSite=Lax`;
+    setNextLocaleCookie(lang);
     router.refresh();
   }
 
@@ -32,7 +37,7 @@ export default function LanguageToggle({ current }: Props) {
     <div
       role="tablist"
       aria-label="Language selector"
-      className="flex items-center gap-0.5 rounded-lg bg-white/20 p-0.5"
+      className="flex items-center gap-0.5 rounded-lg bg-utu-bg-card/20 p-0.5"
     >
       {LANGS.map(({ value, label }) => {
         const active = current === value;
