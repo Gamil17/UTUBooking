@@ -1,12 +1,14 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 export default function AdminSignOut() {
   const t = useTranslations('admin');
+  const router = useRouter();
   async function handleSignOut() {
     await fetch('/api/admin/auth', { method: 'DELETE' });
-    window.location.href = '/admin/login';
+    router.push('/admin/login');
   }
 
   return (

@@ -21,6 +21,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface LGPDChoices {
   strictly_necessary: true;
@@ -230,7 +231,7 @@ export default function LGPDBanner({ countryCode }: Props) {
         {/* LGPD rights note */}
         <p className="text-xs text-utu-text-muted">
           Seus direitos: acesso, correção, exclusão e portabilidade dos dados (LGPD Art. 18).{' '}
-          <a href="/privacidade" className="text-green-700 underline">Política de privacidade</a> ·{' '}
+          <Link href="/privacy" className="text-green-700 underline">Política de privacidade</Link> ·{' '}
           <a href="https://www.anpd.gov.br" target="_blank" rel="noopener noreferrer" className="text-green-700 underline">ANPD</a>
         </p>
 

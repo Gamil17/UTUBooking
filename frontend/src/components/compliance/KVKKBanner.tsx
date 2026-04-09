@@ -19,6 +19,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useTenant } from '@/contexts/TenantContext';
 
@@ -242,13 +243,13 @@ export default function KVKKBanner({ countryCode }: Props) {
 
       <p style={{ color: '#9CA3AF', fontSize: 12, lineHeight: 1.5, marginBottom: 16 }}>
         {t('storage')}{' '}
-        <a
+        <Link
           href="/privacy"
           style={{ color: '#1E3A5F', textDecoration: 'underline' }}
           aria-label="Gizlilik politikasını oku"
         >
           {t('privacyPolicyLink')}
-        </a>
+        </Link>
       </p>
 
       {/* Action buttons */}

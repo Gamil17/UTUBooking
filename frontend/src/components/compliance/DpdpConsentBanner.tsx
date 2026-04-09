@@ -23,6 +23,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTenant } from '@/contexts/TenantContext';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -284,7 +285,7 @@ export default function DpdpConsentBanner({ countryCode }: Props) {
         Data stored in AWS Mumbai (ap-south-1) — India data residency compliant.
         Retention: contract duration + 7 years (legal requirement).{' '}
         डेटा AWS मुंबई में संग्रहीत है। / Breach notification within 72 hours per DPDP §8.{' '}
-        <a href="/privacy" style={styles.link}>Privacy Policy / गोपनीयता नीति</a>
+        <Link href="/privacy" style={styles.link}>Privacy Policy / गोपनीयता नीति</Link>
       </p>
 
       {/* Action buttons */}

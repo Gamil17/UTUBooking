@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import ContactForm from '@/components/contact/ContactForm';
 import ContactSearch from '@/components/contact/ContactSearch';
@@ -168,9 +169,9 @@ export default async function ContactPage() {
                 <ul className="space-y-1.5">
                   {cat.topics.map((topic) => (
                     <li key={topic}>
-                      <a href="/faq" className="text-xs text-utu-text-muted hover:text-utu-blue hover:underline transition-colors leading-snug block">
+                      <Link href="/faq" className="text-xs text-utu-text-muted hover:text-utu-blue hover:underline transition-colors leading-snug block">
                         {topic}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>

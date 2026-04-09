@@ -436,12 +436,12 @@ export default function PrivacyPage() {
           <tr>
             <td style={S.td}><strong>Delete</strong> (§1798.105)</td>
             <td style={S.td}>Request deletion of personal information (exemptions apply for tax/legal records)</td>
-            <td style={S.td}><a href="/privacy/ccpa-opt-out" style={S.link}>Request deletion</a></td>
+            <td style={S.td}><Link href="/privacy/ccpa-opt-out" style={S.link}>Request deletion</Link></td>
           </tr>
           <tr>
             <td style={S.td}><strong>Opt-out of sale / sharing</strong> (§1798.120)</td>
             <td style={S.td}>Direct UTUBooking not to sell or share your PI for cross-context behavioural advertising</td>
-            <td style={S.td}><a href="/privacy/ccpa-opt-out" style={S.link}>Do Not Sell or Share</a></td>
+            <td style={S.td}><Link href="/privacy/ccpa-opt-out" style={S.link}>Do Not Sell or Share</Link></td>
           </tr>
           <tr>
             <td style={S.td}><strong>Correct</strong> (§1798.106)</td>
@@ -484,7 +484,7 @@ export default function PrivacyPage() {
         California residents (and authorised agents acting on their behalf) may submit requests:
       </p>
       <ul style={{ ...S.p, paddingLeft: 20 }}>
-        <li>Online: <a href="/privacy/ccpa-opt-out" style={S.link}>utubooking.com/privacy/ccpa-opt-out</a></li>
+        <li>Online: <Link href="/privacy/ccpa-opt-out" style={S.link}>utubooking.com/privacy/ccpa-opt-out</Link></li>
         <li>Email: <a href="mailto:privacy@utubooking.com" style={S.link}>privacy@utubooking.com</a></li>
         <li>Phone: 1 (800) UTU-BOOK (toll-free, US only)</li>
       </ul>

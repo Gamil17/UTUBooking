@@ -19,6 +19,8 @@
  * Only shown when countryCode === 'US'.
  */
 
+import Link from 'next/link';
+
 /**
  * California Seller of Travel registration number.
  * REQUIRED before CA launch: set NEXT_PUBLIC_CA_CST_NUMBER in your environment.
@@ -44,20 +46,20 @@ export default function CCPAFooterLink({ countryCode }: Props) {
   return (
     <div className="text-center text-xs text-utu-text-muted py-2 border-t border-utu-border-default space-y-1">
       <div>
-        <a
+        <Link
           href="/privacy/ccpa-opt-out"
           className="hover:text-utu-text-secondary underline"
           aria-label="Do Not Sell or Share My Personal Information — California Privacy Rights"
         >
           Do Not Sell or Share My Personal Information
-        </a>
+        </Link>
         {' · '}
-        <a
+        <Link
           href="/privacy#ccpa"
           className="hover:text-utu-text-secondary underline"
         >
           California Privacy Rights
-        </a>
+        </Link>
       </div>
       <div aria-label={`California Seller of Travel Registration Number ${CST_NUMBER}`}>
         California Seller of Travel Reg. No.{' '}

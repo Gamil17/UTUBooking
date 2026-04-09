@@ -25,6 +25,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useTenant } from '@/contexts/TenantContext';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -650,7 +651,7 @@ export default function GDPRConsentBanner({ countryCode }: Props) {
           {' · '}
           {t.retention}
           {' '}
-          <a href="/privacy" style={S.link}>{t.privacy}</a>
+          <Link href="/privacy" style={S.link}>{t.privacy}</Link>
         </p>
         <p style={{ ...S.note, marginTop: 4 }}>{t.remembered}</p>
       </div>
@@ -672,7 +673,7 @@ export default function GDPRConsentBanner({ countryCode }: Props) {
       <p style={{ ...S.note, marginBottom: 0 }}>
         {t.rights}
         {' · '}
-        <a href="/privacy" style={S.link}>{t.privacy}</a>
+        <Link href="/privacy" style={S.link}>{t.privacy}</Link>
         {' · '}
         <a href="mailto:dpo@utubooking.com" style={S.link}>{t.dpo}</a>
       </p>

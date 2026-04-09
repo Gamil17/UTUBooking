@@ -21,6 +21,7 @@
  */
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface Props {
   locale?:    'en' | 'fr';
@@ -193,14 +194,12 @@ export default function PIPEDAPrivacyNotice({
             </button>
           )}
 
-          <a
+          <Link
             href="/privacy"
             className="block text-center text-xs text-red-700 underline hover:text-red-800 py-1"
-            target="_blank"
-            rel="noopener noreferrer"
           >
             {t.policy}
-          </a>
+          </Link>
         </div>
       </div>
     </div>
