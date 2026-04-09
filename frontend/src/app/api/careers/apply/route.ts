@@ -7,6 +7,8 @@ const ACCEPTED_MIME = new Set([
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
 
+const AUTH_SERVICE = process.env.AUTH_SERVICE_URL ?? 'http://localhost:3001';
+
 export async function POST(req: NextRequest) {
   try {
     const data = await req.formData();
@@ -62,20 +64,35 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // In production: save CV to S3 and forward to HR system or SendGrid.
-    // Log metadata for now so submissions aren't silently dropped.
-    console.log('[careers-apply]', {
-      name,
-      email,
-      role,
-      phone,
-      linkedinUrl,
-      coverLetterLength: coverLetter.length,
-      cv: cv && cv.size > 0
-        ? { name: cv.name, size: cv.size, type: cv.type }
-        : null,
-      timestamp: new Date().toISOString(),
+    // Persist to database via auth service
+    // In production: upload CV to S3 first and include cv_s3_key in the payload.
+    const upstream = await fetch(`${AUTH_SERVICE}/api/admin/careers/applications`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':    'application/json',
+        'x-admin-secret':  process.env.ADMIN_SECRET ?? '',
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        role,
+        coverLetter,
+        phone:       phone       || '',
+        linkedinUrl: linkedinUrl || '',
+        cvFilename:  cv && cv.size > 0 ? cv.name          : null,
+        cvSizeBytes: cv && cv.size > 0 ? cv.size          : null,
+        cvMimeType:  cv && cv.size > 0 ? cv.type          : null,
+      }),
+      signal: AbortSignal.timeout(10_000),
     });
+
+    if (!upstream.ok) {
+      const err = await upstream.json().catch(() => ({}));
+      return NextResponse.json(
+        { message: err.message || 'Unable to submit application.' },
+        { status: upstream.status }
+      );
+    }
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch {

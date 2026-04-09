@@ -420,6 +420,61 @@ export const suspendUser = (userId: string, reason: string) =>
 export const unsuspendUser = (userId: string) =>
   adminBff.post<{ data: AdminUser }>(`/users/${userId}/unsuspend`, {}).then((r) => r.data);
 
+// ─── Admin: Career Applications ───────────────────────────────────────────────
+
+export type ApplicationStatus =
+  | 'applied'
+  | 'reviewing'
+  | 'interviewing'
+  | 'offered'
+  | 'rejected'
+  | 'withdrawn';
+
+export interface CareerApplication {
+  id:             string;
+  applicant_name: string;
+  email:          string;
+  phone:          string | null;
+  position:       string;
+  linkedin_url:   string | null;
+  cover_letter?:  string;
+  status:         ApplicationStatus;
+  cv_filename:    string | null;
+  cv_size_bytes:  number | null;
+  cv_mime_type:   string | null;
+  cv_s3_key:      string | null;
+  admin_notes:    string | null;
+  reviewed_by:    string | null;
+  reviewed_at:    string | null;
+  created_at:     string;
+  updated_at:     string;
+}
+
+export interface CareerApplicationsResponse {
+  data:  CareerApplication[];
+  total: number;
+  page:  number;
+  limit: number;
+}
+
+export const getAdminApplications = (
+  params: { search?: string; status?: string; position?: string; page?: number; limit?: number } = {},
+) =>
+  adminBff
+    .get<CareerApplicationsResponse>('/careers/applications', { params: { limit: 25, ...params } })
+    .then((r) => r.data);
+
+export const getAdminApplication = (id: string) =>
+  adminBff.get<{ data: CareerApplication }>(`/careers/applications/${id}`).then((r) => r.data);
+
+export const updateApplicationStatus = (
+  id: string,
+  payload: { status: ApplicationStatus; adminNotes?: string; reviewedBy?: string },
+) =>
+  adminBff
+    .patch<{ data: CareerApplication }>(`/careers/applications/${id}`, payload)
+    .then((r) => r.data);
+
 // ─── Admin: Platform Settings ─────────────────────────────────────────────────
 
 export interface PlatformSettings {

@@ -47,6 +47,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                 { label: t('campaigns'),          href: '/admin/notifications/campaigns' },
               ],
             },
+            {
+              heading: t('careersNav'),
+              items: [
+                { label: t('applications'), href: '/admin/careers/applications' },
+              ],
+            },
           ]} />
         </nav>
         <main className="min-w-0 flex-1">

@@ -1471,7 +1471,9 @@
     "settingsLoadDefault": "Showing default values. Changes will be applied when the API is available.",
     "subjectArPlaceholder": "أفضل عروض السفر هذا الشهر",
     "dealTitleArPlaceholder": "العنوان (عربي)",
-    "usersTotal": "{n} total"
+    "usersTotal": "{n} total",
+    "careersNav": "HR / Careers",
+    "applications": "Applications"
   },
   "loyalty": {
     "heroTagline": "Earn Rewards on Every Journey",
