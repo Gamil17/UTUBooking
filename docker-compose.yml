@@ -20,6 +20,7 @@ x-common-env: &common-env
 
 # ── Shared restart / healthcheck defaults ─────────────────────────────────────
 x-service-defaults: &service-defaults
+  platform: linux/amd64
   restart: unless-stopped
   networks:
     - utu-net
@@ -84,9 +85,11 @@ services:
     environment:
       <<: *common-env
       PORT: 3001
+      NODE_PATH: /app/node_modules
     working_dir: /app
     volumes:
       - ./backend/services/auth:/app
+      - ./backend/shared:/shared
     command: sh -c "npm install && node server.js"
     ports:
       - "3001:3001"
@@ -110,6 +113,7 @@ services:
     environment:
       <<: *common-env
       PORT: 3003
+      NODE_PATH: /app/node_modules
     working_dir: /app
     volumes:
       - ./backend/hotel-service:/app
@@ -133,6 +137,7 @@ services:
     environment:
       <<: *common-env
       PORT: 3004
+      NODE_PATH: /app/node_modules
     working_dir: /app
     volumes:
       - ./backend/services/flight:/app
@@ -156,6 +161,7 @@ services:
     environment:
       <<: *common-env
       PORT: 3005
+      NODE_PATH: /app/node_modules
     working_dir: /app
     volumes:
       - ./backend/services/car:/app
@@ -205,9 +211,11 @@ services:
     environment:
       <<: *common-env
       PORT: 3007
+      NODE_PATH: /app/node_modules
     working_dir: /app
     volumes:
       - ./backend/services/payment:/app
+      - ./backend/shared:/shared
     command: sh -c "npm install && node server.js"
     ports:
       - "3007:3007"
@@ -338,6 +346,7 @@ services:
     environment:
       <<: *common-env
       PORT: 3002
+      NODE_PATH: /app/node_modules
       # SENDGRID_API_KEY: set in backend/.env
       # SENDGRID_FROM_EMAIL: set in backend/.env
       # SENDGRID_WEBHOOK_SECRET: set in backend/.env
@@ -347,6 +356,7 @@ services:
     working_dir: /app
     volumes:
       - ./backend/services/notification:/app
+      - ./backend/shared:/shared
     command: sh -c "npm install && node server.js"
     ports:
       - "3002:3002"
@@ -363,10 +373,35 @@ services:
       timeout: 5s
       retries: 5
 
+  admin-service:
+    image: node:22-alpine
+    <<: *service-defaults
+    env_file: ./backend/.env
+    environment:
+      <<: *common-env
+      PORT: 3012
+      ADMIN_PORT: 3012
+    working_dir: /app
+    volumes:
+      - ./backend/services/admin:/app
+    command: sh -c "npm install && node server.js"
+    ports:
+      - "3012:3012"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3012/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ── API Gateway (nginx) ───────────────────────────────────────────────────────
 
   gateway:
-    image: nginx:1.27-alpine
+    image: nginx:alpine
     <<: *service-defaults
     ports:
       - "80:80"

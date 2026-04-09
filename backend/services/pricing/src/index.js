@@ -15,7 +15,7 @@ app.get('/health', (_, res) => res.json({ status: 'ok', service: 'pricing' }));
 app.use((err, req, res, _next) => {
   console.error('[pricing] unhandled error:', err);
   const status = err.statusCode ?? 500;
-  res.status(status).json({ error: err.name ?? 'INTERNAL_ERROR', message: err.message });
+  res.status(status).json({ error: err.name ?? 'INTERNAL_ERROR', message: status < 500 ? err.message : 'An internal error occurred.' });
 });
 
 const PORT = process.env.PORT ?? 3011;

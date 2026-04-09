@@ -73,6 +73,14 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  turbopack: {
+    // Explicit root silences the "multiple lockfiles" warning — tells Turbopack
+    // that the frontend/ directory is the project root, not the monorepo root.
+    root: __dirname,
+  },
+  experimental: {
+    cpus: 1,
+  },
 };
 
 export default withNextIntl(withPWA(nextConfig));

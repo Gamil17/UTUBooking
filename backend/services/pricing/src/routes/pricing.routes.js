@@ -1,6 +1,7 @@
 'use strict';
 
 const { Router }            = require('express');
+const { timingSafeEqual }   = require('crypto');
 const { authenticateToken } = require('../middleware/auth');
 const adminAuth             = require('../middleware/adminAuth');
 const ctrl                  = require('../controllers/pricing.controller');
@@ -26,10 +27,11 @@ router.get('/metrics/funnel',               adminAuth, ctrl.getFunnelMetrics);
 // ── Internal cron endpoint (Lambda — x-internal-secret header) ───────────────
 
 router.post('/internal/cron', (req, res, next) => {
-  const secret = req.headers['x-internal-secret'];
-  if (!secret || secret !== process.env.INTERNAL_API_SECRET) {
-    return res.status(401).json({ error: 'UNAUTHORIZED' });
-  }
+  const envSecret = process.env.INTERNAL_API_SECRET ?? '';
+  const provided  = req.headers['x-internal-secret'] ?? '';
+  let ok = false;
+  try { ok = !!envSecret && timingSafeEqual(Buffer.from(provided), Buffer.from(envSecret)); } catch { ok = false; }
+  if (!ok) return res.status(401).json({ error: 'UNAUTHORIZED' });
   ctrl.runCron(req, res, next);
 });
 
