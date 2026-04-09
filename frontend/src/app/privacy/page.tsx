@@ -507,19 +507,6 @@ export default function PrivacyPage() {
       </p>
     </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-utu-text-muted py-8 px-4 text-center text-sm /* EXCEPTION: dark mini-footer */">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
-          <p>© 2026 UTUBooking.com — AMEC Solutions. All rights reserved.</p>
-          <div className="flex gap-4">
-            <Link href="/about" className="hover:text-white transition-colors">About</Link>
-            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            <Link href="/privacy" className="text-white font-semibold">Privacy</Link>
-          </div>
-        </div>
-      </footer>
-
     </div>
   );
 }
