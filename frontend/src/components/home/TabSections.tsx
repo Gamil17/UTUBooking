@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
 type Tab = 'hotels' | 'flights' | 'cars';
@@ -335,7 +336,8 @@ function HotelSections() {
                 <div className="px-6 pb-5 border-t border-utu-border-default">
                   <div className="flex flex-wrap gap-2 pt-4">
                     {HOTEL_CITIES.map((c) => (
-                      <span key={c} className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</span>
+                      <Link key={c} href={`/hotels/search?destination=${encodeURIComponent(c)}`}
+                        className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</Link>
                     ))}
                   </div>
                 </div>
@@ -356,7 +358,8 @@ function HotelSections() {
                 <div className="px-6 pb-5 border-t border-utu-border-default">
                   <div className="flex flex-wrap gap-2 pt-4">
                     {HOTEL_COUNTRIES.map((c) => (
-                      <span key={c} className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</span>
+                      <Link key={c} href={`/hotels/search?destination=${encodeURIComponent(c)}`}
+                        className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</Link>
                     ))}
                   </div>
                 </div>
@@ -404,6 +407,17 @@ const TOP_DESTINATIONS = [
 
 const FLIGHT_CITIES = ['Dubai', 'Cairo', 'Istanbul', 'Amman', 'Kuala Lumpur', 'Jakarta', 'London', 'Paris', 'Frankfurt', 'New York'];
 const FLIGHT_COUNTRIES = ['UAE', 'Egypt', 'Turkey', 'Jordan', 'Malaysia', 'Indonesia', 'United Kingdom', 'France', 'Germany', 'United States'];
+
+const FLIGHT_CITY_CODES: Record<string, string> = {
+  'Dubai': 'DXB', 'Cairo': 'CAI', 'Istanbul': 'IST', 'Amman': 'AMM',
+  'Kuala Lumpur': 'KUL', 'Jakarta': 'CGK', 'London': 'LHR', 'Paris': 'CDG',
+  'Frankfurt': 'FRA', 'New York': 'JFK',
+};
+const FLIGHT_COUNTRY_CODES: Record<string, string> = {
+  'UAE': 'DXB', 'Egypt': 'CAI', 'Turkey': 'IST', 'Jordan': 'AMM',
+  'Malaysia': 'KUL', 'Indonesia': 'CGK', 'United Kingdom': 'LHR',
+  'France': 'CDG', 'Germany': 'FRA', 'United States': 'JFK',
+};
 
 
 function FlightSections() {
@@ -486,7 +500,8 @@ function FlightSections() {
                 <div className="px-6 pb-5 border-t border-utu-border-default">
                   <div className="flex flex-wrap gap-2 pt-4">
                     {FLIGHT_CITIES.map((c) => (
-                      <span key={c} className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</span>
+                      <Link key={c} href={`/flights/search?from=JED&to=${FLIGHT_CITY_CODES[c] ?? ''}`}
+                        className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</Link>
                     ))}
                   </div>
                 </div>
@@ -506,7 +521,8 @@ function FlightSections() {
                 <div className="px-6 pb-5 border-t border-utu-border-default">
                   <div className="flex flex-wrap gap-2 pt-4">
                     {FLIGHT_COUNTRIES.map((c) => (
-                      <span key={c} className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</span>
+                      <Link key={c} href={`/flights/search?from=JED&to=${FLIGHT_COUNTRY_CODES[c] ?? ''}`}
+                        className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</Link>
                     ))}
                   </div>
                 </div>
@@ -632,7 +648,8 @@ function CarSections() {
                 <div className="px-6 pb-5 border-t border-utu-border-default">
                   <div className="flex flex-wrap gap-2 pt-4">
                     {CAR_LOCATIONS.map((c) => (
-                      <span key={c} className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</span>
+                      <Link key={c} href={`/cars/search?pickupLocation=${encodeURIComponent(c)}`}
+                        className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</Link>
                     ))}
                   </div>
                 </div>
