@@ -71,7 +71,7 @@ export default async function CareersPage() {
                   </div>
                 </div>
                 <Link
-                  href="/contact"
+                  href={`/careers/apply?role=${encodeURIComponent(role.title)}`}
                   className="shrink-0 bg-utu-navy hover:bg-utu-blue text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
                 >
                   {t('applyBtn')}
