@@ -108,7 +108,7 @@ export default function UmrahPackagesPage() {
         <Link href="/us/muslim-guide/dearborn" className="text-utu-blue hover:underline">
           Muslim Guide — Dearborn
         </Link>
-        <Link href="/hotels/search?location=Makkah&halal_friendly=true" className="text-utu-blue hover:underline">
+        <Link href="/" className="text-utu-blue hover:underline">
           Browse Makkah Hotels
         </Link>
         <Link href="/flights/search?destination=JED&tripType=umrah" className="text-utu-blue hover:underline">

@@ -23,7 +23,7 @@ export default async function UmrahPackagesPage() {
         <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">{t('heroHeading')}</h1>
         <p className="text-white/80 max-w-xl mx-auto text-lg mb-8">{t('heroDesc')}</p>
         <Link
-          href="/hotels/search"
+          href="/"
           className="inline-block bg-amber-400 hover:bg-amber-300 text-utu-navy font-bold px-8 py-3 rounded-xl transition-colors text-sm"
         >
           {t('searchHotelsBtn')}
@@ -39,7 +39,7 @@ export default async function UmrahPackagesPage() {
                 <div className="text-lg font-black text-utu-blue mb-1">{pkg.price}</div>
                 <div className="text-xs text-utu-text-muted mb-3">{pkg.nights} {t('perPerson')}</div>
                 <p className="text-sm text-utu-text-muted">{pkg.desc}</p>
-                <Link href="/hotels/search" className="mt-4 block text-center bg-utu-navy hover:bg-utu-blue text-white text-sm font-semibold py-2 rounded-lg transition-colors">
+                <Link href="/" className="mt-4 block text-center bg-utu-navy hover:bg-utu-blue text-white text-sm font-semibold py-2 rounded-lg transition-colors">
                   {t('searchHotels')}
                 </Link>
               </div>
