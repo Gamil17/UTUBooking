@@ -8,7 +8,7 @@
     "dev":   "nodemon server.js"
   },
   "dependencies": {
-    "@sendgrid/event-webhook": "^1.3.0",
+    "@sendgrid/eventwebhook": "^7.2.0",
     "@sendgrid/mail": "^8.1.0",
     "axios":          "^1.7.0",
     "bull":           "^4.16.0",

@@ -1,4 +1,4 @@
-const bcrypt     = require('bcrypt');
+const bcrypt     = require('bcryptjs');
 const { pool }   = require('../db/pg');
 
 const BCRYPT_ROUNDS = 12; // cost factor: ~250ms on modern hardware
@@ -6,11 +6,12 @@ const BCRYPT_ROUNDS = 12; // cost factor: ~250ms on modern hardware
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 async function findByEmail(email) {
+  // Returns user regardless of status — callers check status themselves
+  // so pending/rejected users get proper error messages rather than INVALID_CREDENTIALS
   const { rows } = await pool.query(
-    `SELECT id, email, password_hash, role
+    `SELECT id, email, password_hash, role, COALESCE(status, 'active') AS status
        FROM users
       WHERE email = $1
-        AND is_active = TRUE
       LIMIT 1`,
     [email.toLowerCase().trim()]
   );
@@ -19,14 +20,21 @@ async function findByEmail(email) {
 
 async function findById(id) {
   const { rows } = await pool.query(
-    `SELECT id, email, role
+    `SELECT id, email, role, COALESCE(status, 'active') AS status
        FROM users
       WHERE id = $1
-        AND is_active = TRUE
+        AND COALESCE(status, 'active') = 'active'
       LIMIT 1`,
     [id]
   );
   return rows[0] || null;
+}
+
+async function touchLastSeen(userId) {
+  await pool.query(
+    `UPDATE users SET last_seen_at = NOW() WHERE id = $1`,
+    [userId]
+  );
 }
 
 async function emailExists(email) {
@@ -37,13 +45,14 @@ async function emailExists(email) {
   return rows.length > 0;
 }
 
-async function createUser({ email, password }) {
+async function createUser({ email, password, name, country }) {
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  const displayName  = name?.trim() || email.split('@')[0];
   const { rows } = await pool.query(
-    `INSERT INTO users (email, password_hash, role)
-          VALUES ($1, $2, 'user')
-     RETURNING id, email, role`,
-    [email.toLowerCase().trim(), passwordHash]
+    `INSERT INTO users (email, password_hash, role, name, status, country)
+          VALUES ($1, $2, 'user', $3, 'pending', $4)
+     RETURNING id, email, role, status`,
+    [email.toLowerCase().trim(), passwordHash, displayName, country?.toUpperCase() || null]
   );
   return rows[0];
 }
@@ -53,4 +62,12 @@ async function verifyPassword(plaintext, hash) {
   return bcrypt.compare(plaintext, hash);
 }
 
-module.exports = { findByEmail, findById, emailExists, createUser, verifyPassword };
+async function updatePassword(userId, newPlaintext) {
+  const passwordHash = await bcrypt.hash(newPlaintext, BCRYPT_ROUNDS);
+  await pool.query(
+    `UPDATE users SET password_hash = $1 WHERE id = $2`,
+    [passwordHash, userId]
+  );
+}
+
+module.exports = { findByEmail, findById, emailExists, createUser, verifyPassword, touchLastSeen, updatePassword };

@@ -20,6 +20,14 @@ const redis            = require('../services/redis.service');
 // ── Rate limiter (in-memory — mirrors gdpr.router.js pattern) ─────────────────
 const rateLimitStore = new Map();  // userId → { count, resetAt }
 
+// Purge expired entries every 15 minutes to prevent unbounded memory growth
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitStore) {
+    if (now >= entry.resetAt) rateLimitStore.delete(key);
+  }
+}, 15 * 60 * 1000).unref();
+
 function ccpaRateLimit(req, res, next) {
   const userId   = req.user.id;
   const now      = Date.now();
@@ -226,12 +234,13 @@ router.post('/delete', ccpaRateLimit, async (req, res, next) => {
   }
 
   // Log to Redis deletion queue for cascade cleanup
+  // email intentionally excluded — already anonymised in DB transaction above;
+  // storing PII in a Redis queue violates data minimisation (CCPA §1798.105).
   await redis.rpush('ccpa:deletion:queue', JSON.stringify({
-    userId, email,
+    userId,
     law:         'CCPA',
     action:      'delete',
     reason:      reason?.trim() ?? '',
-    ip,
     requestedAt: new Date().toISOString(),
     status:      'pending-cascade',
   }));

@@ -18,6 +18,11 @@ const URLENC_BODY   = express.urlencoded({ extended: false, limit: '64kb' });
 app.use('/api/payments/webhook',              RAW_BODY);     // STC Pay
 app.use('/api/payments/mada/webhook',         RAW_BODY);     // Moyasar
 app.use('/api/payments/stripe/webhook',       RAW_BODY);     // Stripe
+app.use('/api/payments/razorpay/webhook',     RAW_BODY);     // Razorpay HMAC-SHA256
+app.use('/api/payments/twint/webhook',        RAW_BODY);     // TWINT HMAC-SHA256
+app.use('/api/payments/paypal/webhook',       RAW_BODY);     // PayPal signature verification
+app.use('/api/payments/affirm/webhook',       RAW_BODY);     // Affirm HMAC-SHA256
+app.use('/api/payments/pix/webhook',          RAW_BODY);     // Stripe Pix/Boleto events
 
 // iyzico callback + iPay88 response send URL-encoded form data (browser redirects)
 app.use('/api/payments/iyzico/callback',      URLENC_BODY);  // iyzico 3DS redirect

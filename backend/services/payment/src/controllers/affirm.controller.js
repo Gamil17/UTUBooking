@@ -53,11 +53,10 @@ async function initiate(req, res, next) {
   let payment;
   try {
     payment = await repo.createPayment({
-      booking_id: bookingId,
-      method:     'affirm',
-      amount:     amountUSD,
-      currency:   'USD',
-      status:     'pending',
+      bookingId,
+      method:   'affirm',
+      amount:   amountUSD,
+      currency: 'USD',
     });
   } catch (err) {
     return next(err);
@@ -78,12 +77,13 @@ async function initiate(req, res, next) {
       customerEmail,
     });
   } catch (err) {
-    await repo.updatePaymentStatus(payment.id, 'failed', { error: err.message });
+    await repo.updatePayment(payment.id, { status: 'failed', gateway_payload: { error: err.message } });
     return next(err);
   }
 
-  await repo.updatePaymentGatewayRef(payment.id, result.checkoutToken, {
-    redirectUrl: result.redirectUrl,
+  await repo.updatePayment(payment.id, {
+    gateway_ref:     result.checkoutToken,
+    gateway_payload: { redirectUrl: result.redirectUrl },
   });
 
   await audit.log({
@@ -139,13 +139,14 @@ async function confirm(req, res, next) {
   try {
     result = await affirm.chargeCheckout(checkoutToken);
   } catch (err) {
-    await repo.updatePaymentStatus(payment.id, 'failed', { error: err.message });
+    await repo.updatePayment(payment.id, { status: 'failed', gateway_payload: { error: err.message } });
     return next(err);
   }
 
-  await repo.updatePaymentStatus(payment.id, result.status, {
-    chargeId:    result.chargeId,
-    amountCents: result.amountCents,
+  await repo.updatePayment(payment.id, {
+    status:          result.status,
+    gateway_payload: { chargeId: result.chargeId, amountCents: result.amountCents },
+    ...(result.status === 'completed' ? { paid_at: new Date() } : {}),
   });
 
   await audit.log({
@@ -160,14 +161,6 @@ async function confirm(req, res, next) {
   });
 
   if (result.status === 'completed') {
-    try {
-      const { triggerPushNotification } = require('../services/push.service');
-      await triggerPushNotification(payment.booking_id, 'payment_success', {
-        amount:   result.amountCents / 100,
-        currency: 'USD',
-      });
-    } catch { /* non-fatal */ }
-
     // Auto-capture after confirmation (travel = no delay needed)
     try {
       await affirm.captureCharge(result.chargeId);
@@ -220,11 +213,10 @@ async function webhook(req, res, next) {
     return res.status(200).json({ received: true, idempotent: true });
   }
 
-  await repo.updatePaymentStatus(payment.id, newStatus, {
-    chargeId,
-    amountCents,
-    eventType,
-    gateway_payload: event,
+  await repo.updatePayment(payment.id, {
+    status:          newStatus,
+    gateway_payload: { chargeId, amountCents, eventType, raw: event },
+    ...(newStatus === 'completed' ? { paid_at: new Date() } : {}),
   });
 
   await audit.log({
@@ -237,15 +229,6 @@ async function webhook(req, res, next) {
     status:    newStatus,
     meta:      { chargeId, checkoutToken, eventType },
   });
-
-  if (newStatus === 'completed') {
-    try {
-      const { triggerPushNotification } = require('../services/push.service');
-      await triggerPushNotification(payment.booking_id, 'payment_success', {
-        amount: amountCents / 100, currency: 'USD',
-      });
-    } catch { /* non-fatal */ }
-  }
 
   return res.status(200).json({ received: true });
 }

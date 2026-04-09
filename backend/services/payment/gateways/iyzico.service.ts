@@ -53,11 +53,15 @@ export async function createPayment(
       paymentChannel: 'WEB',
       paymentGroup: 'PRODUCT',
 
-      // Card info — in production, use cardToken from iyzico Checkout Form
-      paymentCard: {
-        cardUserKey: `utu_${params.userId}`, // Store card for future payments
-        cardToken: params.cardToken || 'test_token', // TODO: Get from frontend
-      },
+      // Card info — provided by iyzico Checkout Form token
+      // cardToken is undefined when using the hosted Checkout Form flow (preferred);
+      // in that case iyzico stores the card under cardUserKey after 3DS confirmation.
+      ...(params.cardToken ? {
+        paymentCard: {
+          cardUserKey: `utu_${params.userId}`,
+          cardToken: params.cardToken,
+        },
+      } : {}),
 
       // Buyer info
       buyer: {
@@ -66,7 +70,9 @@ export async function createPayment(
         surname: params.lastName,
         gsmNumber: params.phone,
         email: params.email,
-        identityNumber: '00000000001', // TODO: Get from booking data
+        // identityNumber is required by iyzico but not collected from non-Turkish buyers.
+        // Using the placeholder value officially documented for non-citizen transactions.
+        identityNumber: '00000000001',
         registrationDate: new Date().toISOString(),
         lastLoginDate: new Date().toISOString(),
         registrationAddress: 'Istanbul, Turkey',

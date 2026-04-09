@@ -78,7 +78,7 @@ function stripeWebhookAuth(req, res, next) {
     event = stripe.constructWebhookEvent(req.body, signature); // req.body is Buffer
   } catch (err) {
     console.warn('[stripe-webhook] signature verification failed:', err.message);
-    return res.status(401).json({ error: 'INVALID_SIGNATURE', message: err.message });
+    return res.status(401).json({ error: 'INVALID_SIGNATURE', message: 'Webhook signature verification failed.' });
   }
 
   req.stripeEvent = event;

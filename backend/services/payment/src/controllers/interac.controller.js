@@ -50,12 +50,10 @@ async function initiate(req, res, next) {
   let payment;
   try {
     payment = await repo.createPayment({
-      booking_id: bookingId,
-      method:     'interac',
-      amount:     amountCAD,
-      currency:   'CAD',
-      status:     'pending',
-      metadata:   { ip },
+      bookingId,
+      method:   'interac',
+      amount:   amountCAD,
+      currency: 'CAD',
     });
   } catch (err) {
     return next(err);
@@ -76,11 +74,16 @@ async function initiate(req, res, next) {
       declinedUrl,
     });
   } catch (err) {
-    await repo.updatePaymentStatus(payment.id, 'failed', { initiateError: err.message });
+    await repo.updatePayment(payment.id, { status: 'failed', gateway_payload: { initiateError: err.message } });
     return next(err);
   }
 
-  await repo.updatePaymentStatus(payment.id, 'redirected', { bamboraId: result.paymentId });
+  // Store Bambora payment ID as gateway_ref so we can look it up later
+  await repo.updatePayment(payment.id, {
+    status:          'redirected',
+    gateway_ref:     String(result.paymentId),
+    gateway_payload: { redirectUrl: result.redirectUrl },
+  });
 
   return res.json({
     ok:          true,
@@ -104,7 +107,8 @@ async function returnFromBank(req, res, next) {
   }
 
   try {
-    const bamboraId  = trnId ?? (await repo.getPayment(paymentDbId))?.metadata?.bamboraId;
+    const existingPayment = await repo.findById(paymentDbId);
+    const bamboraId  = trnId ?? existingPayment?.gateway_ref;
     const approved   = trnApproved === '1' || req.query.approved === '1';
 
     let newStatus = approved ? 'completed' : 'failed';
@@ -115,7 +119,11 @@ async function returnFromBank(req, res, next) {
       newStatus = verification.status;
     }
 
-    await repo.updatePaymentStatus(paymentDbId, newStatus, { trnId: bamboraId, verifiedAt: new Date().toISOString() });
+    await repo.updatePayment(paymentDbId, {
+      status:          newStatus,
+      gateway_payload: { trnId: bamboraId, verifiedAt: new Date().toISOString() },
+      ...(newStatus === 'completed' ? { paid_at: new Date() } : {}),
+    });
     await audit.log({ event: 'interac.return', paymentId: paymentDbId, status: newStatus });
 
     if (newStatus === 'completed') {
@@ -144,12 +152,16 @@ async function webhook(req, res, next) {
       return res.status(400).json({ error: 'INVALID_WEBHOOK', message: 'Missing trnId' });
     }
 
-    // Look up our internal payment record by Bambora ID stored in metadata
-    const payment = await repo.findPaymentByMetadata({ bamboraId: String(result.paymentId) });
+    // Look up our internal payment record by Bambora ID stored in gateway_ref
+    const payment = await repo.findByGatewayRef(String(result.paymentId));
     if (payment) {
       // Only update if still pending (idempotent guard)
       if (payment.status === 'pending' || payment.status === 'redirected') {
-        await repo.updatePaymentStatus(payment.id, result.status, { webhookAt: new Date().toISOString() });
+        await repo.updatePayment(payment.id, {
+          status:          result.status,
+          gateway_payload: { webhookAt: new Date().toISOString() },
+          ...(result.status === 'completed' ? { paid_at: new Date() } : {}),
+        });
         await audit.log({ event: 'interac.webhook', paymentId: payment.id, status: result.status });
       }
     }

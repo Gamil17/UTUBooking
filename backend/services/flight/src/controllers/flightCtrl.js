@@ -25,7 +25,10 @@
 const { validate }              = require('../validators/search.validator');
 const FlightOffer               = require('../models/FlightOffer');
 
-const amadeus                   = require('../../../../adapters/amadeus');
+// Use the airline-whitelist + airport-filter patch over the base Amadeus adapter.
+// This enforces content filters from amadeus-airlines.json (enabled airports,
+// allowed airlines for Hajj/Umrah routes, bilingual error messages).
+const amadeus                   = require('../services/amadeus.service.patch');
 const sabre                     = require('../../../../adapters/sabre');
 const { AmadeusAdapterError }   = require('../../../../adapters/amadeus');
 const { SabreAdapterError }     = require('../../../../adapters/sabre');

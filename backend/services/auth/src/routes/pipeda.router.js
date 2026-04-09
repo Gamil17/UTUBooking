@@ -28,6 +28,14 @@ const redis            = require('../services/redis.service');
 // ── In-memory rate limiter (mirrors gdpr.router.js pattern) ───────────────────
 const rateLimitStore = new Map(); // userId → { count, resetAt }
 
+// Purge expired entries every 15 minutes to prevent unbounded memory growth
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitStore) {
+    if (now >= entry.resetAt) rateLimitStore.delete(key);
+  }
+}, 15 * 60 * 1000).unref();
+
 function pipedaRateLimit(req, res, next) {
   const userId   = req.user.id;
   const now      = Date.now();
@@ -275,14 +283,15 @@ router.post('/erase', pipedaRateLimit, async (req, res, next) => {
   } catch { /* non-fatal */ }
 
   // 6. Queue cascade (bookings metadata, consent_log anonymisation — 30-day window)
+  // emailSnapshot intentionally excluded — email was already anonymised in step 1;
+  // storing PII in a Redis queue violates data minimisation (PIPEDA s.4.4).
   await redis.rpush(
     'pipeda:erasure:queue',
     JSON.stringify({
       userId,
-      emailSnapshot:  email,
-      reason:         reason?.trim() ?? null,
-      requestedAt:    new Date().toISOString(),
-      cascadeBy:      new Date(Date.now() + 30 * 86_400_000).toISOString(),
+      reason:      reason?.trim() ?? null,
+      requestedAt: new Date().toISOString(),
+      cascadeBy:   new Date(Date.now() + 30 * 86_400_000).toISOString(),
     }),
   );
 
@@ -377,7 +386,7 @@ router.get('/portability', pipedaRateLimit, async (req, res, next) => {
 
 // ── GET /api/user/pipeda/consents ─────────────────────────────────────────────
 // Current consent state — most recent row per consent_type.
-router.get('/consents', async (req, res, next) => {
+router.get('/consents', pipedaRateLimit, async (req, res, next) => {
   const { id: userId } = req.user;
   const readPool = caReadPool();
 

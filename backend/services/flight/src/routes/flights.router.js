@@ -1,7 +1,5 @@
 'use strict';
 
-'use strict';
-
 const { Router }       = require('express');
 const flightCtrl       = require('../controllers/flightCtrl');
 const departuresCtrl   = require('../controllers/departures.controller');

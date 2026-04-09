@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UTUBooking Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .badge-super_admin { background:#ede9fe; color:#5b21b6; }
+    .badge-country_admin { background:#dbeafe; color:#1e40af; }
+    .badge-admin    { background:#fef9c3; color:#854d0e; }
+    .badge-agent    { background:#e0f2fe; color:#0369a1; }
+    .badge-user     { background:#f0fdf4; color:#166534; }
+    .badge-active   { background:#dcfce7; color:#166534; }
+    .badge-pending  { background:#fef9c3; color:#92400e; }
+    .badge-rejected { background:#fee2e2; color:#991b1b; }
+    .badge-inactive { background:#f1f5f9; color:#64748b; }
+    .badge-suspended{ background:#fee2e2; color:#991b1b; }
+    .badge-hajj     { background:#fef3c7; color:#92400e; }
+    .badge-halal    { background:#d1fae5; color:#065f46; }
+    .nav-btn { transition: background .15s; }
+    .nav-active { background: #064e3b !important; }
+    .pending-badge { background:#f59e0b; color:#fff; border-radius:9999px; font-size:10px; padding:1px 6px; display:inline-block; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+
+<!-- ═══════════════════════ LOGIN ═══════════════════════ -->
+<div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-900 to-emerald-700">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm">
+    <div class="text-center mb-8">
+      <div class="text-4xl font-black text-emerald-700">UTU<span class="text-gray-400">Booking</span></div>
+      <div class="text-sm text-gray-400 mt-1">Admin Panel</div>
+    </div>
+    <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4"></div>
+    <form id="login-form" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input id="login-email" type="email" required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <input id="login-password" type="password" required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+      </div>
+      <button type="submit" id="login-btn"
+        class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2 rounded-lg transition text-sm">
+        Sign In
+      </button>
+    </form>
+    <p class="text-center text-xs text-gray-400 mt-4">
+      <a href="/" class="hover:text-emerald-600">User Portal</a>
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════════ DASHBOARD ═══════════════════════ -->
+<div id="dashboard-screen" class="hidden">
+
+  <!-- Sidebar -->
+  <div class="fixed inset-y-0 left-0 w-56 bg-emerald-950 text-white flex flex-col z-20">
+    <div class="px-6 py-5 border-b border-emerald-900">
+      <div class="text-2xl font-black">UTU<span class="text-emerald-400">Booking</span></div>
+      <div id="sidebar-role" class="text-xs text-emerald-400 mt-0.5"></div>
+    </div>
+    <nav class="flex-1 py-4 space-y-0.5 px-3" id="sidebar-nav">
+      <button onclick="showTab('dashboard')" data-tab="dashboard"
+        class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-emerald-900 flex items-center justify-between">
+        <span>Dashboard</span>
+      </button>
+      <button onclick="showTab('pending')" data-tab="pending"
+        class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-emerald-900 flex items-center justify-between">
+        <span>Pending Approval</span>
+        <span id="pending-count-badge" class="hidden pending-badge">0</span>
+      </button>
+      <button onclick="showTab('users')" data-tab="users"
+        class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-emerald-900">Users</button>
+      <button onclick="showTab('hotels')" data-tab="hotels"
+        class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-emerald-900">Hotels</button>
+      <button onclick="showTab('flights')" data-tab="flights"
+        class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-emerald-900">Flights</button>
+      <button onclick="showTab('cars')" data-tab="cars"
+        class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-emerald-900">Car Rentals</button>
+      <button id="nav-country-admins" onclick="showTab('country-admins')" data-tab="country-admins"
+        class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-emerald-900 hidden">Country Admins</button>
+      <button id="nav-audit" onclick="showTab('audit')" data-tab="audit"
+        class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-emerald-900 hidden">Audit Log</button>
+    </nav>
+    <div class="px-4 py-4 border-t border-emerald-900">
+      <div id="admin-name" class="text-xs text-emerald-300 truncate mb-0.5"></div>
+      <div id="admin-country-label" class="text-xs text-emerald-500 mb-2"></div>
+      <button onclick="logout()" class="text-xs text-emerald-500 hover:text-white transition">Sign out</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="ml-56 min-h-screen">
+    <div class="bg-white border-b px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+      <h1 id="page-title" class="text-lg font-semibold text-gray-800">Dashboard</h1>
+      <div class="text-xs text-gray-400" id="last-updated"></div>
+    </div>
+
+    <div class="p-8">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="tab-dashboard">
+        <div id="stats-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white rounded-xl shadow-sm border p-6">
+            <h3 class="text-sm font-semibold text-gray-700 mb-4">Service Health</h3>
+            <div id="health-list" class="space-y-2 text-sm"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border p-6">
+            <h3 class="text-sm font-semibold text-gray-700 mb-4">Quick Links</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between py-1 border-b"><span class="text-gray-500">User Portal</span><a href="/" target="_blank" class="text-emerald-600 hover:underline">localhost:3012/</a></div>
+              <div class="flex justify-between py-1 border-b"><span class="text-gray-500">Hotel Search</span><code class="text-xs bg-gray-100 px-2 py-0.5 rounded">:3003/api/v1/hotels/search</code></div>
+              <div class="flex justify-between py-1 border-b"><span class="text-gray-500">Flight Search</span><code class="text-xs bg-gray-100 px-2 py-0.5 rounded">:3004/api/v1/flights/search</code></div>
+              <div class="flex justify-between py-1"><span class="text-gray-500">Gateway</span><a href="http://localhost:80" target="_blank" class="text-emerald-600 hover:underline">localhost:80</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PENDING APPROVAL ── -->
+      <div id="tab-pending" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <div class="px-6 py-4 border-b flex items-center justify-between">
+            <div class="text-sm font-semibold text-gray-700">
+              Pending Approval <span id="pending-total" class="text-gray-400 font-normal"></span>
+            </div>
+            <button onclick="loadPending()" class="text-xs text-emerald-600 hover:underline">Refresh</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th class="px-4 py-3 text-left">Name</th>
+                  <th class="px-4 py-3 text-left">Email</th>
+                  <th class="px-4 py-3 text-left">Country</th>
+                  <th class="px-4 py-3 text-left">Registered</th>
+                  <th class="px-4 py-3 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pending-tbody" class="divide-y"></tbody>
+            </table>
+          </div>
+          <div id="pending-empty" class="hidden px-6 py-10 text-center text-sm text-gray-400">No pending registrations</div>
+        </div>
+      </div>
+
+      <!-- ── USERS ── -->
+      <div id="tab-users" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <div class="px-6 py-4 border-b flex items-center justify-between flex-wrap gap-2">
+            <div class="text-sm font-semibold text-gray-700">Users <span id="users-count" class="text-gray-400 font-normal"></span></div>
+            <div class="flex gap-2">
+              <select id="users-status-filter" onchange="offsets.users=0;loadUsers()"
+                class="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none">
+                <option value="">All statuses</option>
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
+                <option value="suspended">Suspended</option>
+              </select>
+              <input id="users-search" type="text" placeholder="Search..."
+                class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                oninput="debounce(() => { offsets.users=0; loadUsers(); }, 400)" />
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th class="px-4 py-3 text-left">Name</th>
+                  <th class="px-4 py-3 text-left">Email</th>
+                  <th class="px-4 py-3 text-left">Role</th>
+                  <th class="px-4 py-3 text-left">Country</th>
+                  <th class="px-4 py-3 text-left">Status</th>
+                  <th class="px-4 py-3 text-left">Joined</th>
+                  <th class="px-4 py-3 text-left">Action</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody" class="divide-y"></tbody>
+            </table>
+          </div>
+          <div class="px-6 py-3 border-t flex gap-2" id="users-pagination"></div>
+        </div>
+      </div>
+
+      <!-- ── HOTELS ── -->
+      <div id="tab-hotels" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <div class="px-6 py-4 border-b flex items-center justify-between">
+            <div class="text-sm font-semibold text-gray-700">Hotel Offers <span id="hotels-count" class="text-gray-400 font-normal"></span></div>
+            <input id="hotels-search" type="text" placeholder="Search name or city..."
+              class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              oninput="debounce(() => { offsets.hotels=0; loadHotels(); }, 400)" />
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th class="px-4 py-3 text-left">Hotel</th>
+                  <th class="px-4 py-3 text-left">City</th>
+                  <th class="px-4 py-3 text-left">Stars</th>
+                  <th class="px-4 py-3 text-right">Price/Night</th>
+                  <th class="px-4 py-3 text-left">Tags</th>
+                  <th class="px-4 py-3 text-left">Status</th>
+                  <th class="px-4 py-3 text-left">Action</th>
+                </tr>
+              </thead>
+              <tbody id="hotels-tbody" class="divide-y"></tbody>
+            </table>
+          </div>
+          <div class="px-6 py-3 border-t flex gap-2" id="hotels-pagination"></div>
+        </div>
+      </div>
+
+      <!-- ── FLIGHTS ── -->
+      <div id="tab-flights" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <div class="px-6 py-4 border-b">
+            <div class="text-sm font-semibold text-gray-700">Flights <span id="flights-count" class="text-gray-400 font-normal"></span></div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th class="px-4 py-3 text-left">Flight</th>
+                  <th class="px-4 py-3 text-left">Route</th>
+                  <th class="px-4 py-3 text-left">Departure</th>
+                  <th class="px-4 py-3 text-left">Cabin</th>
+                  <th class="px-4 py-3 text-right">Seats</th>
+                  <th class="px-4 py-3 text-right">Price (SAR)</th>
+                  <th class="px-4 py-3 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody id="flights-tbody" class="divide-y"></tbody>
+            </table>
+          </div>
+          <div class="px-6 py-3 border-t flex gap-2" id="flights-pagination"></div>
+        </div>
+      </div>
+
+      <!-- ── CARS ── -->
+      <div id="tab-cars" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <div class="px-6 py-4 border-b">
+            <div class="text-sm font-semibold text-gray-700">Car Rentals <span id="cars-count" class="text-gray-400 font-normal"></span></div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th class="px-4 py-3 text-left">Vendor</th>
+                  <th class="px-4 py-3 text-left">Vehicle</th>
+                  <th class="px-4 py-3 text-left">Type</th>
+                  <th class="px-4 py-3 text-right">Seats</th>
+                  <th class="px-4 py-3 text-left">Pickup</th>
+                  <th class="px-4 py-3 text-right">Price/Day</th>
+                  <th class="px-4 py-3 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody id="cars-tbody" class="divide-y"></tbody>
+            </table>
+          </div>
+          <div class="px-6 py-3 border-t flex gap-2" id="cars-pagination"></div>
+        </div>
+      </div>
+
+      <!-- ── COUNTRY ADMINS ── -->
+      <div id="tab-country-admins" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <div class="px-6 py-4 border-b flex items-center justify-between">
+            <div class="text-sm font-semibold text-gray-700">Country Admins <span id="ca-count" class="text-gray-400 font-normal"></span></div>
+            <button onclick="openAssignModal()"
+              class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition">
+              + Assign Country Admin
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th class="px-4 py-3 text-left">Name</th>
+                  <th class="px-4 py-3 text-left">Email</th>
+                  <th class="px-4 py-3 text-left">Manages Country</th>
+                  <th class="px-4 py-3 text-left">Status</th>
+                  <th class="px-4 py-3 text-left">Assigned</th>
+                  <th class="px-4 py-3 text-left">Action</th>
+                </tr>
+              </thead>
+              <tbody id="ca-tbody" class="divide-y"></tbody>
+            </table>
+          </div>
+          <div id="ca-empty" class="hidden px-6 py-10 text-center text-sm text-gray-400">No country admins assigned yet</div>
+        </div>
+      </div>
+
+      <!-- ── AUDIT LOG ── -->
+      <div id="tab-audit" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <div class="px-6 py-4 border-b">
+            <div class="text-sm font-semibold text-gray-700">Audit Log <span id="audit-count" class="text-gray-400 font-normal"></span></div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th class="px-4 py-3 text-left">Action</th>
+                  <th class="px-4 py-3 text-left">Admin</th>
+                  <th class="px-4 py-3 text-left">Target</th>
+                  <th class="px-4 py-3 text-left">Details</th>
+                  <th class="px-4 py-3 text-left">When</th>
+                </tr>
+              </thead>
+              <tbody id="audit-tbody" class="divide-y"></tbody>
+            </table>
+          </div>
+          <div class="px-6 py-3 border-t flex gap-2" id="audit-pagination"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Reject modal ──────────────────────────────────────────────────────── -->
+<div id="reject-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+    <h3 class="font-semibold text-gray-800 mb-3">Reject Registration</h3>
+    <p class="text-sm text-gray-500 mb-4">Provide a reason (optional — visible to support team only):</p>
+    <textarea id="reject-reason" rows="3" placeholder="e.g. Invalid documents, duplicate account..."
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 mb-4"></textarea>
+    <div class="flex gap-2">
+      <button onclick="closeRejectModal()" class="flex-1 border border-gray-200 rounded-lg py-2 text-sm hover:bg-gray-50">Cancel</button>
+      <button onclick="confirmReject()" class="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 text-sm font-medium">Reject</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Assign Country Admin modal ─────────────────────────────────────────── -->
+<div id="assign-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+    <h3 class="font-semibold text-gray-800 mb-4">Assign Country Admin</h3>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">User ID (copy from Users tab)</label>
+        <input id="assign-user-id" type="text" placeholder="uuid..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Country</label>
+        <select id="assign-country"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+          <option value="SA">Saudi Arabia (SA)</option>
+          <option value="AE">UAE (AE)</option>
+          <option value="EG">Egypt (EG)</option>
+          <option value="TR">Turkey (TR)</option>
+          <option value="PK">Pakistan (PK)</option>
+          <option value="ID">Indonesia (ID)</option>
+          <option value="MY">Malaysia (MY)</option>
+          <option value="IN">India (IN)</option>
+          <option value="GB">United Kingdom (GB)</option>
+          <option value="DE">Germany (DE)</option>
+          <option value="US">United States (US)</option>
+          <option value="BR">Brazil (BR)</option>
+        </select>
+      </div>
+    </div>
+    <div id="assign-err" class="hidden mt-3 text-xs text-red-600"></div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="closeAssignModal()" class="flex-1 border border-gray-200 rounded-lg py-2 text-sm hover:bg-gray-50">Cancel</button>
+      <button onclick="assignCountryAdmin()" class="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg py-2 text-sm font-medium">Assign</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let TOKEN = localStorage.getItem('admin_token') || '';
+let ME    = {};
+let currentTab = '';
+const LIMIT = 20;
+const offsets = { hotels: 0, flights: 0, cars: 0, users: 0, pending: 0, audit: 0 };
+let _debounceTimer = null;
+let _rejectUserId  = null;
+
+function debounce(fn, ms) { clearTimeout(_debounceTimer); _debounceTimer = setTimeout(fn, ms); }
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  if (TOKEN) {
+    try {
+      const p = JSON.parse(atob(TOKEN.split('.')[1]));
+      if (p.exp * 1000 > Date.now()) { ME = p; showDashboard(p); return; }
+    } catch {}
+  }
+  showLogin();
+};
+
+// ── Login ─────────────────────────────────────────────────────────────────────
+document.getElementById('login-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  const err = document.getElementById('login-error');
+  err.classList.add('hidden');
+  try {
+    const r = await fetch('/admin/api/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email:    document.getElementById('login-email').value,
+        password: document.getElementById('login-password').value,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Login failed');
+    TOKEN = data.token;
+    ME    = JSON.parse(atob(TOKEN.split('.')[1]));
+    localStorage.setItem('admin_token', TOKEN);
+    showDashboard(data);
+  } catch (ex) {
+    err.textContent = ex.message; err.classList.remove('hidden');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+};
+
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('dashboard-screen').classList.add('hidden');
+}
+
+function showDashboard(user) {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('dashboard-screen').classList.remove('hidden');
+  document.getElementById('admin-name').textContent = user.name || user.email;
+  const roleLabel = { super_admin:'Super Admin', country_admin:'Country Admin', admin:'Admin', agent:'Agent' }[user.role] || user.role;
+  document.getElementById('sidebar-role').textContent = roleLabel;
+  if (user.admin_country) {
+    document.getElementById('admin-country-label').textContent = `Scope: ${user.admin_country}`;
+  }
+  // Show super_admin-only nav items
+  if (user.role === 'super_admin') {
+    document.getElementById('nav-country-admins').classList.remove('hidden');
+    document.getElementById('nav-audit').classList.remove('hidden');
+  }
+  showTab('dashboard');
+}
+
+function logout() {
+  TOKEN = ''; ME = {};
+  localStorage.removeItem('admin_token');
+  showLogin();
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(url) {
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${TOKEN}` } });
+  if (r.status === 401) { logout(); return null; }
+  return r.json();
+}
+async function apiPost(url, body) {
+  const r = await fetch(url, {
+    method: 'POST', headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return { ok: r.ok, status: r.status, data: await r.json() };
+}
+async function apiDel(url) {
+  const r = await fetch(url, { method: 'DELETE', headers: { Authorization: `Bearer ${TOKEN}` } });
+  return { ok: r.ok, data: await r.json() };
+}
+async function apiPatch(url) {
+  const r = await fetch(url, { method: 'PATCH', headers: { Authorization: `Bearer ${TOKEN}` } });
+  return r.json();
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+const TAB_TITLES = {
+  dashboard:'Dashboard', pending:'Pending Approval', users:'Users',
+  hotels:'Hotels', flights:'Flights', cars:'Car Rentals',
+  'country-admins':'Country Admins', audit:'Audit Log',
+};
+const ALL_TABS = ['dashboard','pending','users','hotels','flights','cars','country-admins','audit'];
+
+function showTab(tab) {
+  currentTab = tab;
+  document.getElementById('page-title').textContent = TAB_TITLES[tab] || tab;
+  ALL_TABS.forEach(t => {
+    const el = document.getElementById(`tab-${t}`);
+    if (el) el.classList.toggle('hidden', t !== tab);
+  });
+  document.querySelectorAll('.nav-btn[data-tab]').forEach(b => {
+    b.classList.toggle('nav-active', b.dataset.tab === tab);
+  });
+  document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  if (tab === 'dashboard')      { loadStats(); loadPendingBadge(); }
+  if (tab === 'pending')        loadPending();
+  if (tab === 'users')          loadUsers();
+  if (tab === 'hotels')         loadHotels();
+  if (tab === 'flights')        loadFlights();
+  if (tab === 'cars')           loadCars();
+  if (tab === 'country-admins') loadCountryAdmins();
+  if (tab === 'audit')          loadAudit();
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  const d = await api('/admin/api/stats');
+  if (!d) return;
+  const grid = document.getElementById('stats-grid');
+  const cards = [
+    { label: 'Users',    value: d.users,   color: 'gray' },
+    { label: 'Pending',  value: d.pending, color: 'amber', link: () => showTab('pending') },
+    ...(d.hotels  != null ? [{ label:'Hotels',  value:d.hotels,  color:'emerald' }] : []),
+    ...(d.flights != null ? [{ label:'Flights', value:d.flights, color:'blue'    }] : []),
+    ...(d.cars    != null ? [{ label:'Cars',    value:d.cars,    color:'purple'  }] : []),
+    ...(d.revenue != null ? [{ label:'Revenue (SAR)', value:'SAR '+Number(d.revenue).toLocaleString(), color:'green' }] : []),
+  ];
+  grid.innerHTML = cards.map(c => `
+    <div class="bg-white rounded-xl p-5 shadow-sm border ${c.link ? 'cursor-pointer hover:shadow-md transition' : ''}"
+         ${c.link ? `onclick="showTab('pending')"` : ''}>
+      <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">${c.label}</div>
+      <div class="text-3xl font-bold text-gray-800">${c.value ?? '-'}</div>
+      ${c.label === 'Pending' && d.pending > 0 ? '<div class="text-xs text-amber-600 mt-1">Requires attention</div>' : ''}
+    </div>
+  `).join('');
+
+  // health list
+  const services = ['Auth:3001','Notification:3002','Hotel:3003','Flight:3004','Car:3005','Booking:3006','Payment:3007','Loyalty:3008','Wallet:3010','Pricing:3011'];
+  document.getElementById('health-list').innerHTML = services.map(s => {
+    const [name, port] = s.split(':');
+    return `<div class="flex items-center justify-between py-1 border-b last:border-0">
+      <span class="text-gray-600">${name} <span class="text-gray-400 text-xs">:${port}</span></span>
+      <span class="inline-flex items-center gap-1 text-xs font-medium badge-active px-2 py-0.5 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online
+      </span>
+    </div>`;
+  }).join('');
+}
+
+async function loadPendingBadge() {
+  const d = await api('/admin/api/pending-users?limit=1');
+  if (!d) return;
+  const badge = document.getElementById('pending-count-badge');
+  if (d.total > 0) {
+    badge.textContent = d.total;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+// ── Pending users ─────────────────────────────────────────────────────────────
+async function loadPending() {
+  const d = await api(`/admin/api/pending-users?limit=${LIMIT}&offset=${offsets.pending}`);
+  if (!d) return;
+  document.getElementById('pending-total').textContent = `(${d.total})`;
+  const tbody = document.getElementById('pending-tbody');
+  const empty = document.getElementById('pending-empty');
+  if (!d.rows.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  tbody.innerHTML = d.rows.map(u => `
+    <tr class="hover:bg-gray-50">
+      <td class="px-4 py-3 font-medium text-gray-800">${esc(u.name || '-')}</td>
+      <td class="px-4 py-3 text-gray-600 text-xs">${esc(u.email)}</td>
+      <td class="px-4 py-3 text-gray-600">${esc(u.country || '-')}</td>
+      <td class="px-4 py-3 text-gray-400 text-xs">${fmtDate(u.created_at)}</td>
+      <td class="px-4 py-3 flex gap-2">
+        <button onclick="approveUser('${u.id}')"
+          class="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-medium px-3 py-1 rounded-lg transition">
+          Approve
+        </button>
+        <button onclick="openRejectModal('${u.id}')"
+          class="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-medium px-3 py-1 rounded-lg transition">
+          Reject
+        </button>
+      </td>
+    </tr>
+  `).join('');
+  renderPagination('pending', d.total);
+}
+
+async function approveUser(id) {
+  const r = await apiPost(`/admin/api/users/${id}/approve`, {});
+  if (r.ok) { loadPending(); loadPendingBadge(); loadStats(); }
+  else alert(r.data.error || 'Failed to approve');
+}
+
+function openRejectModal(id) { _rejectUserId = id; document.getElementById('reject-modal').classList.remove('hidden'); }
+function closeRejectModal()  { _rejectUserId = null; document.getElementById('reject-modal').classList.add('hidden'); document.getElementById('reject-reason').value = ''; }
+async function confirmReject() {
+  if (!_rejectUserId) return;
+  const reason = document.getElementById('reject-reason').value.trim();
+  const r = await apiPost(`/admin/api/users/${_rejectUserId}/reject`, { reason });
+  closeRejectModal();
+  if (r.ok) { loadPending(); loadPendingBadge(); loadStats(); }
+  else alert(r.data.error || 'Failed to reject');
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+async function loadUsers() {
+  const search = document.getElementById('users-search').value;
+  const status = document.getElementById('users-status-filter').value;
+  let url = `/admin/api/users?limit=${LIMIT}&offset=${offsets.users}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (status) url += `&status=${status}`;
+  const d = await api(url);
+  if (!d) return;
+  document.getElementById('users-count').textContent = `(${d.total})`;
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = d.rows.map(u => `
+    <tr class="hover:bg-gray-50">
+      <td class="px-4 py-3">
+        <div class="font-medium text-gray-800 text-xs">${esc(u.name || '-')}</div>
+        <div class="text-xs text-gray-300 font-mono" title="${u.id}">${u.id.slice(0,8)}...</div>
+      </td>
+      <td class="px-4 py-3 text-gray-600 text-xs">${esc(u.email)}</td>
+      <td class="px-4 py-3"><span class="badge-${u.role} text-xs px-2 py-0.5 rounded-full capitalize">${u.role}</span></td>
+      <td class="px-4 py-3 text-gray-500 text-xs">${u.country || '-'}</td>
+      <td class="px-4 py-3">
+        <span class="badge-${u.status} text-xs px-2 py-0.5 rounded-full capitalize">${u.status}</span>
+      </td>
+      <td class="px-4 py-3 text-gray-400 text-xs">${fmtDate(u.created_at)}</td>
+      <td class="px-4 py-3">
+        <button onclick="toggleUser('${u.id}')"
+          class="text-xs border rounded px-2 py-1 hover:bg-gray-100 text-gray-500">
+          ${u.is_active ? 'Deactivate' : 'Activate'}
+        </button>
+      </td>
+    </tr>
+  `).join('');
+  renderPagination('users', d.total);
+}
+
+async function toggleUser(id) {
+  await apiPatch(`/admin/api/users/${id}/toggle`);
+  loadUsers();
+}
+
+// ── Hotels ────────────────────────────────────────────────────────────────────
+async function loadHotels() {
+  const search = document.getElementById('hotels-search').value;
+  const url = `/admin/api/hotels?limit=${LIMIT}&offset=${offsets.hotels}${search ? '&search='+encodeURIComponent(search) : ''}`;
+  const d = await api(url);
+  if (!d) return;
+  document.getElementById('hotels-count').textContent = `(${d.total})`;
+  const tbody = document.getElementById('hotels-tbody');
+  tbody.innerHTML = d.rows.map(h => `
+    <tr class="hover:bg-gray-50">
+      <td class="px-4 py-3">
+        <div class="font-medium text-gray-800">${esc(h.name)}</div>
+        <div class="text-xs text-gray-400" dir="rtl">${esc(h.name_ar || '')}</div>
+      </td>
+      <td class="px-4 py-3 text-gray-600">${esc(h.location)}</td>
+      <td class="px-4 py-3 text-yellow-500">${'★'.repeat(h.stars||0)}<span class="text-gray-200">${'★'.repeat(5-(h.stars||0))}</span></td>
+      <td class="px-4 py-3 text-right font-medium">${Number(h.price_per_night).toLocaleString()} <span class="text-xs text-gray-400">${h.currency}</span></td>
+      <td class="px-4 py-3">
+        <div class="flex flex-wrap gap-1">
+          ${h.is_hajj_package   ? '<span class="badge-hajj  text-xs px-1.5 py-0.5 rounded">Hajj</span>'  : ''}
+          ${h.is_umrah_package  ? '<span class="badge-hajj  text-xs px-1.5 py-0.5 rounded">Umrah</span>' : ''}
+          ${h.is_halal_friendly ? '<span class="badge-halal text-xs px-1.5 py-0.5 rounded">Halal</span>' : ''}
+        </div>
+      </td>
+      <td class="px-4 py-3"><span class="${h.is_active ? 'badge-active' : 'badge-inactive'} text-xs px-2 py-0.5 rounded-full">${h.is_active ? 'Active' : 'Inactive'}</span></td>
+      <td class="px-4 py-3">
+        <button onclick="toggleHotel('${h.id}')"
+          class="text-xs border rounded px-2 py-1 hover:bg-gray-100 text-gray-500">
+          ${h.is_active ? 'Deactivate' : 'Activate'}
+        </button>
+      </td>
+    </tr>
+  `).join('');
+  renderPagination('hotels', d.total);
+}
+async function toggleHotel(id) { await apiPatch(`/admin/api/hotels/${id}/toggle`); loadHotels(); }
+
+// ── Flights ───────────────────────────────────────────────────────────────────
+async function loadFlights() {
+  const d = await api(`/admin/api/flights?limit=${LIMIT}&offset=${offsets.flights}`);
+  if (!d) return;
+  document.getElementById('flights-count').textContent = `(${d.total})`;
+  document.getElementById('flights-tbody').innerHTML = d.rows.map(f => `
+    <tr class="hover:bg-gray-50">
+      <td class="px-4 py-3 font-mono font-semibold text-gray-800">${esc(f.airline_code)}${esc(f.flight_num)}</td>
+      <td class="px-4 py-3 font-mono"><span class="text-blue-700">${esc(f.origin)}</span> → <span class="text-blue-700">${esc(f.dest)}</span></td>
+      <td class="px-4 py-3 text-gray-500 text-xs">${fmtDate(f.departure)}</td>
+      <td class="px-4 py-3 capitalize text-gray-600">${esc(f.cabin_class)}</td>
+      <td class="px-4 py-3 text-right text-gray-700">${f.seats_available}</td>
+      <td class="px-4 py-3 text-right font-medium">${Number(f.price).toLocaleString()}</td>
+      <td class="px-4 py-3"><span class="${f.is_active ? 'badge-active' : 'badge-inactive'} text-xs px-2 py-0.5 rounded-full">${f.is_active ? 'Active' : 'Inactive'}</span></td>
+    </tr>
+  `).join('');
+  renderPagination('flights', d.total);
+}
+
+// ── Cars ──────────────────────────────────────────────────────────────────────
+async function loadCars() {
+  const d = await api(`/admin/api/cars?limit=${LIMIT}&offset=${offsets.cars}`);
+  if (!d) return;
+  document.getElementById('cars-count').textContent = `(${d.total})`;
+  document.getElementById('cars-tbody').innerHTML = d.rows.map(c => `
+    <tr class="hover:bg-gray-50">
+      <td class="px-4 py-3 font-medium text-gray-800">${esc(c.vendor_name)}</td>
+      <td class="px-4 py-3 text-gray-600">${esc(c.model || '-')}</td>
+      <td class="px-4 py-3 capitalize text-gray-600">${esc(c.vehicle_type)}</td>
+      <td class="px-4 py-3 text-right text-gray-500">${c.seats}</td>
+      <td class="px-4 py-3 text-gray-500 text-xs">${esc(c.pickup_location)}</td>
+      <td class="px-4 py-3 text-right font-medium">${Number(c.price_per_day).toLocaleString()}</td>
+      <td class="px-4 py-3"><span class="${c.is_active ? 'badge-active' : 'badge-inactive'} text-xs px-2 py-0.5 rounded-full">${c.is_active ? 'Active' : 'Inactive'}</span></td>
+    </tr>
+  `).join('');
+  renderPagination('cars', d.total);
+}
+
+// ── Country Admins ────────────────────────────────────────────────────────────
+async function loadCountryAdmins() {
+  const d = await api('/admin/api/country-admins');
+  if (!d) return;
+  document.getElementById('ca-count').textContent = `(${d.total})`;
+  const tbody = document.getElementById('ca-tbody');
+  const empty = document.getElementById('ca-empty');
+  if (!d.rows.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  tbody.innerHTML = d.rows.map(u => `
+    <tr class="hover:bg-gray-50">
+      <td class="px-4 py-3 font-medium text-gray-800">${esc(u.name || '-')}</td>
+      <td class="px-4 py-3 text-gray-600 text-xs">${esc(u.email)}</td>
+      <td class="px-4 py-3"><span class="font-mono text-blue-700 font-semibold">${esc(u.admin_country || '-')}</span></td>
+      <td class="px-4 py-3"><span class="badge-${u.status} text-xs px-2 py-0.5 rounded-full">${u.status}</span></td>
+      <td class="px-4 py-3 text-gray-400 text-xs">${fmtDate(u.created_at)}</td>
+      <td class="px-4 py-3">
+        <button onclick="removeCountryAdmin('${u.id}')"
+          class="text-xs border border-red-200 text-red-600 hover:bg-red-50 rounded px-2 py-1 transition">
+          Remove
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openAssignModal()  { document.getElementById('assign-modal').classList.remove('hidden'); document.getElementById('assign-err').classList.add('hidden'); }
+function closeAssignModal() { document.getElementById('assign-modal').classList.add('hidden'); document.getElementById('assign-user-id').value = ''; }
+async function assignCountryAdmin() {
+  const userId  = document.getElementById('assign-user-id').value.trim();
+  const country = document.getElementById('assign-country').value;
+  if (!userId) { showAssignErr('User ID is required'); return; }
+  const r = await apiPost('/admin/api/country-admins', { user_id: userId, country });
+  if (r.ok) { closeAssignModal(); loadCountryAdmins(); }
+  else showAssignErr(r.data.error || 'Failed to assign');
+}
+function showAssignErr(msg) {
+  const el = document.getElementById('assign-err');
+  el.textContent = msg; el.classList.remove('hidden');
+}
+async function removeCountryAdmin(id) {
+  if (!confirm('Remove this country admin? They will revert to a regular user.')) return;
+  const r = await apiDel(`/admin/api/country-admins/${id}`);
+  if (r.ok) loadCountryAdmins();
+  else alert(r.data.error || 'Failed to remove');
+}
+
+// ── Audit Log ─────────────────────────────────────────────────────────────────
+async function loadAudit() {
+  const d = await api(`/admin/api/audit-log?limit=${LIMIT}&offset=${offsets.audit}`);
+  if (!d) return;
+  document.getElementById('audit-count').textContent = `(${d.total})`;
+  const actionLabels = {
+    approve_user:'Approved user', reject_user:'Rejected user',
+    suspend_user:'Suspended user', unsuspend_user:'Unsuspended user',
+    create_country_admin:'Assigned country admin', remove_country_admin:'Removed country admin',
+  };
+  document.getElementById('audit-tbody').innerHTML = d.rows.map(r => `
+    <tr class="hover:bg-gray-50">
+      <td class="px-4 py-3"><span class="text-xs font-medium text-gray-700">${actionLabels[r.action] || r.action}</span></td>
+      <td class="px-4 py-3 text-xs text-gray-500">${esc(r.admin_email || '-')}</td>
+      <td class="px-4 py-3 text-xs text-gray-500">${esc(r.target_email || '-')}</td>
+      <td class="px-4 py-3 text-xs text-gray-400">${r.meta ? esc(JSON.stringify(r.meta)) : '-'}</td>
+      <td class="px-4 py-3 text-xs text-gray-400">${fmtDate(r.created_at)}</td>
+    </tr>
+  `).join('');
+  renderPagination('audit', d.total);
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+function renderPagination(tab, total) {
+  const pages   = Math.ceil(total / LIMIT);
+  const current = Math.floor(offsets[tab] / LIMIT);
+  const el = document.getElementById(`${tab}-pagination`);
+  if (!el || pages <= 1) { if (el) el.innerHTML = ''; return; }
+  el.innerHTML = Array.from({ length: pages }, (_, i) => `
+    <button onclick="goPage('${tab}', ${i})"
+      class="px-3 py-1 rounded text-xs ${i === current ? 'bg-emerald-700 text-white' : 'border hover:bg-gray-100 text-gray-600'}">
+      ${i + 1}
+    </button>
+  `).join('');
+}
+
+function goPage(tab, page) {
+  offsets[tab] = page * LIMIT;
+  const loaders = { hotels:loadHotels, flights:loadFlights, cars:loadCars, users:loadUsers, pending:loadPending, audit:loadAudit };
+  if (loaders[tab]) loaders[tab]();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(d) {
+  if (!d) return '-';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+    + ' ' + dt.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UTUBooking — Travel Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .hero-bg { background: linear-gradient(135deg, #064e3b 0%, #065f46 40%, #047857 100%); }
+    .tab-active { border-bottom: 2px solid #059669; color: #059669; font-weight: 600; }
+    .input { width:100%; border:1px solid #d1d5db; border-radius:0.5rem; padding:0.625rem 0.75rem; font-size:0.875rem; outline:none; transition:box-shadow .15s; }
+    .input:focus { box-shadow:0 0 0 3px rgba(5,150,105,.2); border-color:#059669; }
+    .btn-primary { width:100%; background:#059669; color:#fff; font-weight:600; padding:.625rem; border-radius:.5rem; transition:background .15s; font-size:.875rem; }
+    .btn-primary:hover { background:#047857; }
+    .btn-primary:disabled { background:#9ca3af; cursor:not-allowed; }
+    .alert-err { background:#fef2f2; border:1px solid #fca5a5; color:#b91c1c; border-radius:.5rem; padding:.75rem 1rem; font-size:.875rem; }
+    .alert-ok  { background:#f0fdf4; border:1px solid #86efac; color:#166534; border-radius:.5rem; padding:.75rem 1rem; font-size:.875rem; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- ══════════════════════════ HERO ══════════════════════════ -->
+<div class="hero-bg text-white">
+  <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="text-3xl font-black tracking-tight">UTU<span class="text-emerald-300">Booking</span></div>
+      <div class="hidden sm:block text-xs text-emerald-200 border-l border-emerald-600 pl-3">Powered by AMEC Solutions</div>
+    </div>
+    <a href="/admin" class="text-xs text-emerald-300 hover:text-white border border-emerald-600 px-3 py-1.5 rounded-lg transition">Admin Panel</a>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-6 py-16 text-center">
+    <h1 class="text-4xl sm:text-5xl font-black mb-4 leading-tight">
+      Your Journey to<br /><span class="text-emerald-300">Makkah &amp; Beyond</span>
+    </h1>
+    <p class="text-emerald-100 text-lg max-w-xl mx-auto mb-8">
+      Hotels, Flights &amp; Car Rentals — trusted by Hajj &amp; Umrah travelers across the Gulf, Asia and beyond.
+    </p>
+    <div class="flex flex-wrap justify-center gap-4 text-sm text-emerald-200">
+      <span>Saudi Arabia</span><span class="opacity-40">|</span>
+      <span>UAE</span><span class="opacity-40">|</span>
+      <span>Turkey</span><span class="opacity-40">|</span>
+      <span>Indonesia</span><span class="opacity-40">|</span>
+      <span>Malaysia</span><span class="opacity-40">|</span>
+      <span>Pakistan</span><span class="opacity-40">|</span>
+      <span>Egypt</span><span class="opacity-40">|</span>
+      <span>28+ Countries</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ MAIN ══════════════════════════ -->
+<div class="max-w-md mx-auto px-4 -mt-8 pb-16">
+
+  <!-- ── Auth card ─────────────────────────────────────────── -->
+  <div id="auth-card" class="bg-white rounded-2xl shadow-xl overflow-hidden">
+
+    <!-- Tabs -->
+    <div class="flex border-b">
+      <button id="tab-login-btn" onclick="switchTab('login')"
+        class="flex-1 py-3.5 text-sm tab-active" data-tab="login">Sign In</button>
+      <button id="tab-register-btn" onclick="switchTab('register')"
+        class="flex-1 py-3.5 text-sm text-gray-500 hover:text-gray-700" data-tab="register">Create Account</button>
+    </div>
+
+    <div class="p-6">
+
+      <!-- LOGIN FORM -->
+      <div id="login-form-wrap">
+        <div id="login-msg" class="hidden mb-4"></div>
+        <form id="login-form" class="space-y-4" onsubmit="doLogin(event)">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Email address</label>
+            <input id="l-email" type="email" required class="input" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Password</label>
+            <input id="l-pass" type="password" required class="input" placeholder="••••••••" />
+          </div>
+          <button type="submit" id="login-btn" class="btn-primary">Sign In</button>
+        </form>
+        <p class="text-center text-xs text-gray-400 mt-4">
+          No account? <button onclick="switchTab('register')" class="text-emerald-600 hover:underline">Create one</button>
+        </p>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="register-form-wrap" class="hidden">
+        <div id="register-msg" class="hidden mb-4"></div>
+        <form id="register-form" class="space-y-4" onsubmit="doRegister(event)">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Full name</label>
+            <input id="r-name" type="text" required class="input" placeholder="Ahmed Al-Rashid" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Email address</label>
+            <input id="r-email" type="email" required class="input" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Password <span class="text-gray-400">(min 8 chars, upper + lower + number)</span></label>
+            <input id="r-pass" type="password" required class="input" placeholder="••••••••" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Country</label>
+            <select id="r-country" required class="input">
+              <option value="">Select your country...</option>
+              <optgroup label="Gulf &amp; Middle East">
+                <option value="SA">Saudi Arabia</option>
+                <option value="AE">United Arab Emirates</option>
+                <option value="KW">Kuwait</option>
+                <option value="QA">Qatar</option>
+                <option value="BH">Bahrain</option>
+                <option value="OM">Oman</option>
+                <option value="JO">Jordan</option>
+                <option value="EG">Egypt</option>
+                <option value="MA">Morocco</option>
+                <option value="TN">Tunisia</option>
+              </optgroup>
+              <optgroup label="Asia">
+                <option value="TR">Turkey</option>
+                <option value="PK">Pakistan</option>
+                <option value="IN">India</option>
+                <option value="BD">Bangladesh</option>
+                <option value="ID">Indonesia</option>
+                <option value="MY">Malaysia</option>
+                <option value="SG">Singapore</option>
+              </optgroup>
+              <optgroup label="Europe">
+                <option value="GB">United Kingdom</option>
+                <option value="DE">Germany</option>
+                <option value="FR">France</option>
+                <option value="NL">Netherlands</option>
+                <option value="BE">Belgium</option>
+                <option value="CH">Switzerland</option>
+                <option value="AT">Austria</option>
+                <option value="SE">Sweden</option>
+                <option value="NO">Norway</option>
+                <option value="DK">Denmark</option>
+                <option value="FI">Finland</option>
+                <option value="ES">Spain</option>
+                <option value="IT">Italy</option>
+                <option value="PL">Poland</option>
+                <option value="PT">Portugal</option>
+                <option value="IE">Ireland</option>
+                <option value="GR">Greece</option>
+                <option value="BA">Bosnia and Herzegovina</option>
+              </optgroup>
+              <optgroup label="Americas">
+                <option value="US">United States</option>
+                <option value="CA">Canada</option>
+                <option value="BR">Brazil</option>
+                <option value="AR">Argentina</option>
+                <option value="CO">Colombia</option>
+                <option value="CL">Chile</option>
+                <option value="PE">Peru</option>
+              </optgroup>
+            </select>
+          </div>
+          <button type="submit" id="register-btn" class="btn-primary">Create Account</button>
+        </form>
+        <p class="text-center text-xs text-gray-400 mt-4">
+          Already have an account? <button onclick="switchTab('login')" class="text-emerald-600 hover:underline">Sign in</button>
+        </p>
+      </div>
+
+      <!-- PENDING SCREEN -->
+      <div id="pending-screen" class="hidden text-center py-4">
+        <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 text-lg mb-2">Account Pending Approval</h3>
+        <p class="text-sm text-gray-500 mb-4">
+          Your registration has been submitted. A country administrator will review and approve your account shortly.
+        </p>
+        <p class="text-xs text-gray-400 mb-6">You will be able to log in once approved.</p>
+        <button onclick="switchTab('login')" class="text-sm text-emerald-600 hover:underline">Back to sign in</button>
+      </div>
+
+      <!-- REJECTED SCREEN -->
+      <div id="rejected-screen" class="hidden text-center py-4">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 text-lg mb-2">Registration Not Approved</h3>
+        <p class="text-sm text-gray-500 mb-6">Your registration was not approved. Please contact <a href="mailto:support@utubooking.com" class="text-emerald-600 hover:underline">support@utubooking.com</a> for more information.</p>
+        <button onclick="switchTab('login')" class="text-sm text-emerald-600 hover:underline">Back to sign in</button>
+      </div>
+
+      <!-- USER DASHBOARD -->
+      <div id="user-dashboard" class="hidden">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <div class="font-semibold text-gray-800" id="dash-name"></div>
+            <div class="text-xs text-gray-400" id="dash-email"></div>
+          </div>
+          <button onclick="doLogout()" class="text-xs text-gray-400 hover:text-red-500 transition">Sign out</button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 mb-6">
+          <div class="bg-emerald-50 rounded-xl p-3 text-center">
+            <div class="text-2xl font-bold text-emerald-700">0</div>
+            <div class="text-xs text-emerald-600 mt-0.5">Bookings</div>
+          </div>
+          <div class="bg-blue-50 rounded-xl p-3 text-center">
+            <div class="text-2xl font-bold text-blue-700">0</div>
+            <div class="text-xs text-blue-600 mt-0.5">Points</div>
+          </div>
+          <div class="bg-amber-50 rounded-xl p-3 text-center">
+            <div class="text-2xl font-bold text-amber-700">0</div>
+            <div class="text-xs text-amber-600 mt-0.5">Saved</div>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <a href="http://localhost:3003/api/v1/hotels/search?location=Makkah&checkIn=2026-05-01&checkOut=2026-05-05&guests=2"
+            target="_blank"
+            class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+            <span class="text-2xl">🏨</span>
+            <div>
+              <div class="text-sm font-medium text-gray-800">Search Hotels</div>
+              <div class="text-xs text-gray-400">Makkah, Madinah &amp; more</div>
+            </div>
+          </a>
+          <a href="http://localhost:3004/health" target="_blank"
+            class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+            <span class="text-2xl">✈️</span>
+            <div>
+              <div class="text-sm font-medium text-gray-800">Search Flights</div>
+              <div class="text-xs text-gray-400">Gulf, Asia, Europe &amp; more</div>
+            </div>
+          </a>
+          <a href="http://localhost:3005/health" target="_blank"
+            class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+            <span class="text-2xl">🚗</span>
+            <div>
+              <div class="text-sm font-medium text-gray-800">Rent a Car</div>
+              <div class="text-xs text-gray-400">Makkah, Madinah, Jeddah &amp; Riyadh</div>
+            </div>
+          </a>
+        </div>
+
+        <div class="mt-6 pt-4 border-t text-center">
+          <a href="/admin" class="text-xs text-gray-400 hover:text-emerald-600 transition">Admin Panel</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Features strip -->
+  <div class="mt-8 grid grid-cols-3 gap-4 text-center">
+    <div class="bg-white rounded-xl p-4 shadow-sm">
+      <div class="text-2xl mb-1">🕌</div>
+      <div class="text-xs font-medium text-gray-700">Hajj &amp; Umrah</div>
+      <div class="text-xs text-gray-400 mt-0.5">Specialist packages</div>
+    </div>
+    <div class="bg-white rounded-xl p-4 shadow-sm">
+      <div class="text-2xl mb-1">🌙</div>
+      <div class="text-xs font-medium text-gray-700">Halal Certified</div>
+      <div class="text-xs text-gray-400 mt-0.5">Prayer rooms &amp; halal food</div>
+    </div>
+    <div class="bg-white rounded-xl p-4 shadow-sm">
+      <div class="text-2xl mb-1">💱</div>
+      <div class="text-xs font-medium text-gray-700">SAR First</div>
+      <div class="text-xs text-gray-400 mt-0.5">Multi-currency support</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PORTAL_TOKEN_KEY = 'portal_user_token';
+const PORTAL_USER_KEY  = 'portal_user_info';
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  const token = localStorage.getItem(PORTAL_TOKEN_KEY);
+  if (token) {
+    try {
+      const p = JSON.parse(atob(token.split('.')[1]));
+      if (p.exp * 1000 > Date.now()) {
+        showDashboard(JSON.parse(localStorage.getItem(PORTAL_USER_KEY) || '{}'));
+        return;
+      }
+    } catch {}
+    localStorage.removeItem(PORTAL_TOKEN_KEY);
+    localStorage.removeItem(PORTAL_USER_KEY);
+  }
+};
+
+function switchTab(tab) {
+  const loginBtn    = document.getElementById('tab-login-btn');
+  const registerBtn = document.getElementById('tab-register-btn');
+  loginBtn.className    = 'flex-1 py-3.5 text-sm ' + (tab === 'login'    ? 'tab-active' : 'text-gray-500 hover:text-gray-700');
+  registerBtn.className = 'flex-1 py-3.5 text-sm ' + (tab === 'register' ? 'tab-active' : 'text-gray-500 hover:text-gray-700');
+
+  hide('login-form-wrap');
+  hide('register-form-wrap');
+  hide('pending-screen');
+  hide('rejected-screen');
+  hide('user-dashboard');
+
+  if (tab === 'login')    show('login-form-wrap');
+  if (tab === 'register') show('register-form-wrap');
+  if (tab === 'pending')  { hide('login-form-wrap'); hide('register-form-wrap'); show('pending-screen'); }
+  if (tab === 'rejected') { hide('login-form-wrap'); hide('register-form-wrap'); show('rejected-screen'); }
+}
+
+function showDashboard(user) {
+  hide('login-form-wrap');
+  hide('register-form-wrap');
+  hide('pending-screen');
+  hide('rejected-screen');
+  show('user-dashboard');
+  document.getElementById('dash-name').textContent  = user.name  || 'Welcome';
+  document.getElementById('dash-email').textContent = user.email || '';
+}
+
+// ── Login ─────────────────────────────────────────────────────────────────────
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  setMsg('login-msg', '', '');
+  try {
+    const r = await fetch('/api/portal/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email:    document.getElementById('l-email').value,
+        password: document.getElementById('l-pass').value,
+      }),
+    });
+    const data = await r.json();
+
+    if (r.status === 403 && data.error === 'ACCOUNT_PENDING') {
+      switchTab('pending'); return;
+    }
+    if (r.status === 403 && data.error === 'ACCOUNT_REJECTED') {
+      switchTab('rejected'); return;
+    }
+    if (!r.ok) {
+      setMsg('login-msg', data.details?.[0] || data.message || 'Login failed', 'err');
+      return;
+    }
+
+    // Decode JWT for display info
+    const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
+    const userInfo = { name: payload.name || payload.email, email: payload.email || document.getElementById('l-email').value };
+    localStorage.setItem(PORTAL_TOKEN_KEY, data.accessToken);
+    localStorage.setItem(PORTAL_USER_KEY, JSON.stringify(userInfo));
+    showDashboard(userInfo);
+  } catch {
+    setMsg('login-msg', 'Connection error. Is the backend running?', 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+
+// ── Register ──────────────────────────────────────────────────────────────────
+async function doRegister(e) {
+  e.preventDefault();
+  const btn = document.getElementById('register-btn');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  setMsg('register-msg', '', '');
+  try {
+    const r = await fetch('/api/portal/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:     document.getElementById('r-name').value,
+        email:    document.getElementById('r-email').value,
+        password: document.getElementById('r-pass').value,
+        country:  document.getElementById('r-country').value,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      setMsg('register-msg', data.details?.[0] || data.message || 'Registration failed', 'err');
+      return;
+    }
+    switchTab('pending');
+  } catch {
+    setMsg('register-msg', 'Connection error. Is the backend running?', 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Create Account';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem(PORTAL_TOKEN_KEY);
+  localStorage.removeItem(PORTAL_USER_KEY);
+  switchTab('login');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+function setMsg(id, text, type) {
+  const el = document.getElementById(id);
+  if (!text) { el.classList.add('hidden'); return; }
+  el.className = type === 'err' ? 'alert-err mb-4' : 'alert-ok mb-4';
+  el.textContent = text;
+  el.classList.remove('hidden');
+}
+</script>
+</body>
+</html>

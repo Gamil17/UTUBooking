@@ -67,14 +67,14 @@ const US_UMRAH_HAJJ_DEPARTURES = [
 const UMRAH_DESTINATIONS = ['JED', 'MED'];
 const HAJJ_DESTINATIONS  = ['JED'];
 
-const DEPARTURE_MAP: Record<string, Record<string, typeof US_UMRAH_HAJJ_DEPARTURES>> = {
+const DEPARTURE_MAP = {
   US: {
     umrah: US_UMRAH_HAJJ_DEPARTURES,
     hajj:  US_UMRAH_HAJJ_DEPARTURES,
   },
 };
 
-const DESTINATION_MAP: Record<string, Record<string, string[]>> = {
+const DESTINATION_MAP = {
   US: {
     umrah: UMRAH_DESTINATIONS,
     hajj:  HAJJ_DESTINATIONS,

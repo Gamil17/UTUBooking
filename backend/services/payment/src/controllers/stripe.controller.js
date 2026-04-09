@@ -142,7 +142,8 @@ async function webhook(req, res, next) {
 
     // Determine actual card brand from payment method details for records
     const cardBrand = intent.charges?.data?.[0]?.payment_method_details?.card?.brand;
-    const method    = cardBrand === 'mastercard' ? 'mastercard' : 'visa';
+    const BRAND_MAP = { visa: 'visa', mastercard: 'mastercard', amex: 'amex', discover: 'visa', diners: 'visa', jcb: 'visa', unionpay: 'visa', mada: 'visa' };
+    const method    = BRAND_MAP[cardBrand] ?? 'visa';
 
     await repo.updatePayment(payment.id, {
       status:          newStatus,

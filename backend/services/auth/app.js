@@ -1,11 +1,13 @@
 require('dotenv').config();
 const express        = require('express');
 const authRouter     = require('./src/routes/auth.router');
+const adminRouter    = require('./src/routes/admin.router');
 const gdprRouter     = require('./src/routes/gdpr.router');
 const ccpaRouter     = require('./src/routes/ccpa.router');
 const pipedaRouter   = require('./src/routes/pipeda.router');
-const lgpdRouter     = require('./src/routes/lgpd.router');
-const authMiddleware = require('./src/middleware/auth.middleware');
+const lgpdRouter      = require('./src/routes/lgpd.router');
+const whatsappRouter  = require('./src/routes/whatsapp.router');
+const authMiddleware  = require('./src/middleware/auth.middleware');
 const errorHandler   = require('./src/middleware/errorHandler');
 
 const app = express();
@@ -33,6 +35,7 @@ app.get('/health', (req, res) =>
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth',      authRouter);
+app.use('/api/admin',     adminRouter);
 // GDPR user rights — Art. 15/17/20 endpoints (JWT required)
 app.use('/api/user/gdpr', authMiddleware, gdprRouter);
 // CCPA user rights — Cal. Civ. Code §1798.100+ (JWT required)
@@ -41,6 +44,8 @@ app.use('/api/user/ccpa', authMiddleware, ccpaRouter);
 app.use('/api/user/pipeda', authMiddleware, pipedaRouter);
 // LGPD user rights — Brazilian Lei Geral de Proteção de Dados (JWT required)
 app.use('/api/user/lgpd',   authMiddleware, lgpdRouter);
+// WhatsApp opt-in / opt-out + Meta webhook (x-internal-secret gated)
+app.use('/api/v1/whatsapp', whatsappRouter);
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) =>

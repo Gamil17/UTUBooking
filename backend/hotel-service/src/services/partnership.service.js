@@ -17,13 +17,18 @@
  */
 
 const path = require('path');
-const { createClient } = require('ioredis');
+const Redis = require('ioredis');
 
 // ─── Redis client (shared — reuse if already initialised) ─────────────────────
 let _redis = null;
 function _getRedis() {
   if (!_redis) {
-    _redis = new createClient({ host: process.env.REDIS_HOST || '127.0.0.1', port: 6379 });
+    _redis = new Redis({
+      host:                 process.env.REDIS_HOST || '127.0.0.1',
+      port:                 6379,
+      lazyConnect:          true,
+      maxRetriesPerRequest: 1,
+    });
     _redis.on('error', (err) => console.error('[partnership.service] Redis error:', err.message));
   }
   return _redis;

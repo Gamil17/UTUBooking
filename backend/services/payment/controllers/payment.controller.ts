@@ -4,6 +4,20 @@
 import { Router, Request, Response } from 'express';
 import { getGateway, validateAmountForGateway, calculateFee, GATEWAY_CONFIG } from '../PaymentRouter';
 import * as iyzicoService from '../gateways/iyzico.service';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const exchangeRateSvc  = require('../src/services/exchangeRate.service');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const stcpayGateway    = require('../src/gateways/stcpay.gateway');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const stripeGateway    = require('../src/gateways/stripe.gateway');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const midtransGateway  = require('../src/gateways/midtrans.gateway');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const ipay88Gateway    = require('../src/gateways/ipay88.gateway');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const razorpayGateway  = require('../src/gateways/razorpay.gateway');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const jazzcashGateway  = require('../src/gateways/jazzcash.gateway');
 
 const router = Router();
 
@@ -63,7 +77,7 @@ router.post('/process', async (req: Request, res: Response) => {
         break;
 
       case 'iyzico':
-        paymentResult = await processIyzico(userId, bookingId, totalInUSD, currency);
+        paymentResult = await processIyzico(userId, bookingId, totalInUSD, currency, req);
         break;
 
       case 'midtrans':
@@ -199,29 +213,71 @@ router.post('/webhook/:gateway', async (req: Request, res: Response) => {
 // --- Helper Functions (Stubs) ---
 // These delegate to existing gateway-specific implementations
 
-async function getExchangeRate(from: string, to: string): Promise<number> {
-  // Call existing FX service
-  return 1.0; // stub
+/**
+ * Returns how many units of `from` equal 1 USD.
+ * Used by the caller as: amountInUSD = amountLocal / getExchangeRate(localCurrency, 'USD')
+ * e.g. getExchangeRate('SAR', 'USD') → 3.75  →  375 SAR / 3.75 = 100 USD
+ */
+async function getExchangeRate(from: string, _to: string): Promise<number> {
+  try {
+    // getRate('USD', from, 1) = how many `from` per 1 USD (e.g. 3.75 for SAR)
+    const rate = await exchangeRateSvc.getRate('USD', from, 1);
+    return (rate as number) || 1.0;
+  } catch {
+    console.error(`[FX] Failed to get rate USD→${from}, falling back to 1.0`);
+    return 1.0;
+  }
 }
 
 async function processStcPay(userId: string, bookingId: string, amount: number, currency: string) {
-  // Delegate to existing STC Pay implementation
-  return { transactionId: 'stc_xxx', status: 'pending' };
+  // amount is in SAR (STC Pay only operates in SAR)
+  const sarRate   = await getExchangeRate('SAR', 'USD');
+  const amountSAR = amount * sarRate;
+  const booking   = await getBookingDetails(bookingId);
+
+  const result = await stcpayGateway.initiatePayment({
+    bookingId,
+    amount:     amountSAR,
+    currency:   'SAR',
+    mobileNumber: booking?.phone,
+  });
+
+  return {
+    transactionId: result.stcPayRef,
+    paymentUrl:    result.paymentUrl,
+    status:        'pending',
+  };
 }
 
 async function processStripe(userId: string, bookingId: string, amount: number, currency: string) {
-  // Delegate to existing Stripe implementation
-  return { transactionId: 'stripe_xxx', status: 'pending' };
+  // amount is already in USD from the main handler
+  const result = await stripeGateway.createPaymentIntent({
+    bookingId,
+    amount,
+    currency:    'USD',
+    description: `UTUBooking hotel booking ${bookingId}`,
+  });
+
+  return {
+    transactionId: result.paymentIntentId,
+    clientSecret:  result.clientSecret,
+    status:        result.status === 'succeeded' ? 'completed' : 'pending',
+  };
 }
 
-async function processIyzico(userId: string, bookingId: string, amount: number, currency: string) {
+async function processIyzico(
+  userId: string, bookingId: string, amount: number, currency: string,
+  req: Request
+) {
   try {
-    // Get buyer email and phone from booking (TODO: fetch from booking service)
-    const email = await getBookingEmail(bookingId) || 'customer@example.com';
-    const phone = await getBookingPhone(bookingId) || '+90 555 000 0000';
-    const firstName = 'Customer'; // TODO: Get from booking
-    const lastName = 'Name';      // TODO: Get from booking
-    const ipAddress = '127.0.0.1'; // TODO: Get from request
+    const booking   = await getBookingDetails(bookingId);
+    const email     = booking?.email     || 'customer@example.com';
+    const phone     = booking?.phone     || '+90 555 000 0000';
+    const firstName = booking?.firstName || 'UTU';
+    const lastName  = booking?.lastName  || 'Guest';
+    const ipAddress = (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim()
+      || req.socket?.remoteAddress
+      || '127.0.0.1';
 
     // Call iyzico service
     const result = await iyzicoService.createPayment({
@@ -234,7 +290,7 @@ async function processIyzico(userId: string, bookingId: string, amount: number, 
       lastName,
       ipAddress,
       currency: 'USD',
-      cardToken: undefined, // TODO: Get from frontend in production
+      cardToken: undefined, // Checkout Form flow — token comes from iyzico callback
     });
 
     return {
@@ -254,23 +310,97 @@ async function processIyzico(userId: string, bookingId: string, amount: number, 
 }
 
 async function processMidtrans(userId: string, bookingId: string, amount: number, currency: string) {
-  // TODO: Implement Phase 5
-  return { transactionId: 'midtrans_xxx', status: 'pending' };
+  // amount is in USD — convert to IDR for Midtrans
+  const idrRate   = await getExchangeRate('IDR', 'USD');   // IDR per 1 USD
+  const amountIDR = Math.round(amount * idrRate);
+  const booking   = await getBookingDetails(bookingId);
+
+  const result = await midtransGateway.createTransaction({
+    bookingId,
+    amount:         amountIDR,
+    currency:       'IDR',
+    customerName:   booking ? `${booking.firstName} ${booking.lastName}` : undefined,
+    customerEmail:  booking?.email,
+    customerPhone:  booking?.phone,
+  });
+
+  return {
+    transactionId: result.token,         // Snap token — frontend opens Snap.js popup
+    snapToken:     result.token,
+    redirectUrl:   result.redirectUrl,
+    status:        'pending',
+  };
 }
 
 async function processIpay88(userId: string, bookingId: string, amount: number, currency: string) {
-  // TODO: Implement Phase 5
-  return { transactionId: 'ipay88_xxx', status: 'pending' };
+  // amount is in USD — convert to MYR for iPay88
+  const myrRate   = await getExchangeRate('MYR', 'USD');
+  const amountMYR = (amount * myrRate).toFixed(2);
+  const booking   = await getBookingDetails(bookingId);
+
+  const result = ipay88Gateway.initiatePayment({
+    bookingId,
+    amount:        amountMYR,
+    currency:      'MYR',
+    customerName:  booking ? `${booking.firstName} ${booking.lastName}` : undefined,
+    customerEmail: booking?.email,
+    customerPhone: booking?.phone,
+  });
+
+  return {
+    transactionId: bookingId,            // RefNo — iPay88 uses bookingId as reference
+    paymentUrl:    result.paymentUrl,    // frontend POSTs formParams to this URL
+    formParams:    result.formParams,
+    status:        'pending',
+  };
 }
 
 async function processRazorpay(userId: string, bookingId: string, amount: number, currency: string) {
-  // TODO: Implement Phase 6
-  return { transactionId: 'razorpay_xxx', status: 'pending' };
+  // amount is in USD — convert to INR for Razorpay
+  const inrRate   = await getExchangeRate('INR', 'USD');
+  const amountINR = amount * inrRate;
+  const booking   = await getBookingDetails(bookingId);
+
+  const result = await razorpayGateway.createOrder({
+    bookingId,
+    amount:   amountINR,
+    currency: 'INR',
+    notes:    { userId, email: booking?.email ?? '' },
+  });
+
+  return {
+    transactionId: result.orderId,   // Razorpay order ID — passed to Checkout widget
+    orderId:       result.orderId,
+    keyId:         result.keyId,
+    amountPaise:   result.amountPaise,
+    emiOptions:    result.emiOptions,
+    status:        'pending',
+  };
 }
 
 async function processJazzcash(userId: string, bookingId: string, amount: number, currency: string) {
-  // TODO: Implement Phase 6
-  return { transactionId: 'jazzcash_xxx', status: 'pending' };
+  // amount is in USD — convert to PKR for JazzCash
+  const pkrRate   = await getExchangeRate('PKR', 'USD');
+  const amountPKR = amount * pkrRate;
+  const booking   = await getBookingDetails(bookingId);
+
+  if (!booking?.phone) {
+    console.warn(`[JazzCash] No mobile number for booking ${bookingId} — cannot initiate MPAY`);
+    return { transactionId: bookingId, status: 'failed', errorMessage: 'Mobile number required for JazzCash' };
+  }
+
+  const result = await jazzcashGateway.initiateMobileWalletPayment({
+    bookingId,
+    amount:       amountPKR,
+    mobileNumber: booking.phone,
+    description:  `UTUBooking ref ${bookingId}`,
+  });
+
+  return {
+    transactionId: result.txnRefNo,
+    status:        result.status === 'success' ? 'pending' : 'failed',
+    errorMessage:  result.status !== 'success' ? result.jazzCashResponse?.pp_ResponseMessage : undefined,
+  };
 }
 
 async function recordTransaction(
@@ -322,9 +452,10 @@ function parseStripeWebhook(body: any) {
 function parseIyzicoWebhook(body: any) {
   // Use iyzico service's webhook parser
   const webhookData = iyzicoService.parseWebhook(body);
+  // conversationId == bookingId; userId is looked up from booking service at notification time
   return {
     bookingId: webhookData.bookingId,
-    userId: body.buyerEmail, // iyzico doesn't send userId, use email lookup TODO
+    userId: body.conversationId, // resolve to userId via booking service downstream
     status: webhookData.status === 'success' ? 'completed' : 'failed',
   };
 }
@@ -376,14 +507,29 @@ function getAvailableGateways(countryCode: string): string[] {
   return [gateway, 'stripe'].filter((g, i, arr) => arr.indexOf(g) === i);
 }
 
-async function getBookingEmail(bookingId: string): Promise<string | null> {
-  // TODO: Call booking service to fetch email
-  return null;
+interface BookingDetails {
+  email: string;
+  phone: string;
+  firstName: string;
+  lastName: string;
 }
 
-async function getBookingPhone(bookingId: string): Promise<string | null> {
-  // TODO: Call booking service to fetch phone
-  return null;
+const BOOKING_SERVICE = process.env.INTERNAL_BOOKING_SERVICE_URL ?? 'http://booking-service:3006';
+
+async function getBookingDetails(bookingId: string): Promise<BookingDetails | null> {
+  try {
+    const res = await fetch(
+      `${BOOKING_SERVICE}/api/v1/bookings/${bookingId}/contact`,
+      {
+        headers: { 'x-internal-secret': process.env.INTERNAL_API_SECRET ?? '' },
+        signal: AbortSignal.timeout(4000),
+      }
+    );
+    if (!res.ok) return null;
+    return await res.json() as BookingDetails;
+  } catch {
+    return null;
+  }
 }
 
 export default router;

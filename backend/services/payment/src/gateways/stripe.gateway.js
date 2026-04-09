@@ -42,7 +42,7 @@ async function createPaymentIntent({ amount, currency = 'SAR', bookingId, descri
     description,
     metadata:             { bookingId },
     // 3DS handled automatically by Stripe when using PaymentIntents + stripe.js
-  });
+  }, { idempotencyKey: `pi-${bookingId}` });
 
   return {
     paymentIntentId: intent.id,
@@ -107,7 +107,7 @@ async function createPaymentElementIntent({
     capture_method:           'automatic',
     description,
     metadata:                 { bookingId, countryCode: countryCode ?? '' },
-  });
+  }, { idempotencyKey: `pe-${bookingId}` });
 
   return {
     paymentIntentId: intent.id,

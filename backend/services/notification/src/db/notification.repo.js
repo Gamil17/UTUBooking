@@ -263,8 +263,9 @@ async function createCampaign({ name, subjectEn, subjectAr, dealItems, scheduled
 async function updateCampaignStatus(campaignId, status, extra = {}) {
   const sets = ['status = $2', 'updated_at = NOW()'];
   const vals = [campaignId, status];
-  if (extra.startedAt)   { sets.push(`started_at = $${vals.push(extra.startedAt)}`); }
-  if (extra.completedAt) { sets.push(`completed_at = $${vals.push(extra.completedAt)}`); }
+  if (extra.startedAt)         { sets.push(`started_at = $${vals.push(extra.startedAt)}`); }
+  if (extra.completedAt)       { sets.push(`completed_at = $${vals.push(extra.completedAt)}`); }
+  if (extra.scheduledFor)      { sets.push(`scheduled_for = $${vals.push(extra.scheduledFor)}`); }
   if (extra.totalRecipients != null) { sets.push(`total_recipients = $${vals.push(extra.totalRecipients)}`); }
   await pool.query(`UPDATE email_campaigns SET ${sets.join(', ')} WHERE id = $1`, vals);
 }

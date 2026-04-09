@@ -20,15 +20,23 @@ router.get('/incomplete-bookings', async (req, res) => {
     const page  = Math.max(1, parseInt(req.query.page  || '1',  10));
     const limit = Math.min(100, parseInt(req.query.limit || '20', 10));
 
-    const [rows, stats] = await Promise.all([
+    const [{ results, total }, stats] = await Promise.all([
       repo.listIncompleteBookings({ page, limit }),
       repo.getIncompleteBookingStats(),
     ]);
 
-    res.json({ data: rows, stats, page, limit });
+    // Normalise field names to match frontend IncompleteBookingRow interface
+    const data = results.map((r) => ({
+      ...r,
+      name_en:     r.customer_name ?? null,
+      email_count: r.recovery_emails_sent ?? 0,
+      suppressed:  r.is_suppressed ?? false,
+    }));
+
+    res.json({ data, total, stats, page, limit });
   } catch (err) {
     console.error('[admin] incomplete-bookings error:', err.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+    res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
   }
 });
 
@@ -49,11 +57,11 @@ router.get('/email-log', async (req, res) => {
       bookingRef:     req.query.bookingRef     || null,
     };
 
-    const rows = await repo.listEmailLog({ page, limit, filters });
-    res.json({ data: rows, page, limit });
+    const { results, total } = await repo.listEmailLog({ page, limit, ...filters });
+    res.json({ data: results, total, page, limit });
   } catch (err) {
     console.error('[admin] email-log error:', err.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+    res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
   }
 });
 
@@ -77,7 +85,7 @@ router.post('/suppress', async (req, res) => {
     res.status(201).json({ data: row });
   } catch (err) {
     console.error('[admin] suppress error:', err.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+    res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
   }
 });
 
@@ -86,12 +94,12 @@ router.post('/suppress', async (req, res) => {
  */
 router.post('/suppress/:id/lift', async (req, res) => {
   try {
-    const row = await repo.liftSuppression(req.params.id);
-    if (!row) return res.status(404).json({ error: 'NOT_FOUND' });
-    res.json({ data: row });
+    const lifted = await repo.liftSuppression(req.params.id);
+    if (!lifted) return res.status(404).json({ error: 'NOT_FOUND' });
+    res.json({ ok: true });
   } catch (err) {
     console.error('[admin] lift-suppress error:', err.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+    res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
   }
 });
 
@@ -115,7 +123,7 @@ router.post('/trigger-recovery', async (req, res) => {
     res.json({ queued: true, jobId: job.id });
   } catch (err) {
     console.error('[admin] trigger-recovery error:', err.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+    res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
   }
 });
 
@@ -131,11 +139,11 @@ router.get('/campaigns', async (req, res) => {
     const limit  = Math.min(100, parseInt(req.query.limit || '20', 10));
     const status = req.query.status || null;
 
-    const rows = await repo.listCampaigns({ page, limit, status });
-    res.json({ data: rows, page, limit });
+    const { results, total } = await repo.listCampaigns({ page, limit, status });
+    res.json({ data: results, total, page, limit });
   } catch (err) {
     console.error('[admin] campaigns list error:', err.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+    res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
   }
 });
 
@@ -161,7 +169,7 @@ router.post('/campaigns', async (req, res) => {
     res.status(201).json({ data: campaign });
   } catch (err) {
     console.error('[admin] campaigns create error:', err.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+    res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
   }
 });
 
@@ -171,17 +179,21 @@ router.post('/campaigns', async (req, res) => {
  */
 router.post('/campaigns/:id/send', async (req, res) => {
   try {
-    const campaign = await repo.updateCampaignStatus(req.params.id, 'scheduled', {
+    const existing = await repo.getCampaignById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'NOT_FOUND' });
+
+    await repo.updateCampaignStatus(req.params.id, 'scheduled', {
       scheduledFor: new Date(),
     });
-    if (!campaign) return res.status(404).json({ error: 'NOT_FOUND' });
 
     // Also enqueue immediately rather than waiting up to 5 minutes
     await notificationQueue.add('dispatch-campaigns', {}, { attempts: 1, removeOnComplete: true });
-    res.json({ data: campaign, queued: true });
+
+    const updated = await repo.getCampaignById(req.params.id);
+    res.json({ data: updated, queued: true });
   } catch (err) {
     console.error('[admin] campaigns send error:', err.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+    res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
   }
 });
 
@@ -191,12 +203,12 @@ router.post('/campaigns/:id/send', async (req, res) => {
  */
 router.delete('/campaigns/:id', async (req, res) => {
   try {
-    const campaign = await repo.cancelCampaign(req.params.id);
-    if (!campaign) return res.status(404).json({ error: 'NOT_FOUND' });
-    res.json({ data: campaign });
+    const cancelled = await repo.cancelCampaign(req.params.id);
+    if (!cancelled) return res.status(404).json({ error: 'NOT_FOUND' });
+    res.json({ ok: true });
   } catch (err) {
     console.error('[admin] campaigns delete error:', err.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+    res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
   }
 });
 
@@ -225,7 +237,7 @@ router.get('/campaigns/:id/stats', async (req, res) => {
     res.json({ data: rows[0] });
   } catch (err) {
     console.error('[admin] campaigns stats error:', err.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+    res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
   }
 });
 

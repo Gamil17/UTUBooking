@@ -29,7 +29,7 @@
  */
 
 const Redis       = require('ioredis');
-const cartrawler  = require('../../../../../adapters/cartrawler');
+const cartrawler  = require('../../../../adapters/cartrawler');
 const carFx       = require('./car-fx.service');
 const locations   = require('../config/cartrawler-locations.json');
 

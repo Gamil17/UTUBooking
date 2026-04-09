@@ -33,7 +33,8 @@ const pipedaLimiter = rateLimit({
   message: { error: 'RATE_LIMITED', message: 'Too many PIPEDA requests. Try again in 15 minutes.' },
 });
 
-// Auth middleware stub — replace with real JWT verification in auth service
+// Guards that the auth service's JWT middleware already ran and set req.userId.
+// JWT verification itself is done globally in auth/app.js — not here.
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   const userId = (req as any).userId;
   if (!userId) return res.status(401).json({ error: 'UNAUTHENTICATED' });

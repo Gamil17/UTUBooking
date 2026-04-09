@@ -136,4 +136,26 @@ async function getBookingByRef(referenceNo) {
   return rows[0] ?? null;
 }
 
-module.exports = { createBooking, updateBookingStatus, getBookingById, getBookingByRef, listUserBookings, cancelBooking, updateMehramData };
+/**
+ * Fetch contact details for a booking — used by the payment service (service-to-service).
+ * Joins bookings → users to get email, phone, and display name.
+ * Returns null if booking not found.
+ */
+async function getBookingContact(bookingId) {
+  const { rows } = await pool.query(
+    `SELECT u.email, u.phone, u.name_en AS display_name
+     FROM bookings b
+     JOIN users u ON u.id = b.user_id
+     WHERE b.id = $1
+     LIMIT 1`,
+    [bookingId]
+  );
+  if (!rows[0]) return null;
+  const { email, phone, display_name } = rows[0];
+  const parts     = (display_name ?? '').trim().split(/\s+/);
+  const firstName = parts[0] || 'UTU';
+  const lastName  = parts.slice(1).join(' ') || 'Guest';
+  return { email, phone, firstName, lastName };
+}
+
+module.exports = { createBooking, updateBookingStatus, getBookingById, getBookingByRef, listUserBookings, cancelBooking, updateMehramData, getBookingContact };

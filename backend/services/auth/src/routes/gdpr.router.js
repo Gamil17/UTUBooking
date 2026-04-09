@@ -21,6 +21,14 @@ const redis              = require('../services/redis.service');
 // Simple in-memory store (single process). In prod, back with Redis.
 const rateLimitStore = new Map();  // userId → { count, resetAt }
 
+// Purge expired entries every 15 minutes to prevent unbounded memory growth
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitStore) {
+    if (now >= entry.resetAt) rateLimitStore.delete(key);
+  }
+}, 15 * 60 * 1000).unref();
+
 function gdprRateLimit(req, res, next) {
   const userId  = req.user.id;
   const now     = Date.now();

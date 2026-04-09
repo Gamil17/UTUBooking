@@ -145,4 +145,20 @@ async function getBookingByRef(req, res, next) {
   }
 }
 
-module.exports = { createBooking, listBookings, getBooking, getBookingByRef, cancelBooking };
+// ─── GET /api/v1/bookings/:id/contact ────────────────────────────────────────
+// Internal service endpoint — returns buyer contact for use by payment gateways.
+// Auth: x-internal-secret header (not user JWT).
+
+async function getBookingContact(req, res, next) {
+  try {
+    const contact = await repo.getBookingContact(req.params.id);
+    if (!contact) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Booking not found' });
+    }
+    return res.json(contact);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { createBooking, listBookings, getBooking, getBookingByRef, cancelBooking, getBookingContact };

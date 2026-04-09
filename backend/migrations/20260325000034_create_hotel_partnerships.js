@@ -109,7 +109,6 @@ exports.up = (pgm) => {
     // e.g. { "earlyCheckIn": true, "dedicatedConcierge": true, "minNights": 2 }
     partner_perks: {
       type: 'jsonb',
-      default: "'{}' :: jsonb",
     },
     notes: {
       type: 'text',
@@ -125,6 +124,8 @@ exports.up = (pgm) => {
       default: pgm.func('NOW()'),
     },
   });
+
+  pgm.sql(`ALTER TABLE hotel_partnerships ALTER COLUMN partner_perks SET DEFAULT '{}'`);
 
   // Query indexes
   pgm.createIndex('hotel_partnerships', 'hotelbeds_hotel_code');

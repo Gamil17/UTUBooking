@@ -1,14 +1,20 @@
 'use strict';
 
-const express = require('express');
+const express              = require('express');
+const { timingSafeEqual }  = require('crypto');
 const { notificationQueue } = require('../jobs/queue');
 
 const router = express.Router();
 
+function safeEqual(a, b) {
+  try { return timingSafeEqual(Buffer.from(a), Buffer.from(b)); } catch { return false; }
+}
+
 // Internal secret auth — separate from admin Bearer token
 function internalAuth(req, res, next) {
-  const secret = req.headers['x-internal-secret'];
-  if (!secret || secret !== process.env.INTERNAL_API_SECRET) {
+  const secret   = process.env.INTERNAL_API_SECRET ?? '';
+  const provided = req.headers['x-internal-secret'] ?? '';
+  if (!secret || !safeEqual(provided, secret)) {
     return res.status(401).json({ error: 'UNAUTHORIZED' });
   }
   next();
@@ -40,7 +46,7 @@ router.post('/trigger', async (req, res) => {
     res.json({ queued: true, jobId: queued.id, job });
   } catch (err) {
     console.error('[internal] trigger error:', err.message);
-    res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+    res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
   }
 });
 

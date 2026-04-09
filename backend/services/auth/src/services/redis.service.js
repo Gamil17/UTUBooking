@@ -1,5 +1,5 @@
 require('dotenv').config();
-const client = require('../../../../../shared/redis-cluster');
+const client = require('../../../../shared/redis-cluster');
 
 // Store a key with TTL (value stored as-is string, not JSON)
 async function setex(key, ttlSeconds, value) {
@@ -39,4 +39,24 @@ async function del(key) {
   }
 }
 
-module.exports = { setex, get, exists, del };
+// Append one or more values to a list (right push)
+async function rpush(key, ...values) {
+  try {
+    return await client.rpush(key, ...values);
+  } catch (err) {
+    console.warn('[redis] RPUSH failed:', err.message);
+    return 0;
+  }
+}
+
+// Return all keys matching a pattern (use sparingly — O(N) scan)
+async function keys(pattern) {
+  try {
+    return await client.keys(pattern);
+  } catch (err) {
+    console.warn('[redis] KEYS failed:', err.message);
+    return [];
+  }
+}
+
+module.exports = { setex, get, exists, del, rpush, keys };

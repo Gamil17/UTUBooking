@@ -29,6 +29,14 @@ const redis            = require('../services/redis.service');
 // ── Rate limiter ────────────────────────────────────────────────────────────────
 const rateLimitStore = new Map();
 
+// Purge expired entries every 15 minutes to prevent unbounded memory growth
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitStore) {
+    if (now >= entry.resetAt) rateLimitStore.delete(key);
+  }
+}, 15 * 60 * 1000).unref();
+
 function lgpdRateLimit(req, res, next) {
   const userId   = req.user.id;
   const now      = Date.now();
@@ -231,15 +239,15 @@ router.delete('/erase', lgpdRateLimit, async (req, res, next) => {
     if (keys.length) await redis.del(...keys);
   } catch { /* non-fatal */ }
 
+  // emailSnapshot intentionally excluded — email was anonymised in step 1;
+  // storing PII in a Redis queue violates data minimisation (LGPD Art. 6 III).
   await redis.rpush(
     'lgpd:erasure:queue',
     JSON.stringify({
       userId,
-      emailSnapshot:  email,
-      motivo:         motivo?.trim() ?? null,
-      ip,
-      solicitadoEm:   new Date().toISOString(),
-      cascadeEm:      new Date(Date.now() + 15 * 86_400_000).toISOString(), // 15 business days
+      motivo:       motivo?.trim() ?? null,
+      solicitadoEm: new Date().toISOString(),
+      cascadeEm:    new Date(Date.now() + 15 * 86_400_000).toISOString(), // 15 business days
     }),
   );
 

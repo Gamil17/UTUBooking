@@ -24,9 +24,21 @@ const paypal = require('../gateways/paypal.gateway');
 const repo   = require('../db/payment.repo');
 const audit  = require('../services/audit.service');
 
-// Shared schema — defined inline; full Joi schemas in payment.validator.js
 const { validate, paypalInitiateSchema, paypalCaptureSchema } =
   require('../validators/payment.validator');
+
+const FRONTEND_URL        = process.env.FRONTEND_URL        ?? 'http://frontend:3000';
+const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET;
+
+async function _pushNotification({ userId, trigger, vars, deepLink }) {
+  if (!userId || !INTERNAL_API_SECRET) return;
+  await fetch(`${FRONTEND_URL}/api/notifications/push`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', 'x-internal-secret': INTERNAL_API_SECRET },
+    body:    JSON.stringify({ userId, trigger, vars, deepLink }),
+    signal:  AbortSignal.timeout(5_000),
+  });
+}
 
 // ─── initiate ────────────────────────────────────────────────────────────────
 
@@ -45,11 +57,10 @@ async function initiate(req, res, next) {
   let payment;
   try {
     payment = await repo.createPayment({
-      booking_id: bookingId,
-      method:     'paypal',
-      amount:     parseFloat(amount),
-      currency:   currency.toUpperCase(),
-      status:     'pending',
+      bookingId,
+      method:   'paypal',
+      amount:   parseFloat(amount),
+      currency: currency.toUpperCase(),
     });
   } catch (err) {
     return next(err);
@@ -66,13 +77,13 @@ async function initiate(req, res, next) {
       cancelUrl,
     });
   } catch (err) {
-    await repo.updatePaymentStatus(payment.id, 'failed', { error: err.message });
+    await repo.updatePayment(payment.id, { status: 'failed', gateway_payload: { error: err.message } });
     return next(err);
   }
 
-  await repo.updatePaymentGatewayRef(payment.id, result.orderId, {
-    approveUrl: result.approveUrl,
-    status:     result.status,
+  await repo.updatePayment(payment.id, {
+    gateway_ref:     result.orderId,
+    gateway_payload: { approveUrl: result.approveUrl, status: result.status },
   });
 
   await audit.log({
@@ -128,14 +139,14 @@ async function capture(req, res, next) {
   try {
     result = await paypal.captureOrder(orderId);
   } catch (err) {
-    await repo.updatePaymentStatus(payment.id, 'failed', { error: err.message });
+    await repo.updatePayment(payment.id, { status: 'failed', gateway_payload: { error: err.message } });
     return next(err);
   }
 
-  await repo.updatePaymentStatus(payment.id, result.status, {
-    captureId: result.captureId,
-    amount:    result.amount,
-    currency:  result.currency,
+  await repo.updatePayment(payment.id, {
+    status:          result.status,
+    gateway_payload: { captureId: result.captureId, amount: result.amount, currency: result.currency },
+    ...(result.status === 'completed' ? { paid_at: new Date() } : {}),
   });
 
   await audit.log({
@@ -150,14 +161,12 @@ async function capture(req, res, next) {
   });
 
   if (result.status === 'completed') {
-    // Trigger push notification (same pattern as Stripe controller)
-    try {
-      const { triggerPushNotification } = require('../services/push.service');
-      await triggerPushNotification(payment.booking_id, 'payment_success', {
-        amount:   result.amount,
-        currency: result.currency,
-      });
-    } catch { /* non-fatal */ }
+    _pushNotification({
+      userId:   payment.user_id,
+      trigger:  'booking_confirmed',
+      vars:     { ref: String(payment.booking_id) },
+      deepLink: `/trips/${payment.booking_id}`,
+    }).catch((err) => console.error('[paypal-capture] push failed:', err));
   }
 
   return res.json({
@@ -224,12 +233,10 @@ async function webhook(req, res, next) {
     return res.status(200).json({ received: true, idempotent: true });
   }
 
-  await repo.updatePaymentStatus(payment.id, newStatus, {
-    captureId,
-    amount,
-    currency,
-    eventType,
-    gateway_payload: event,
+  await repo.updatePayment(payment.id, {
+    status:          newStatus,
+    gateway_payload: { captureId, amount, currency, eventType, raw: event },
+    ...(newStatus === 'completed' ? { paid_at: new Date() } : {}),
   });
 
   await audit.log({
@@ -244,10 +251,12 @@ async function webhook(req, res, next) {
   });
 
   if (newStatus === 'completed') {
-    try {
-      const { triggerPushNotification } = require('../services/push.service');
-      await triggerPushNotification(payment.booking_id, 'payment_success', { amount, currency });
-    } catch { /* non-fatal */ }
+    _pushNotification({
+      userId:   payment.user_id,
+      trigger:  'booking_confirmed',
+      vars:     { ref: String(payment.booking_id) },
+      deepLink: `/trips/${payment.booking_id}`,
+    }).catch((err) => console.error('[paypal-webhook] push failed:', err));
   }
 
   return res.status(200).json({ received: true });

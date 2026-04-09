@@ -1,5 +1,6 @@
 const express       = require('express');
 const { Router }    = require('express');
+const { getGateway, getAvailableGateways, getGatewayConfig } = require('../services/gatewayRouter');
 const stcpayCtrl    = require('../controllers/stcpay.controller');
 const madaCtrl      = require('../controllers/mada.controller');
 const stripeCtrl    = require('../controllers/stripe.controller');
@@ -157,6 +158,29 @@ router.get('/mercadopago/pending',       mercadopagoCtrl.pending);
 router.post('/mercadopago/webhook',
   express.urlencoded({ extended: false }),
   mercadopagoCtrl.webhook);
+
+// ─── Gateway discovery ────────────────────────────────────────────────────────
+// GET /api/payments/available-gateways?countryCode=TR
+router.get('/available-gateways', (req, res) => {
+  const { countryCode } = req.query;
+  if (!countryCode) {
+    return res.status(400).json({ error: 'VALIDATION_ERROR', details: ['countryCode is required'] });
+  }
+
+  const primary    = getGateway(countryCode);
+  const gateways   = getAvailableGateways(countryCode);
+  const config     = getGatewayConfig(primary) ?? {};
+
+  return res.json({
+    countryCode:    countryCode.toUpperCase(),
+    primaryGateway: primary,
+    allGateways:    gateways,
+    fee:            config.fee ?? null,
+    minAmount:      config.minAmount ?? null,
+    maxAmount:      config.maxAmount ?? null,
+    currency:       config.currency ?? 'USD',
+  });
+});
 
 // ─── Status lookup ────────────────────────────────────────────────────────────
 router.get('/:bookingId', async (req, res, next) => {

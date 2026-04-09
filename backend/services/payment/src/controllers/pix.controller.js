@@ -50,11 +50,10 @@ async function inititatePix(req, res, next) {
   let payment;
   try {
     payment = await repo.createPayment({
-      booking_id: bookingId,
-      method:     'pix',
-      amount:     amountBRL,
-      currency:   'BRL',
-      status:     'pending',
+      bookingId,
+      method:   'pix',
+      amount:   amountBRL,
+      currency: 'BRL',
     });
   } catch (err) {
     return next(err);
@@ -64,13 +63,13 @@ async function inititatePix(req, res, next) {
   try {
     result = await pix.generatePixCode({ amountBRL, bookingId, customerEmail, customerName });
   } catch (err) {
-    await repo.updatePaymentStatus(payment.id, 'failed', { error: err.message });
+    await repo.updatePayment(payment.id, { status: 'failed', gateway_payload: { error: err.message } });
     return next(err);
   }
 
-  await repo.updatePaymentStatus(payment.id, 'pending', {
-    stripeIntentId: result.paymentIntentId,
-    expiresAt:      result.expiresAt,
+  await repo.updatePayment(payment.id, {
+    gateway_ref:     result.paymentIntentId,
+    gateway_payload: { expiresAt: result.expiresAt },
   });
 
   await audit.log({
@@ -109,10 +108,12 @@ async function pixStatus(req, res, next) {
 
     // Update DB if completed/failed
     if (result.status === 'completed' || result.status === 'failed') {
-      const payment = await repo.findPaymentByMetadata({ stripeIntentId: intentId });
+      const payment = await repo.findByGatewayRef(intentId);
       if (payment && (payment.status === 'pending')) {
-        await repo.updatePaymentStatus(payment.id, result.status, {
-          verifiedAt: new Date().toISOString(),
+        await repo.updatePayment(payment.id, {
+          status:          result.status,
+          gateway_payload: { verifiedAt: new Date().toISOString() },
+          ...(result.status === 'completed' ? { paid_at: new Date() } : {}),
         });
         await audit.log({
           paymentId: payment.id,
@@ -143,11 +144,10 @@ async function initiateBoleto(req, res, next) {
   let payment;
   try {
     payment = await repo.createPayment({
-      booking_id: bookingId,
-      method:     'boleto',
-      amount:     amountBRL,
-      currency:   'BRL',
-      status:     'pending',
+      bookingId,
+      method:   'boleto',
+      amount:   amountBRL,
+      currency: 'BRL',
     });
   } catch (err) {
     return next(err);
@@ -157,14 +157,13 @@ async function initiateBoleto(req, res, next) {
   try {
     result = await pix.generateBoleto({ amountBRL, bookingId, customerEmail, customerName, cpfOrCnpj });
   } catch (err) {
-    await repo.updatePaymentStatus(payment.id, 'failed', { error: err.message });
+    await repo.updatePayment(payment.id, { status: 'failed', gateway_payload: { error: err.message } });
     return next(err);
   }
 
-  await repo.updatePaymentStatus(payment.id, 'pending', {
-    stripeIntentId: result.paymentIntentId,
-    boletoUrl:      result.boletoUrl,
-    expiresAt:      result.expiresAt,
+  await repo.updatePayment(payment.id, {
+    gateway_ref:     result.paymentIntentId,
+    gateway_payload: { boletoUrl: result.boletoUrl, expiresAt: result.expiresAt },
   });
 
   await audit.log({
@@ -199,11 +198,12 @@ async function pixWebhook(req, res, next) {
       return res.status(200).send('OK'); // non-payment event — ignore
     }
 
-    const payment = await repo.findPaymentByMetadata({ stripeIntentId: result.paymentIntentId });
+    const payment = await repo.findByGatewayRef(result.paymentIntentId);
     if (payment && (payment.status === 'pending' || payment.status === 'redirected')) {
-      await repo.updatePaymentStatus(payment.id, result.status, {
-        webhookEvent: req.body.type,
-        webhookAt:    new Date().toISOString(),
+      await repo.updatePayment(payment.id, {
+        status:          result.status,
+        gateway_payload: { webhookEvent: req.body.type, webhookAt: new Date().toISOString() },
+        ...(result.status === 'completed' ? { paid_at: new Date() } : {}),
       });
       await audit.log({
         paymentId: payment.id,

@@ -10,99 +10,96 @@
  *
  * Data residency: Run ONLY on ca-central-1 (Montreal) database.
  * NEVER run on US, EU, or other region shards.
- *
- * Law requirements:
- *   - PIPEDA: consent log, breach notification (72h to OPC), access rights
- *   - Quebec Law 25: stricter breach (72h to CAI + users), portability, erasure
  */
 
-exports.up = async function up(knex) {
+exports.up = async (pgm) => {
+  // ── Enums ──────────────────────────────────────────────────────────────────
+  pgm.createType('pipeda_law', ['PIPEDA', 'QUEBEC_LAW25', 'PIPA_AB', 'PIPA_BC']);
+  pgm.createType('pipeda_consent_type', [
+    'marketing_email',
+    'marketing_sms',
+    'analytics',
+    'third_party_sharing',
+    'personalization',
+    'push_notifications',
+  ]);
+
   // ── pipeda_consent_log ─────────────────────────────────────────────────────
-  // Immutable (append-only) — withdrawal = new row with granted=false.
-  // DO NOT add UPDATE permissions to this table in pg_hba.conf.
-  await knex.schema.raw(`
-    CREATE TYPE pipeda_law AS ENUM ('PIPEDA', 'QUEBEC_LAW25', 'PIPA_AB', 'PIPA_BC');
-    CREATE TYPE pipeda_consent_type AS ENUM (
-      'marketing_email',
-      'marketing_sms',
-      'analytics',
-      'third_party_sharing',
-      'personalization',
-      'push_notifications'
-    );
-  `);
+  pgm.createTable('pipeda_consent_log', {
+    id:           { type: 'UUID',                primaryKey: true, default: pgm.func('gen_random_uuid()') },
+    user_id:      { type: 'UUID',                notNull: true },
+    law:          { type: 'pipeda_law',          notNull: true, default: 'PIPEDA' },
+    consent_type: { type: 'pipeda_consent_type', notNull: true },
+    granted:      { type: 'BOOLEAN',             notNull: true },
+    purpose:      { type: 'VARCHAR(500)',         notNull: true },
+    language:     { type: 'VARCHAR(5)',           notNull: true, default: 'en' },
+    ip_address:   { type: 'VARCHAR(45)' },
+    user_agent:   { type: 'VARCHAR(500)' },
+    source:       { type: 'VARCHAR(100)',         notNull: true },
+    version:      { type: 'VARCHAR(50)' },
+    created_at:   { type: 'TIMESTAMPTZ',         notNull: true, default: pgm.func('NOW()') },
+  }, { ifNotExists: true });
 
-  await knex.schema.createTable('pipeda_consent_log', (t) => {
-    t.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    t.uuid('user_id').notNullable().index();
-    t.specificType('law', 'pipeda_law').notNullable().defaultTo('PIPEDA');
-    t.specificType('consent_type', 'pipeda_consent_type').notNullable();
-    t.boolean('granted').notNullable();
-    t.string('purpose', 500).notNullable();        // plain-English purpose description
-    t.string('language', 5).notNullable().defaultTo('en'); // 'en' or 'fr' (QC)
-    t.string('ip_address', 45);                    // INET — stored as text for simplicity
-    t.string('user_agent', 500);
-    t.string('source', 100).notNullable();         // 'web', 'mobile', 'phone'
-    t.string('version', 50);                       // privacy policy version at time of consent
-    t.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
-
-    // No updated_at — this table is immutable
-    t.comment('Append-only PIPEDA consent log. Withdrawal = new row with granted=false. Never UPDATE.');
-  });
+  pgm.sql(`COMMENT ON TABLE pipeda_consent_log IS
+    'Append-only PIPEDA consent log. Withdrawal = new row with granted=false. Never UPDATE.'`);
 
   // ── pipeda_breach_log ──────────────────────────────────────────────────────
-  // PIPEDA s.10.1: log breaches + OPC notification within 72h if RRSH.
-  // Quebec Law 25 s.3.5: notify CAI + affected users within 72h.
-  await knex.schema.createTable('pipeda_breach_log', (t) => {
-    t.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    t.timestamp('discovered_at').notNullable();
-    t.timestamp('contained_at');
-    t.text('description').notNullable();           // nature of breach
-    t.text('affected_data').notNullable();          // categories of data involved
-    t.integer('estimated_users_affected');          // best estimate
-    t.boolean('real_risk_significant_harm').notNullable().defaultTo(false); // RRSH determination
-    t.timestamp('opc_notified_at');                // OPC notification timestamp
-    t.timestamp('cai_notified_at');                // CAI (Quebec) notification timestamp
-    t.timestamp('users_notified_at');              // when affected users were notified
-    t.text('remediation_steps');
-    t.string('reported_by', 200);                  // internal team/person
-    t.jsonb('metadata').defaultTo('{}');
-    t.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
+  pgm.createTable('pipeda_breach_log', {
+    id:                           { type: 'UUID',        primaryKey: true, default: pgm.func('gen_random_uuid()') },
+    discovered_at:                { type: 'TIMESTAMPTZ', notNull: true },
+    contained_at:                 { type: 'TIMESTAMPTZ' },
+    description:                  { type: 'TEXT',        notNull: true },
+    affected_data:                { type: 'TEXT',        notNull: true },
+    estimated_users_affected:     { type: 'INTEGER' },
+    real_risk_significant_harm:   { type: 'BOOLEAN',     notNull: true, default: false },
+    opc_notified_at:              { type: 'TIMESTAMPTZ' },
+    cai_notified_at:              { type: 'TIMESTAMPTZ' },
+    users_notified_at:            { type: 'TIMESTAMPTZ' },
+    remediation_steps:            { type: 'TEXT' },
+    reported_by:                  { type: 'VARCHAR(200)' },
+    metadata:                     { type: 'JSONB' },
+    created_at:                   { type: 'TIMESTAMPTZ', notNull: true, default: pgm.func('NOW()') },
+  }, { ifNotExists: true });
 
-    t.comment('Breach notification log per PIPEDA s.10.1 and Quebec Law 25 s.3.5. Keep for 24 months (OPC may request).');
-  });
+  pgm.sql(`ALTER TABLE pipeda_breach_log ALTER COLUMN metadata SET DEFAULT '{}'`);
+
+  pgm.sql(`COMMENT ON TABLE pipeda_breach_log IS
+    'Breach notification log per PIPEDA s.10.1 and Quebec Law 25 s.3.5. Keep for 24 months.'`);
 
   // ── pipeda_access_log ─────────────────────────────────────────────────────
-  // Tracks data access requests — PIPEDA requires response within 30 days.
-  await knex.schema.createTable('pipeda_access_log', (t) => {
-    t.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
-    t.uuid('user_id').notNullable().index();
-    t.string('request_type', 50).notNullable(); // 'access'|'correct'|'erase'|'portability'|'withdraw_consent'
-    t.string('law', 20).notNullable().defaultTo('PIPEDA');
-    t.string('status', 20).notNullable().defaultTo('pending'); // pending|fulfilled|denied|extended
-    t.timestamp('requested_at').notNullable().defaultTo(knex.fn.now());
-    t.timestamp('due_at').notNullable();          // requested_at + 30 days
-    t.timestamp('fulfilled_at');
-    t.text('denial_reason');                      // if status=denied
-    t.string('fulfilled_by', 200);                // internal agent/system
-    t.jsonb('metadata').defaultTo('{}');
+  pgm.createTable('pipeda_access_log', {
+    id:           { type: 'UUID',        primaryKey: true, default: pgm.func('gen_random_uuid()') },
+    user_id:      { type: 'UUID',        notNull: true },
+    request_type: { type: 'VARCHAR(50)', notNull: true },
+    law:          { type: 'VARCHAR(20)', notNull: true, default: 'PIPEDA' },
+    status:       { type: 'VARCHAR(20)', notNull: true, default: 'pending' },
+    requested_at: { type: 'TIMESTAMPTZ', notNull: true, default: pgm.func('NOW()') },
+    due_at:       { type: 'TIMESTAMPTZ', notNull: true },
+    fulfilled_at: { type: 'TIMESTAMPTZ' },
+    denial_reason:{ type: 'TEXT' },
+    fulfilled_by: { type: 'VARCHAR(200)' },
+    metadata:     { type: 'JSONB' },
+  }, { ifNotExists: true });
 
-    t.comment('Data subject request log — PIPEDA 30-day SLA. Extended to 60 days only with user notice.');
-  });
+  pgm.sql(`ALTER TABLE pipeda_access_log ALTER COLUMN metadata SET DEFAULT '{}'`);
+
+  pgm.sql(`COMMENT ON TABLE pipeda_access_log IS
+    'Data subject request log — PIPEDA 30-day SLA. Extended to 60 days only with user notice.'`);
 
   // ── Indexes ────────────────────────────────────────────────────────────────
-  await knex.schema.raw(`
-    CREATE INDEX pipeda_consent_user_law ON pipeda_consent_log (user_id, law, consent_type, created_at DESC);
-    CREATE INDEX pipeda_access_pending ON pipeda_access_log (status, due_at) WHERE status = 'pending';
-  `);
+  pgm.createIndex('pipeda_consent_log', ['user_id', 'law', 'consent_type', 'created_at'], {
+    name: 'pipeda_consent_user_law',
+  });
+  pgm.createIndex('pipeda_access_log', ['status', 'due_at'], {
+    name:  'pipeda_access_pending',
+    where: "status = 'pending'",
+  });
 };
 
-exports.down = async function down(knex) {
-  await knex.schema.dropTableIfExists('pipeda_access_log');
-  await knex.schema.dropTableIfExists('pipeda_breach_log');
-  await knex.schema.dropTableIfExists('pipeda_consent_log');
-  await knex.schema.raw(`
-    DROP TYPE IF EXISTS pipeda_consent_type;
-    DROP TYPE IF EXISTS pipeda_law;
-  `);
+exports.down = async (pgm) => {
+  pgm.dropTable('pipeda_access_log',   { ifExists: true });
+  pgm.dropTable('pipeda_breach_log',   { ifExists: true });
+  pgm.dropTable('pipeda_consent_log',  { ifExists: true });
+  pgm.dropType('pipeda_consent_type',  { ifExists: true });
+  pgm.dropType('pipeda_law',           { ifExists: true });
 };

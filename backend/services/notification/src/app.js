@@ -24,9 +24,14 @@ app.post('/api/v1/notifications/webhook/sendgrid', async (req, res) => {
     const signature = req.headers['x-twilio-email-event-webhook-signature'] ?? '';
     const timestamp = req.headers['x-twilio-email-event-webhook-timestamp'] ?? '';
 
-    // Verify signature if secret is configured (skip in dev)
-    if (secret && process.env.NODE_ENV === 'production') {
-      const { EventWebhook } = require('@sendgrid/event-webhook');
+    // Require secret in production — missing secret is a misconfiguration, not a skip
+    if (process.env.NODE_ENV === 'production' && !secret) {
+      console.error('[webhook/sendgrid] SENDGRID_WEBHOOK_SECRET is not set in production');
+      return res.status(500).json({ error: 'WEBHOOK_NOT_CONFIGURED' });
+    }
+    // Verify signature when secret is present
+    if (secret) {
+      const { EventWebhook } = require('@sendgrid/eventwebhook');
       const ew = new EventWebhook();
       const ecPublicKey = ew.convertPublicKeyToECDH(secret);
       const isValid = ew.verifySignature(ecPublicKey, JSON.stringify(req.body), signature, timestamp);
@@ -51,7 +56,7 @@ app.use('/internal', internalRouter);
 // eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
   console.error('[notification-service] error:', err.message);
-  res.status(500).json({ error: 'INTERNAL_ERROR', message: err.message });
+  res.status(500).json({ error: 'INTERNAL_ERROR', message: 'An internal error occurred.' });
 });
 
 module.exports = app;

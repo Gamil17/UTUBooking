@@ -1,6 +1,7 @@
 const { validate }                             = require('../validators/search.validator');
 const { searchHotels, HotelbedsError }         = require('../../../adapters/hotelbeds');
 const bookingCom                               = require('../../../adapters/hotels/bookingCom');
+const { searchLocalHotels }                    = require('../db/hotel.repo');
 // Redis caching is handled inside each adapter (5/10-min TTL respectively)
 
 // ─── Price deduplication ──────────────────────────────────────────────────────
@@ -160,9 +161,29 @@ async function searchHotelsHandler(req, res, next) {
   const hbOffers = hbResult.status  === 'fulfilled' ? hbResult.value  : [];
   const bcOffers = bcResult.status  === 'fulfilled' ? bcResult.value  : [];
 
-  // 5. Both failed → propagate Hotelbeds error (primary source)
+  // 5. Both failed → fall back to local DB (dev mode / no API keys)
   if (!hbOffers.length && !bcOffers.length && hbResult.status === 'rejected') {
-    return next(hbResult.reason);
+    try {
+      const localOffers = await searchLocalHotels(
+        params.location, params.checkIn, params.checkOut, params.guests,
+        { stars: params.stars, priceMin: params.priceMin, priceMax: params.priceMax,
+          currency: params.currency, isHajj: params.isHajj, isUmrah: params.isUmrah,
+          halalFriendly: params.halal_friendly }
+      );
+      const page  = params.page  ?? 1;
+      const limit = params.limit ?? 20;
+      const start = (page - 1) * limit;
+      return res.json({
+        source:  'local',
+        count:   localOffers.length,
+        page, limit,
+        results: localOffers.slice(start, start + limit),
+        meta:    { hotelbeds: 0, bookingcom: 0, deduped: 0, localFallback: true },
+      });
+    } catch (dbErr) {
+      console.error('[search] local DB fallback failed:', dbErr.message);
+      return next(hbResult.reason);
+    }
   }
 
   // 6. Dedup and merge

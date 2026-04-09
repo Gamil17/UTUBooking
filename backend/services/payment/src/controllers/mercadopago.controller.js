@@ -43,11 +43,10 @@ async function initiate(req, res, next) {
   let payment;
   try {
     payment = await repo.createPayment({
-      booking_id: bookingId,
-      method:     'mercadopago',
+      bookingId,
+      method: 'mercadopago',
       amount,
       currency,
-      status:     'pending',
     });
   } catch (err) {
     return next(err);
@@ -72,13 +71,15 @@ async function initiate(req, res, next) {
       notificationsUrl,
     });
   } catch (err) {
-    await repo.updatePaymentStatus(payment.id, 'failed', { error: err.message });
+    await repo.updatePayment(payment.id, { status: 'failed', gateway_payload: { error: err.message } });
     return next(err);
   }
 
-  await repo.updatePaymentStatus(payment.id, 'redirected', {
-    mpPreferenceId: result.preferenceId,
-    redirectUrl:    result.redirectUrl,
+  // Store preferenceId as gateway_ref for lookups on success/failure/pending redirects
+  await repo.updatePayment(payment.id, {
+    status:          'redirected',
+    gateway_ref:     result.preferenceId,
+    gateway_payload: { redirectUrl: result.redirectUrl },
   });
 
   await audit.log({
@@ -106,12 +107,13 @@ async function initiate(req, res, next) {
 
 async function success(req, res) {
   const { external_reference: bookingId, payment_id: mpPaymentId } = req.query;
-  const payment = await repo.findPaymentByMetadata({ mpPreferenceId: req.query.preference_id });
+  const payment = await repo.findByGatewayRef(req.query.preference_id).catch(() => null);
 
   if (payment && payment.status !== 'completed') {
-    await repo.updatePaymentStatus(payment.id, 'completed', {
-      mpPaymentId: String(mpPaymentId),
-      confirmedAt: new Date().toISOString(),
+    await repo.updatePayment(payment.id, {
+      status:          'completed',
+      gateway_payload: { mpPaymentId: String(mpPaymentId), confirmedAt: new Date().toISOString() },
+      paid_at:         new Date(),
     });
   }
 
@@ -123,10 +125,13 @@ async function success(req, res) {
 // ── GET /mercadopago/failure ─────────────────────────────────────────────────
 
 async function failure(req, res) {
-  const payment = await repo.findPaymentByMetadata({ mpPreferenceId: req.query.preference_id });
+  const payment = await repo.findByGatewayRef(req.query.preference_id).catch(() => null);
 
   if (payment && payment.status === 'redirected') {
-    await repo.updatePaymentStatus(payment.id, 'failed', { failedAt: new Date().toISOString() });
+    await repo.updatePayment(payment.id, {
+      status:          'failed',
+      gateway_payload: { failedAt: new Date().toISOString() },
+    });
   }
 
   return res.redirect(
@@ -138,7 +143,7 @@ async function failure(req, res) {
 // Async methods: Efecty, Rapipago, OXXO, etc. — payment not yet confirmed.
 
 async function pending(req, res) {
-  const payment = await repo.findPaymentByMetadata({ mpPreferenceId: req.query.preference_id });
+  const payment = await repo.findByGatewayRef(req.query.preference_id).catch(() => null);
   return res.redirect(
     `${FRONTEND_URL}/booking/pending?paymentId=${payment?.id ?? ''}`,
   );
@@ -155,14 +160,16 @@ async function webhook(req, res, next) {
     }
 
     // Find our payment record by bookingId stored in external_reference
-    const payment = result.bookingId
-      ? await repo.findPaymentByBookingId(result.bookingId)
-      : null;
+    const payments = result.bookingId
+      ? await repo.findByBookingId(result.bookingId).catch(() => [])
+      : [];
+    const payment = payments[0] ?? null;
 
     if (payment && (payment.status === 'pending' || payment.status === 'redirected')) {
-      await repo.updatePaymentStatus(payment.id, result.status, {
-        mpPaymentId: result.paymentId,
-        webhookAt:   new Date().toISOString(),
+      await repo.updatePayment(payment.id, {
+        status:          result.status,
+        gateway_payload: { mpPaymentId: result.paymentId, webhookAt: new Date().toISOString() },
+        ...(result.status === 'completed' ? { paid_at: new Date() } : {}),
       });
       await audit.log({
         paymentId: payment.id,

@@ -109,4 +109,8 @@ async function searchFlights(params) {
   return filtered;
 }
 
-module.exports = { searchFlights };
+// Pass through order creation and any other base adapter methods unchanged.
+// The patch only intercepts searchFlights (airport gating + airline filtering).
+const { createFlightOrder } = baseAmadeus;
+
+module.exports = { searchFlights, createFlightOrder };
