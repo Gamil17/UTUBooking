@@ -8,8 +8,10 @@ node_modules/
 .env.local
 .env.*.local
 *.env
-.env.mcp          # MCP server secrets (Notion, Slack, GDrive, GitHub tokens)
-credentials/      # Service account JSON keys — never commit
+# MCP server secrets (Notion, Slack, GDrive, GitHub tokens)
+.env.mcp
+# Service account JSON keys — never commit
+credentials/
 
 # Build output
 .next/
