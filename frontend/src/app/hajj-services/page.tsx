@@ -45,7 +45,7 @@ export default async function HajjServicesPage() {
         <h2 className="text-2xl font-bold text-white mb-3">{t('ctaHeading')}</h2>
         <p className="text-white/80 mb-6 max-w-lg mx-auto">{t('ctaDesc')}</p>
         <Link
-          href="/hotels/search"
+          href="/hotels/search?destination=Makkah"
           className="inline-block bg-amber-400 hover:bg-amber-300 text-utu-navy font-bold px-8 py-3 rounded-xl transition-colors text-sm"
         >
           {t('searchBtn')}

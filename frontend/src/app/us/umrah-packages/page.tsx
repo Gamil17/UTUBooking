@@ -111,7 +111,7 @@ export default function UmrahPackagesPage() {
         <Link href="/" className="text-utu-blue hover:underline">
           Browse Makkah Hotels
         </Link>
-        <Link href="/flights/search?destination=JED&tripType=umrah" className="text-utu-blue hover:underline">
+        <Link href="/flights/search?to=JED&tripType=oneway" className="text-utu-blue hover:underline">
           Flights to Jeddah
         </Link>
       </div>
