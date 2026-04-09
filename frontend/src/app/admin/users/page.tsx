@@ -28,7 +28,7 @@ export default function AdminUsersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [suspendingUser, setSuspendingUser]   = useState<AdminUser | null>(null);
   const [suspendReason, setSuspendReason]     = useState('');
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Debounce search input
   function handleSearch(val: string) {

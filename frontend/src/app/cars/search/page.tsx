@@ -383,7 +383,7 @@ export default function CarsSearchPage() {
             </div>
             <CarFilters
               offers={data.results}
-              filters={effectiveFilters}
+              filters={effectiveFilters!}
               onChange={(f) => setFilters(f)}
             />
             <button

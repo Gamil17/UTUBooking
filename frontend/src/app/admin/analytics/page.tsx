@@ -111,8 +111,8 @@ export default function AdminAnalyticsPage() {
   // Country breakdown from funnel
   const countryMap: Record<string, number> = {};
   funnel?.data?.forEach((r: FunnelRow) => {
-    if (r.event_type === 'search') {
-      countryMap[r.country] = (countryMap[r.country] ?? 0) + r.count;
+    if (r.event_type === 'search' && r.country) {
+      countryMap[r.country] = (countryMap[r.country] ?? 0) + (r.count ?? 0);
     }
   });
   const topCountries = Object.entries(countryMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
