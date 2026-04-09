@@ -123,7 +123,7 @@ export default function PrivacyPage() {
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm text-white/80">
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
-            <Link href="/#contact" className="hover:text-white transition-colors">Contact Us</Link>
+            <Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link>
           </nav>
           <Link href="/" className="bg-utu-bg-card/10 hover:bg-utu-bg-card/20 border border-white/20 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors">
             Book Now
@@ -513,7 +513,7 @@ export default function PrivacyPage() {
           <p>© 2026 UTUBooking.com — AMEC Solutions. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
-            <Link href="/#contact" className="hover:text-white transition-colors">Contact</Link>
+            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
             <Link href="/privacy" className="text-white font-semibold">Privacy</Link>
           </div>

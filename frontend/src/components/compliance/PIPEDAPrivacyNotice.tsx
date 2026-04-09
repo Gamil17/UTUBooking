@@ -194,7 +194,7 @@ export default function PIPEDAPrivacyNotice({
           )}
 
           <a
-            href={locale === 'fr' ? '/fr/confidentialite' : '/privacy'}
+            href="/privacy"
             className="block text-center text-xs text-red-700 underline hover:text-red-800 py-1"
             target="_blank"
             rel="noopener noreferrer"
