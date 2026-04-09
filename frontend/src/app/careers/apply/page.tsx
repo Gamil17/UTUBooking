@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import CareerApplicationForm from '@/components/careers/CareerApplicationForm';
+import { getJobDescription } from '@/lib/careers/jobDescriptions';
+import CareerApplyView from '@/components/careers/CareerApplyView';
 
 export const metadata: Metadata = {
   title: 'Apply — Careers | UTUBooking',
@@ -14,10 +15,11 @@ interface Props {
 export default async function CareersApplyPage({ searchParams }: Props) {
   const { role } = await searchParams;
   const roleName = role?.trim() || '';
+  const job = roleName ? getJobDescription(roleName) : null;
 
   return (
     <div className="min-h-screen bg-utu-bg-page py-12 px-4">
-      <div className="max-w-xl mx-auto">
+      <div className="max-w-2xl mx-auto">
 
         {/* Back link */}
         <Link
@@ -37,30 +39,15 @@ export default async function CareersApplyPage({ searchParams }: Props) {
           Back to Careers
         </Link>
 
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-utu-text-primary">Apply for a Position</h1>
-          {roleName ? (
-            <p className="text-utu-text-muted text-sm mt-1">
-              You&apos;re applying for{' '}
-              <span className="font-semibold text-utu-text-primary">{roleName}</span>
-            </p>
-          ) : (
-            <p className="text-utu-text-muted text-sm mt-1">
-              No role selected.{' '}
-              <Link href="/careers" className="text-utu-blue underline">
-                View open positions
-              </Link>
-            </p>
-          )}
-        </div>
-
-        {roleName ? (
-          <CareerApplicationForm role={roleName} />
+        {job ? (
+          <CareerApplyView job={job} />
         ) : (
           <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default p-8 text-center">
             <p className="text-utu-text-muted text-sm mb-4">
-              Please select a role from our open positions page to apply.
+              {roleName
+                ? `No description found for "${roleName}".`
+                : 'No role selected.'}{' '}
+              Please select a position from our open roles.
             </p>
             <Link
               href="/careers"
