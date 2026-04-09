@@ -78,13 +78,13 @@ export default function AdminUsersPage() {
           onChange={(e) => handleSearch(e.target.value)}
           placeholder={t('userSearch')}
           className="w-72 rounded-lg border border-utu-border-default px-3 py-2 text-sm text-utu-text-primary
-                     focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                     focus:outline-none focus:ring-2 focus:ring-utu-blue"
         />
         <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
           className="rounded-lg border border-utu-border-default px-3 py-2 text-sm text-utu-text-primary
-                     focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                     focus:outline-none focus:ring-2 focus:ring-utu-blue"
         >
           <option value="">{t('filterAll')}</option>
           <option value="active">{t('filterActive')}</option>
@@ -135,7 +135,7 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium
                         ${u.status === 'active'
-                          ? 'bg-emerald-100 text-emerald-700'
+                          ? 'bg-utu-bg-subtle text-utu-blue'
                           : 'bg-red-100 text-red-600'}`}
                       >
                         {u.status === 'active' ? t('statusActive') : t('statusSuspended')}
@@ -156,7 +156,7 @@ export default function AdminUsersPage() {
                           onClick={() => unsuspendMutation.mutate(u.id)}
                           disabled={unsuspendMutation.isPending}
                           className="rounded border border-utu-border-default px-3 py-1 text-xs font-medium
-                                     text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-40"
+                                     text-utu-blue hover:bg-utu-bg-subtle transition-colors disabled:opacity-40"
                           style={{ minHeight: 32 }}
                         >
                           {unsuspendMutation.isPending ? t('unsuspending') : t('unsuspend')}

@@ -210,7 +210,7 @@ export default function IndiaPaymentSelector({
             setStatus('idle');
           },
         },
-        theme: { color: '#10B981' },
+        theme: { color: '#2563EB' },
       };
 
       // EMI — pass selected tenor
@@ -229,22 +229,22 @@ export default function IndiaPaymentSelector({
 
   const inputCls =
     'w-full border border-utu-border-strong rounded-xl px-4 py-3 text-base text-utu-text-primary ' +
-    'focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent ' +
+    'focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent ' +
     'placeholder-gray-400 min-h-[44px] bg-utu-bg-card';
 
   const tabCls = (active: boolean) =>
     [
       'flex-1 py-2.5 text-sm font-semibold rounded-xl transition-colors min-h-[44px]',
-      active ? 'bg-emerald-600 text-white shadow-sm' : 'text-utu-text-secondary hover:bg-utu-bg-muted',
+      active ? 'bg-utu-blue text-white shadow-sm' : 'text-utu-text-secondary hover:bg-utu-bg-muted',
     ].join(' ');
 
   return (
     <div className="w-full max-w-md mx-auto space-y-5" style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}>
 
       {/* Amount header */}
-      <div className="text-center bg-emerald-50 rounded-2xl py-4 px-6 border border-emerald-100">
-        <p className="text-xs text-emerald-600 mb-1">कुल राशि</p>
-        <p className="text-2xl font-bold text-emerald-800">{formatInr(amountINR)}</p>
+      <div className="text-center bg-utu-bg-subtle rounded-2xl py-4 px-6 border border-utu-border-default">
+        <p className="text-xs text-utu-blue mb-1">कुल राशि</p>
+        <p className="text-2xl font-bold text-utu-navy">{formatInr(amountINR)}</p>
       </div>
 
       {/* Payment method tabs */}
@@ -318,7 +318,7 @@ export default function IndiaPaymentSelector({
             />
             <p className="text-xs text-utu-text-muted">
               {isValidVpa(vpa) ? (
-                <span className="text-emerald-600 font-medium">✓ वैध UPI ID</span>
+                <span className="text-utu-blue font-medium">✓ वैध UPI ID</span>
               ) : vpa.length > 3 ? (
                 <span className="text-red-500">@ के बाद प्रदाता का नाम जोड़ें</span>
               ) : (
@@ -370,7 +370,7 @@ export default function IndiaPaymentSelector({
                 className={[
                   'w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all min-h-[44px]',
                   emiMonths === opt.months
-                    ? 'border-emerald-500 bg-emerald-50'
+                    ? 'border-utu-blue bg-utu-bg-subtle'
                     : 'border-utu-border-default hover:border-utu-border-strong',
                 ].join(' ')}
               >
@@ -396,14 +396,14 @@ export default function IndiaPaymentSelector({
               className={[
                 'w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all min-h-[44px]',
                 walletCode === w.code
-                  ? 'border-emerald-500 bg-emerald-50'
+                  ? 'border-utu-blue bg-utu-bg-subtle'
                   : 'border-utu-border-default hover:border-utu-border-strong',
               ].join(' ')}
             >
               <span className="font-medium text-utu-text-primary text-sm">{w.label}</span>
               <div className={[
                 'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                walletCode === w.code ? 'border-emerald-500 bg-emerald-500' : 'border-utu-border-strong',
+                walletCode === w.code ? 'border-utu-blue bg-utu-bg-subtle0' : 'border-utu-border-strong',
               ].join(' ')}>
                 {walletCode === w.code && <div className="w-2 h-2 rounded-full bg-utu-bg-card" />}
               </div>
@@ -434,7 +434,7 @@ export default function IndiaPaymentSelector({
             'flex-grow rounded-xl py-3 text-white text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2 transition-colors',
             loading || status === 'done'
               ? 'bg-utu-border-strong cursor-not-allowed'
-              : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800',
+              : 'bg-utu-blue hover:bg-utu-navy active:bg-utu-navy',
           ].join(' ')}
         >
           {loading ? (

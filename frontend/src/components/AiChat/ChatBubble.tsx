@@ -42,7 +42,7 @@ export default function ChatBubble({ isOpen, onClick, hasUnread = false }: Props
       {/* Pulse ring — shown when idle */}
       {showPulse && !isOpen && (
         <span
-          className="absolute inset-0 rounded-full bg-emerald-400 opacity-60 animate-ping"
+          className="absolute inset-0 rounded-full bg-utu-blue opacity-60 animate-ping"
           aria-hidden="true"
         />
       )}
@@ -62,11 +62,11 @@ export default function ChatBubble({ isOpen, onClick, hasUnread = false }: Props
         className={[
           'relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center',
           'text-white text-2xl transition-all duration-200',
-          'focus:outline-none focus:ring-4 focus:ring-emerald-300',
+          'focus:outline-none focus:ring-4 focus:ring-utu-blue',
           'hover:scale-105 active:scale-95',
           isOpen
             ? 'bg-gray-600 hover:bg-gray-700' /* EXCEPTION: AI chat dark action button */
-            : 'bg-emerald-500 hover:bg-emerald-600',
+            : 'bg-utu-bg-subtle0 hover:bg-utu-blue',
         ].join(' ')}
       >
         <span aria-hidden="true">{isOpen ? '✕' : '💬'}</span>

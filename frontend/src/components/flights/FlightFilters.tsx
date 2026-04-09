@@ -6,7 +6,7 @@ import type { FlightOffer } from '@/lib/api';
 
 // ─── Airline colour (same hash as FlightCard) ─────────────────────────────────
 const AIRLINE_COLORS = [
-  'bg-emerald-600', 'bg-blue-600', 'bg-amber-500',
+  'bg-utu-blue', 'bg-blue-600', 'bg-amber-500',
   'bg-indigo-600',  'bg-teal-600', 'bg-rose-500',
   'bg-violet-600',  'bg-orange-500',
 ];
@@ -147,7 +147,7 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-bold text-utu-text-primary">{t('filters')}</h2>
-        <button onClick={reset} className="text-xs text-emerald-700 hover:underline">{t('clearFilters')}</button>
+        <button onClick={reset} className="text-xs text-utu-blue hover:underline">{t('clearFilters')}</button>
       </div>
 
       {/* Stops */}
@@ -160,12 +160,12 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
               onClick={() => toggleStop(s)}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl mb-1.5 border text-sm transition-colors ${
                 active
-                  ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                  : 'border-utu-border-default bg-slate-50 text-utu-text-secondary hover:bg-utu-bg-muted'
+                  ? 'border-utu-blue bg-utu-bg-subtle text-utu-navy'
+                  : 'border-utu-border-default bg-utu-bg-page text-utu-text-secondary hover:bg-utu-bg-muted'
               }`}
             >
               <span>{stopLabels[s]}</span>
-              <span className="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">{stopCounts[s]}</span>
+              <span className="text-xs bg-slate-200 text-utu-text-secondary px-1.5 py-0.5 rounded-full">{stopCounts[s]}</span>
             </button>
           );
         })}
@@ -197,7 +197,7 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
             style={{ zIndex: 4 }}
           />
           <div
-            className="absolute h-1 bg-emerald-500 rounded-full pointer-events-none"
+            className="absolute h-1 bg-utu-bg-subtle0 rounded-full pointer-events-none"
             style={{
               left:  `${((filters.priceMin - filters.priceFloor) / (filters.priceCap - filters.priceFloor || 1)) * 100}%`,
               right: `${100 - ((filters.priceMax - filters.priceFloor) / (filters.priceCap - filters.priceFloor || 1)) * 100}%`,
@@ -219,8 +219,8 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
                 onClick={() => toggleBlock(block.key)}
                 className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-xs font-medium transition-colors ${
                   active
-                    ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                    : 'border-utu-border-default bg-slate-50 text-utu-text-secondary hover:bg-utu-bg-muted'
+                    ? 'border-utu-blue bg-utu-bg-subtle text-utu-navy'
+                    : 'border-utu-border-default bg-utu-bg-page text-utu-text-secondary hover:bg-utu-bg-muted'
                 }`}
               >
                 {block.icon}
@@ -242,7 +242,7 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggleAirline(code)}
-                  className="rounded border-utu-border-strong text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-utu-border-strong text-utu-blue focus:ring-utu-blue"
                 />
                 <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${airlineColor(code)}`}>
                   <span className="text-white text-[9px] font-bold">{code.slice(0, 2)}</span>
@@ -264,7 +264,7 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
           max={filters.maxDurationCap}
           value={filters.maxDuration}
           onChange={(e) => onChange({ ...filters, maxDuration: Number(e.target.value) })}
-          className="w-full accent-emerald-600"
+          className="w-full accent-utu-blue"
         />
       </Section>
 
@@ -275,7 +275,7 @@ export default function FlightFilters({ offers, filters, onChange }: Props) {
           role="switch"
           aria-checked={filters.baggageOnly}
           onClick={() => onChange({ ...filters, baggageOnly: !filters.baggageOnly })}
-          className={`w-10 h-5 rounded-full transition-colors relative ${filters.baggageOnly ? 'bg-emerald-600' : 'bg-utu-border-default'}`}
+          className={`w-10 h-5 rounded-full transition-colors relative ${filters.baggageOnly ? 'bg-utu-blue' : 'bg-utu-border-default'}`}
         >
           <span className={`absolute top-0.5 w-4 h-4 bg-utu-bg-card rounded-full shadow transition-transform ${filters.baggageOnly ? 'translate-x-5' : 'translate-x-0.5'}`} />
         </button>

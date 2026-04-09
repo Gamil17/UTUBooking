@@ -60,7 +60,7 @@ export function ConversionFunnelWidget() {
               onClick={() => setPeriod(p.value)}
               className={`px-3 py-1.5 text-sm font-medium transition-colors
                 ${period === p.value
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-utu-blue text-white'
                   : 'bg-utu-bg-card text-utu-text-muted hover:bg-utu-bg-muted'}`}
               style={{ minHeight: 44 }}
               aria-pressed={period === p.value}
@@ -88,7 +88,7 @@ export function ConversionFunnelWidget() {
                 </div>
                 <div className="h-3 w-full rounded-full bg-utu-bg-muted">
                   <div
-                    className="h-3 rounded-full bg-emerald-600 transition-all duration-500"
+                    className="h-3 rounded-full bg-utu-blue transition-all duration-500"
                     style={{ width: `${pct}%` }}
                     role="progressbar"
                     aria-valuenow={pct}

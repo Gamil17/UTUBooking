@@ -1,15 +1,26 @@
 {
   "name": "utu-backend",
-  "version": "1.2.0",
+  "version": "1.5.0",
   "description": "UTUBooking.com backend — migrations and shared tooling",
   "scripts": {
-    "migrate:up":     "node-pg-migrate up   --migrations-dir migrations --database-url-var DATABASE_URL",
-    "migrate:down":   "node-pg-migrate down --migrations-dir migrations --database-url-var DATABASE_URL",
+    "migrate:up": "node-pg-migrate up   --migrations-dir migrations --database-url-var DATABASE_URL",
+    "migrate:down": "node-pg-migrate down --migrations-dir migrations --database-url-var DATABASE_URL",
     "migrate:create": "node-pg-migrate create --migrations-dir migrations"
   },
   "dependencies": {
+    "amadeus": "^11.0.0",
+    "axios": "^1.13.6",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.1",
+    "helmet": "^8.1.0",
+    "ioredis": "^5.10.1",
+    "morgan": "^1.10.1",
     "node-pg-migrate": "^6.2.2",
-    "pg":              "^8.11.3"
+    "pg": "^8.20.0",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "dotenv-cli": "^7.4.1"

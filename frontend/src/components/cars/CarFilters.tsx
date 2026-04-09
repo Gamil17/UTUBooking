@@ -146,7 +146,7 @@ export default function CarFilters({ offers, filters, onChange }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-bold text-utu-text-primary">{t('filters')}</h2>
-        <button onClick={reset} className="text-xs text-emerald-700 hover:underline">{t('clearFilters')}</button>
+        <button onClick={reset} className="text-xs text-utu-blue hover:underline">{t('clearFilters')}</button>
       </div>
 
       {/* Free Cancellation */}
@@ -156,7 +156,7 @@ export default function CarFilters({ offers, filters, onChange }: Props) {
           role="switch"
           aria-checked={filters.freeCancelOnly}
           onClick={() => onChange({ ...filters, freeCancelOnly: !filters.freeCancelOnly })}
-          className={`w-10 h-5 rounded-full transition-colors relative ${filters.freeCancelOnly ? 'bg-emerald-600' : 'bg-utu-border-default'}`}
+          className={`w-10 h-5 rounded-full transition-colors relative ${filters.freeCancelOnly ? 'bg-utu-blue' : 'bg-utu-border-default'}`}
         >
           <span className={`absolute top-0.5 w-4 h-4 bg-utu-bg-card rounded-full shadow transition-transform ${filters.freeCancelOnly ? 'translate-x-5' : 'translate-x-0.5'}`} />
         </button>
@@ -172,12 +172,12 @@ export default function CarFilters({ offers, filters, onChange }: Props) {
                   type="checkbox"
                   checked={filters.categories.has(cat)}
                   onChange={() => onChange({ ...filters, categories: toggleSet(filters.categories, cat) })}
-                  className="rounded border-utu-border-strong text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-utu-border-strong text-utu-blue focus:ring-utu-blue"
                 />
                 <span className="flex-1 text-utu-text-secondary text-xs capitalize">
                   {CATEGORY_LABELS[cat] ?? cat}
                 </span>
-                <span className="text-[10px] text-utu-text-muted bg-slate-100 px-1.5 py-0.5 rounded-full">{count}</span>
+                <span className="text-[10px] text-utu-text-muted bg-utu-bg-muted px-1.5 py-0.5 rounded-full">{count}</span>
               </label>
             ))}
           </div>
@@ -197,8 +197,8 @@ export default function CarFilters({ offers, filters, onChange }: Props) {
                 disabled={count === 0}
                 className={`flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-medium transition-colors disabled:opacity-40 ${
                   active
-                    ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                    : 'border-utu-border-default bg-slate-50 text-utu-text-secondary hover:bg-utu-bg-muted'
+                    ? 'border-utu-blue bg-utu-bg-subtle text-utu-navy'
+                    : 'border-utu-border-default bg-utu-bg-page text-utu-text-secondary hover:bg-utu-bg-muted'
                 }`}
               >
                 <span>{label}</span>
@@ -222,8 +222,8 @@ export default function CarFilters({ offers, filters, onChange }: Props) {
                 disabled={count === 0}
                 className={`flex-1 py-2 rounded-xl border text-xs font-semibold transition-colors disabled:opacity-40 ${
                   active
-                    ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                    : 'border-utu-border-default bg-slate-50 text-utu-text-secondary hover:bg-utu-bg-muted'
+                    ? 'border-utu-blue bg-utu-bg-subtle text-utu-navy'
+                    : 'border-utu-border-default bg-utu-bg-page text-utu-text-secondary hover:bg-utu-bg-muted'
                 }`}
               >
                 {s === 6 ? '6+' : s}
@@ -244,10 +244,10 @@ export default function CarFilters({ offers, filters, onChange }: Props) {
                   type="checkbox"
                   checked={filters.suppliers.has(supplier)}
                   onChange={() => onChange({ ...filters, suppliers: toggleSet(filters.suppliers, supplier) })}
-                  className="rounded border-utu-border-strong text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-utu-border-strong text-utu-blue focus:ring-utu-blue"
                 />
                 <span className="flex-1 text-utu-text-secondary text-xs">{supplier}</span>
-                <span className="text-[10px] text-utu-text-muted bg-slate-100 px-1.5 py-0.5 rounded-full">{count}</span>
+                <span className="text-[10px] text-utu-text-muted bg-utu-bg-muted px-1.5 py-0.5 rounded-full">{count}</span>
               </label>
             ))}
           </div>
@@ -264,10 +264,10 @@ export default function CarFilters({ offers, filters, onChange }: Props) {
                   type="checkbox"
                   checked={filters.transmission.has(trans)}
                   onChange={() => onChange({ ...filters, transmission: toggleSet(filters.transmission, trans) })}
-                  className="rounded border-utu-border-strong text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-utu-border-strong text-utu-blue focus:ring-utu-blue"
                 />
                 <span className="flex-1 text-utu-text-secondary text-xs capitalize">{trans}</span>
-                <span className="text-[10px] text-utu-text-muted bg-slate-100 px-1.5 py-0.5 rounded-full">{count}</span>
+                <span className="text-[10px] text-utu-text-muted bg-utu-bg-muted px-1.5 py-0.5 rounded-full">{count}</span>
               </label>
             ))}
           </div>
@@ -284,10 +284,10 @@ export default function CarFilters({ offers, filters, onChange }: Props) {
                   type="checkbox"
                   checked={filters.fuelTypes.has(ft)}
                   onChange={() => onChange({ ...filters, fuelTypes: toggleSet(filters.fuelTypes, ft) })}
-                  className="rounded border-utu-border-strong text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-utu-border-strong text-utu-blue focus:ring-utu-blue"
                 />
                 <span className="flex-1 text-utu-text-secondary text-xs">{ft}</span>
-                <span className="text-[10px] text-utu-text-muted bg-slate-100 px-1.5 py-0.5 rounded-full">{count}</span>
+                <span className="text-[10px] text-utu-text-muted bg-utu-bg-muted px-1.5 py-0.5 rounded-full">{count}</span>
               </label>
             ))}
           </div>
@@ -301,7 +301,7 @@ export default function CarFilters({ offers, filters, onChange }: Props) {
           role="switch"
           aria-checked={filters.hasAC}
           onClick={() => onChange({ ...filters, hasAC: !filters.hasAC })}
-          className={`w-10 h-5 rounded-full transition-colors relative ${filters.hasAC ? 'bg-emerald-600' : 'bg-utu-border-default'}`}
+          className={`w-10 h-5 rounded-full transition-colors relative ${filters.hasAC ? 'bg-utu-blue' : 'bg-utu-border-default'}`}
         >
           <span className={`absolute top-0.5 w-4 h-4 bg-utu-bg-card rounded-full shadow transition-transform ${filters.hasAC ? 'translate-x-5' : 'translate-x-0.5'}`} />
         </button>

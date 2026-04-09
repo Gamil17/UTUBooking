@@ -29,7 +29,7 @@ export default function ContactSearch({ placeholder, btnLabel }: Props) {
       />
       <button
         type="submit"
-        className="bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-3 text-sm font-medium transition-colors"
+        className="bg-utu-navy hover:bg-utu-blue text-white px-5 py-3 text-sm font-medium transition-colors"
       >
         {btnLabel}
       </button>

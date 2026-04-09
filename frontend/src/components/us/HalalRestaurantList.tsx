@@ -80,7 +80,7 @@ export default function HalalRestaurantList({ lat, lng, radius = 1500, cityName 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
-        <span className="w-5 h-5 border-2 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />
+        <span className="w-5 h-5 border-2 border-utu-border-default border-t-utu-blue rounded-full animate-spin" />
         <span className="text-sm">{t('loadingRestaurants')}</span>
       </div>
     );
@@ -93,7 +93,7 @@ export default function HalalRestaurantList({ lat, lng, radius = 1500, cityName 
         <button
           type="button"
           onClick={load}
-          className="text-sm text-emerald-600 underline min-h-[44px] px-4"
+          className="text-sm text-utu-blue underline min-h-[44px] px-4"
         >
           {t('retryBtn')}
         </button>
@@ -127,7 +127,7 @@ export default function HalalRestaurantList({ lat, lng, radius = 1500, cityName 
               unoptimized
             />
           ) : (
-            <div className="h-16 w-16 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0 text-xl">
+            <div className="h-16 w-16 rounded-lg bg-utu-bg-subtle flex items-center justify-center flex-shrink-0 text-xl">
               🥩
             </div>
           )}
@@ -143,7 +143,7 @@ export default function HalalRestaurantList({ lat, lng, radius = 1500, cityName 
               )}
               <PriceLevel level={place.priceLevel} />
               {place.openNow !== null && (
-                <span className={`text-xs font-medium ${place.openNow ? 'text-emerald-600' : 'text-red-500'}`}>
+                <span className={`text-xs font-medium ${place.openNow ? 'text-utu-blue' : 'text-red-500'}`}>
                   {place.openNow ? 'Open' : 'Closed'}
                 </span>
               )}

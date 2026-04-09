@@ -42,7 +42,7 @@ export default function BlogPostsGrid({ posts, categories, allLabel, readMoreLab
               onClick={() => setActive(cat.label)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 active === cat.label
-                  ? 'bg-emerald-700 text-white'
+                  ? 'bg-utu-navy text-white'
                   : 'text-utu-text-secondary hover:bg-utu-bg-muted'
               }`}
             >
@@ -61,7 +61,7 @@ export default function BlogPostsGrid({ posts, categories, allLabel, readMoreLab
                 key={post.slug}
                 className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm hover:shadow-md transition-shadow p-6"
               >
-                <span className="inline-block bg-emerald-100 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full mb-3">
+                <span className="inline-block bg-utu-bg-subtle text-utu-blue text-xs font-semibold px-2.5 py-1 rounded-full mb-3">
                   {post.category}
                 </span>
                 <h2 className="text-lg font-bold text-utu-text-primary mb-2 leading-snug">{post.title}</h2>
@@ -70,7 +70,7 @@ export default function BlogPostsGrid({ posts, categories, allLabel, readMoreLab
                   <span className="text-xs text-utu-text-muted">{post.date}</span>
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="text-sm font-semibold text-emerald-700 hover:text-emerald-600 transition-colors"
+                    className="text-sm font-semibold text-utu-blue hover:text-utu-blue transition-colors"
                   >
                     {readMoreLabel}
                   </Link>

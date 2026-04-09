@@ -22,7 +22,7 @@ export const DEFAULT_TENANT: TenantConfig = {
   slug: 'utubooking',
   name: 'UTUBooking',
   logoUrl: null,
-  primaryColor: '#10B981',
+  primaryColor: '#1E3A5F',
   secondaryColor: '#111827',
   currency: 'SAR',
   locale: 'en',

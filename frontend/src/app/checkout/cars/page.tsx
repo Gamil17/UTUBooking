@@ -49,7 +49,7 @@ function Field({ label, value, onChange, type = 'text', required = true }: {
 }) {
   return (
     <div>
-      <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+      <label className="text-[10px] font-semibold text-utu-text-muted uppercase tracking-wide block mb-1">
         {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       <input
@@ -57,7 +57,7 @@ function Field({ label, value, onChange, type = 'text', required = true }: {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
-        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        className="w-full border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-primary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-utu-blue"
       />
     </div>
   );
@@ -94,7 +94,7 @@ function CarSummaryCard({ image, name, category, supplier, pickupLocation, picku
       <div>
         <p className="font-bold text-utu-text-primary leading-tight">{name}</p>
         {category && (
-          <span className="inline-block mt-1 text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full uppercase tracking-wide">
+          <span className="inline-block mt-1 text-[10px] font-semibold text-utu-text-muted bg-utu-bg-muted px-2 py-0.5 rounded-full uppercase tracking-wide">
             {category}
           </span>
         )}
@@ -115,7 +115,7 @@ function CarSummaryCard({ image, name, category, supplier, pickupLocation, picku
         </div>
         <div className="flex justify-between font-bold text-utu-text-primary">
           <span>{tCR('totalPrice')}</span>
-          <span className="text-emerald-700">{fmtPrice(totalPrice, currency)}</span>
+          <span className="text-utu-blue">{fmtPrice(totalPrice, currency)}</span>
         </div>
       </div>
     </div>
@@ -187,7 +187,7 @@ export default function CarCheckoutPage() {
   if (!offerId && !name) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-utu-text-muted text-sm">{tCO('noOfferSelected')} <button onClick={() => router.back()} className="text-emerald-700 underline">{tCO('goBack')}</button></p>
+        <p className="text-utu-text-muted text-sm">{tCO('noOfferSelected')} <button onClick={() => router.back()} className="text-utu-blue underline">{tCO('goBack')}</button></p>
       </div>
     );
   }
@@ -197,10 +197,10 @@ export default function CarCheckoutPage() {
   // ═══════════════════════════════════════════════════════════════════════════════
   if (step === 'confirmed') {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-utu-bg-page flex items-center justify-center px-4">
         <div className="max-w-md w-full bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-8 text-center">
-          <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-7 h-7 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <div className="w-14 h-14 bg-utu-bg-subtle rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-7 h-7 text-utu-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
           </div>
@@ -212,22 +212,22 @@ export default function CarCheckoutPage() {
             <p className="text-xs text-amber-600 mb-5">{tCO('bookingNotSaved')}</p>
           )}
 
-          <div className="bg-slate-50 rounded-xl p-4 text-left text-sm mb-6 space-y-1.5">
+          <div className="bg-utu-bg-page rounded-xl p-4 text-left text-sm mb-6 space-y-1.5">
             <div className="font-semibold text-utu-text-primary">{name}</div>
             {supplier && <div className="text-utu-text-muted">{supplier}</div>}
             <div className="text-utu-text-secondary">{pickupLocation}</div>
             <div className="text-utu-text-secondary">{fmtDate(pickupDate)} → {fmtDate(dropoffDate)}</div>
             <div className="text-utu-text-secondary">{days} day{days > 1 ? 's' : ''}</div>
-            <div className="font-semibold text-emerald-700 pt-1">{fmtPrice(totalPrice, currency)}</div>
+            <div className="font-semibold text-utu-blue pt-1">{fmtPrice(totalPrice, currency)}</div>
           </div>
 
-          <Link href="/account" className="w-full inline-block text-center border border-emerald-200 text-emerald-700 font-semibold py-2.5 rounded-xl text-sm transition-colors hover:bg-emerald-50 mb-3">
+          <Link href="/account" className="w-full inline-block text-center border border-utu-border-default text-utu-blue font-semibold py-2.5 rounded-xl text-sm transition-colors hover:bg-utu-bg-subtle mb-3">
             {tCO('viewInMyTrips')}
           </Link>
 
           <button
             onClick={() => router.push('/')}
-            className="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+            className="w-full bg-utu-navy hover:bg-utu-blue text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
           >
             {tCO('backToHome')}
           </button>
@@ -241,7 +241,7 @@ export default function CarCheckoutPage() {
   // ═══════════════════════════════════════════════════════════════════════════════
   if (step === 'paying') {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-utu-bg-page">
         <div className="max-w-2xl mx-auto px-4 py-8">
           <button onClick={() => setStep('form')} className="flex items-center gap-1.5 text-sm text-utu-text-muted hover:text-utu-text-primary mb-6">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -268,7 +268,7 @@ export default function CarCheckoutPage() {
   // DRIVER DETAILS FORM
   // ═══════════════════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-utu-bg-page">
       <div className="max-w-3xl mx-auto px-4 py-8">
 
         <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-utu-text-muted hover:text-utu-text-primary mb-6">
@@ -303,7 +303,7 @@ export default function CarCheckoutPage() {
                   aria-checked={form.agreed}
                   onClick={() => setField('agreed', !form.agreed)}
                   className={`mt-0.5 w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors ${
-                    form.agreed ? 'bg-emerald-700 border-emerald-700' : 'border-utu-border-strong bg-utu-bg-card'
+                    form.agreed ? 'bg-utu-navy border-utu-navy' : 'border-utu-border-strong bg-utu-bg-card'
                   }`}
                 >
                   {form.agreed && (
@@ -320,7 +320,7 @@ export default function CarCheckoutPage() {
               type="button"
               disabled={!canProceed}
               onClick={() => setStep('paying')}
-              className="w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
+              className="w-full bg-utu-navy hover:bg-utu-blue active:bg-utu-navy disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
             >
               {t('confirm')} → {t('payment')}
             </button>

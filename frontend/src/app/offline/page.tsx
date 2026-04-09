@@ -8,10 +8,10 @@ export default function OfflinePage() {
   const t = useTranslations('offline');
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 text-center">
-      <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+    <div className="min-h-screen bg-utu-bg-page flex flex-col items-center justify-center px-4 text-center">
+      <div className="w-16 h-16 bg-utu-bg-subtle rounded-full flex items-center justify-center mb-6">
         <svg
-          className="w-8 h-8 text-emerald-700"
+          className="w-8 h-8 text-utu-blue"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -31,7 +31,7 @@ export default function OfflinePage() {
 
       <Link
         href="/"
-        className="bg-emerald-700 text-white font-semibold px-6 py-3 rounded-xl text-sm hover:bg-emerald-600 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+        className="bg-utu-navy text-white font-semibold px-6 py-3 rounded-xl text-sm hover:bg-utu-blue transition-colors focus:outline-none focus:ring-2 focus:ring-utu-blue focus:ring-offset-2"
       >
         {t('goHome')}
       </Link>

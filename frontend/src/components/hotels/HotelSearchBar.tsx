@@ -69,7 +69,7 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
           onClick={() => set('freeCancelOnly', !params.freeCancelOnly)}
           className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
             params.freeCancelOnly
-              ? 'bg-emerald-700 border-emerald-700'
+              ? 'bg-utu-navy border-utu-navy'
               : 'border-utu-border-strong bg-utu-bg-card'
           }`}
         >
@@ -87,7 +87,7 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
 
         {/* Destination */}
         <div className="flex-1 min-w-[160px]">
-          <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+          <label className="text-[10px] font-semibold text-utu-text-muted uppercase tracking-wide block mb-1">
             {t('destination')}
           </label>
           <input
@@ -95,7 +95,7 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
             value={params.destination}
             onChange={(e) => set('destination', e.target.value)}
             placeholder={t('destinationHint')}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-primary placeholder:text-utu-text-muted placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-utu-blue"
           />
         </div>
 
@@ -123,16 +123,16 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
 
         {/* Guests & Rooms popup */}
         <div ref={guestsRef} className="relative flex-1 min-w-[160px]">
-          <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+          <label className="text-[10px] font-semibold text-utu-text-muted uppercase tracking-wide block mb-1">
             {t('guests')}
           </label>
           <button
             type="button"
             onClick={() => setGuestsOpen((v) => !v)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 text-start bg-utu-bg-card focus:outline-none focus:ring-2 focus:ring-emerald-500 flex items-center justify-between"
+            className="w-full border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-secondary text-start bg-utu-bg-card focus:outline-none focus:ring-2 focus:ring-utu-blue flex items-center justify-between"
           >
             <span className="truncate">{guestSummary}</span>
-            <svg className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${guestsOpen ? 'rotate-180' : ''}`}
+            <svg className={`w-3.5 h-3.5 text-utu-text-muted shrink-0 transition-transform ${guestsOpen ? 'rotate-180' : ''}`}
               viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
             </svg>
@@ -148,12 +148,12 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
                 </div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => set('adults', Math.max(1, params.adults - 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-utu-blue hover:text-utu-blue">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M5 12h14"/></svg>
                   </button>
                   <span className="w-5 text-center text-sm font-semibold text-utu-text-primary">{params.adults}</span>
                   <button type="button" onClick={() => set('adults', Math.min(12, params.adults + 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-utu-blue hover:text-utu-blue">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
                   </button>
                 </div>
@@ -167,12 +167,12 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
                 </div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => set('children', Math.max(0, params.children - 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-utu-blue hover:text-utu-blue">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M5 12h14"/></svg>
                   </button>
                   <span className="w-5 text-center text-sm font-semibold text-utu-text-primary">{params.children}</span>
                   <button type="button" onClick={() => set('children', Math.min(6, params.children + 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-utu-blue hover:text-utu-blue">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
                   </button>
                 </div>
@@ -183,12 +183,12 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
                 <div className="text-sm font-medium text-utu-text-primary">{t('roomsLabel')}</div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => set('rooms', Math.max(1, params.rooms - 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-utu-blue hover:text-utu-blue">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M5 12h14"/></svg>
                   </button>
                   <span className="w-5 text-center text-sm font-semibold text-utu-text-primary">{params.rooms}</span>
                   <button type="button" onClick={() => set('rooms', Math.min(8, params.rooms + 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-emerald-400 hover:text-emerald-700">
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-utu-border-default text-utu-text-muted hover:border-utu-blue hover:text-utu-blue">
                     <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
                   </button>
                 </div>
@@ -197,7 +197,7 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
               <button
                 type="button"
                 onClick={() => setGuestsOpen(false)}
-                className="w-full mt-1 bg-emerald-700 text-white text-sm font-semibold py-2 rounded-xl hover:bg-emerald-600 transition-colors"
+                className="w-full mt-1 bg-utu-navy text-white text-sm font-semibold py-2 rounded-xl hover:bg-utu-blue transition-colors"
               >
                 Done
               </button>
@@ -210,7 +210,7 @@ export default function HotelSearchBar({ initialParams, onSearch, isLoading }: P
           type="button"
           onClick={handleSearch}
           disabled={!canSearch || isLoading}
-          className="h-[42px] px-6 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors flex items-center gap-2 shrink-0"
+          className="h-[42px] px-6 bg-utu-navy hover:bg-utu-blue active:bg-utu-navy disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors flex items-center gap-2 shrink-0"
         >
           {isLoading
             ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />

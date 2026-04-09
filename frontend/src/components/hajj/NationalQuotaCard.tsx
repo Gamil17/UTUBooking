@@ -38,7 +38,7 @@ interface QuotaStatus {
 
 // ─── Brand constants ──────────────────────────────────────────────────────────
 
-const BRAND_GREEN   = '#10B981';
+const BRAND_GREEN   = '#1E3A5F';
 const BRAND_DARK    = '#111827';
 const GRAY          = '#6B7280';
 const BORDER        = '#E5E7EB';

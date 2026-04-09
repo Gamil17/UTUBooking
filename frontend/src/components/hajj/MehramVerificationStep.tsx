@@ -130,14 +130,14 @@ export default function MehramVerificationStep({
   // ── Shared input classes ──────────────────────────────────────────────────
   const inputCls =
     'w-full border border-utu-border-strong rounded-xl px-4 py-3 text-base text-utu-text-primary ' +
-    'focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent ' +
+    'focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent ' +
     'placeholder-gray-400 min-h-[44px]';
 
   const cardCls = (active: boolean) =>
     [
       'w-full flex items-start gap-3 p-4 rounded-2xl border-2 transition-all text-start cursor-pointer',
       active
-        ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+        ? 'border-utu-blue bg-utu-bg-subtle shadow-sm'
         : 'border-utu-border-default bg-utu-bg-card hover:border-utu-border-strong',
     ].join(' ');
 
@@ -179,7 +179,7 @@ export default function MehramVerificationStep({
               </span>
               <div className={[
                 'ms-auto w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center',
-                gender === g ? 'border-emerald-500 bg-emerald-500' : 'border-utu-border-strong',
+                gender === g ? 'border-utu-blue bg-utu-bg-subtle0' : 'border-utu-border-strong',
               ].join(' ')}>
                 {gender === g && <div className="w-2 h-2 rounded-full bg-utu-bg-card" />}
               </div>
@@ -248,7 +248,7 @@ export default function MehramVerificationStep({
             </div>
             <div className={[
               'w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center mt-0.5',
-              option === 'with_mahram' ? 'border-emerald-500 bg-emerald-500' : 'border-utu-border-strong',
+              option === 'with_mahram' ? 'border-utu-blue bg-utu-bg-subtle0' : 'border-utu-border-strong',
             ].join(' ')}>
               {option === 'with_mahram' && <div className="w-2 h-2 rounded-full bg-utu-bg-card" />}
             </div>
@@ -256,7 +256,7 @@ export default function MehramVerificationStep({
 
           {/* Mahram details */}
           {option === 'with_mahram' && (
-            <div className="ms-2 ps-4 border-s-2 border-emerald-200 space-y-4">
+            <div className="ms-2 ps-4 border-s-2 border-utu-border-default space-y-4">
               {/* Companion name */}
               <div className="space-y-1.5">
                 <label htmlFor="companion-name" className="block text-sm font-medium text-utu-text-secondary" style={{ lineHeight: 1.8 }}>
@@ -309,7 +309,7 @@ export default function MehramVerificationStep({
             </div>
             <div className={[
               'w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center mt-0.5',
-              option === 'authorized_group' ? 'border-emerald-500 bg-emerald-500' : 'border-utu-border-strong',
+              option === 'authorized_group' ? 'border-utu-blue bg-utu-bg-subtle0' : 'border-utu-border-strong',
             ].join(' ')}>
               {option === 'authorized_group' && <div className="w-2 h-2 rounded-full bg-utu-bg-card" />}
             </div>
@@ -317,7 +317,7 @@ export default function MehramVerificationStep({
 
           {/* Group operator */}
           {option === 'authorized_group' && (
-            <div className="ms-2 ps-4 border-s-2 border-emerald-200 space-y-1.5">
+            <div className="ms-2 ps-4 border-s-2 border-utu-border-default space-y-1.5">
               <label htmlFor="group-operator" className="block text-sm font-medium text-utu-text-secondary" style={{ lineHeight: 1.8 }}>
                 {t('groupOperatorLabel')}
               </label>
@@ -368,7 +368,7 @@ export default function MehramVerificationStep({
             'flex-grow rounded-xl py-3 text-sm font-semibold transition-colors min-h-[44px]',
             !gender
               ? 'bg-utu-border-default text-utu-text-muted cursor-not-allowed'
-              : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white',
+              : 'bg-utu-blue hover:bg-utu-navy active:bg-utu-navy text-white',
           ].join(' ')}
           style={{ lineHeight: 1.8 }}
         >

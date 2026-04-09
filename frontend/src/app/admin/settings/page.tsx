@@ -55,7 +55,7 @@ function NumberField({
           step={step}
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
           className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm text-utu-text-primary
-                     focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                     focus:outline-none focus:ring-2 focus:ring-utu-blue"
         />
       </div>
     </div>
@@ -125,8 +125,8 @@ export default function AdminSettingsPage() {
         <button
           onClick={handleSave}
           disabled={isSaving || isLoading}
-          className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white
-                     hover:bg-emerald-600 disabled:opacity-40 transition-colors"
+          className="rounded-lg bg-utu-blue px-5 py-2.5 text-sm font-medium text-white
+                     hover:bg-utu-blue disabled:opacity-40 transition-colors"
           style={{ minHeight: 44 }}
         >
           {isSaving ? t('saving') : t('saveSettings')}
@@ -136,7 +136,7 @@ export default function AdminSettingsPage() {
       {saveMsg && (
         <div className={`rounded-xl border px-4 py-3 text-sm
           ${saveMsg.type === 'ok'
-            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            ? 'border-utu-border-default bg-utu-bg-subtle text-utu-blue'
             : 'border-red-200 bg-red-50 text-red-600'}`}
         >
           {saveMsg.text}
@@ -267,7 +267,7 @@ export default function AdminSettingsPage() {
                     placeholder={t('maintenanceMsgPh')}
                     rows={2}
                     className="w-full rounded-lg border border-utu-border-default p-3 text-sm text-utu-text-primary
-                               focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-none"
+                               focus:outline-none focus:ring-2 focus:ring-utu-blue resize-none"
                   />
                 </div>
               )}

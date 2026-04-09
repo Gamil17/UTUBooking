@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2">
-            <div className="w-9 h-9 bg-emerald-700 rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-utu-navy rounded-xl flex items-center justify-center">
               <span className="text-white font-black text-sm">U</span>
             </div>
             <span className="font-black text-utu-text-primary text-lg">UTUBooking</span>
@@ -67,7 +67,7 @@ export default function AdminLoginPage() {
                 required
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent transition"
                 placeholder={t('enterSecret')}
               />
             </div>
@@ -75,7 +75,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={!token || loading}
-              className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60"
+              className="w-full py-2.5 rounded-xl bg-utu-navy hover:bg-utu-blue text-white text-sm font-semibold transition-colors disabled:opacity-60"
             >
               {loading ? t('authenticating') : t('accessDashboard')}
             </button>

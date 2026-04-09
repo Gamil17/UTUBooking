@@ -101,7 +101,7 @@ export function PricingRecommendationsWidget() {
                     </td>
                     <td className="py-3 text-end font-semibold text-utu-text-primary">
                       {Number(rec.recommended_price).toLocaleString()}
-                      <span className={`ms-1 text-xs ${isUp ? 'text-emerald-600' : 'text-red-500'}`}>
+                      <span className={`ms-1 text-xs ${isUp ? 'text-utu-blue' : 'text-red-500'}`}>
                         {isUp ? '↑' : '↓'}{Math.abs(Number(pctChg))}%
                       </span>
                     </td>
@@ -112,7 +112,7 @@ export function PricingRecommendationsWidget() {
                       {/* Confidence bar */}
                       <div className="mt-1 h-1 w-16 rounded-full bg-utu-border-default ms-auto">
                         <div
-                          className="h-1 rounded-full bg-emerald-600"
+                          className="h-1 rounded-full bg-utu-blue"
                           style={{ width: `${Math.round(rec.confidence_score * 100)}%` }}
                         />
                       </div>
@@ -125,8 +125,8 @@ export function PricingRecommendationsWidget() {
                         <button
                           onClick={() => acceptMutation.mutate(rec.id)}
                           disabled={acceptMutation.isPending}
-                          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white
-                                     hover:bg-emerald-600 disabled:opacity-50 transition-colors"
+                          className="rounded-lg bg-utu-blue px-3 py-1.5 text-xs font-medium text-white
+                                     hover:bg-utu-blue disabled:opacity-50 transition-colors"
                           style={{ minHeight: 44 }}
                           aria-label={`Accept pricing recommendation for hotel ${rec.hotel_id}`}
                         >
@@ -168,7 +168,7 @@ export function PricingRecommendationsWidget() {
               placeholder={t('rejectPlaceholder')}
               rows={3}
               className="mt-3 w-full rounded-lg border border-utu-border-default p-3 text-sm text-utu-text-primary
-                         focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-none"
+                         focus:outline-none focus:ring-2 focus:ring-utu-blue resize-none"
               aria-label="Rejection note"
             />
             <div className="mt-4 flex justify-end gap-3">

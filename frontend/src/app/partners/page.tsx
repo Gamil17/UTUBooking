@@ -24,18 +24,18 @@ export default async function PartnersPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-utu-bg-page">
 
-      <section className="bg-emerald-900 py-16 px-4 text-center">
+      <section className="bg-utu-navy py-16 px-4 text-center">
         <p className="text-amber-300 text-xs font-semibold uppercase tracking-widest mb-3">{t('tagline')}</p>
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">{t('heroHeading')}</h1>
-        <p className="text-emerald-100 max-w-xl mx-auto">{t('heroDesc')}</p>
+        <p className="text-white/80 max-w-xl mx-auto">{t('heroDesc')}</p>
       </section>
 
       {/* Tab nav */}
       <div className="bg-utu-bg-card border-b border-utu-border-default">
         <div className="max-w-5xl mx-auto px-4 flex">
-          <a href="#hotels" className="px-5 py-4 text-sm font-semibold text-emerald-700 border-b-2 border-emerald-700">
+          <a href="#hotels" className="px-5 py-4 text-sm font-semibold text-utu-blue border-b-2 border-utu-navy">
             {t('tabHotels')}
           </a>
           <a href="#business" className="px-5 py-4 text-sm font-medium text-utu-text-muted hover:text-utu-text-primary transition-colors">
@@ -65,7 +65,7 @@ export default async function PartnersPage() {
           </div>
           <Link
             href="/contact"
-            className="inline-block bg-emerald-700 hover:bg-emerald-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm"
+            className="inline-block bg-utu-navy hover:bg-utu-blue text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm"
           >
             {t('listPropertyBtn')}
           </Link>
@@ -79,7 +79,7 @@ export default async function PartnersPage() {
           <p className="text-utu-text-muted text-sm mb-8 max-w-xl">{t('businessDesc')}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
             {bizBenefits.map((b) => (
-              <div key={b.title} className="bg-slate-50 rounded-xl border border-utu-border-default p-5 flex gap-4">
+              <div key={b.title} className="bg-utu-bg-page rounded-xl border border-utu-border-default p-5 flex gap-4">
                 <span className="text-2xl shrink-0" aria-hidden="true">{b.icon}</span>
                 <div>
                   <h3 className="font-semibold text-utu-text-primary mb-1">{b.title}</h3>
@@ -90,7 +90,7 @@ export default async function PartnersPage() {
           </div>
           <Link
             href="/contact"
-            className="inline-block bg-emerald-700 hover:bg-emerald-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm"
+            className="inline-block bg-utu-navy hover:bg-utu-blue text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm"
           >
             {t('requestDemoBtn')}
           </Link>
@@ -104,7 +104,7 @@ export default async function PartnersPage() {
           <p className="text-utu-text-muted text-sm mb-6 max-w-lg mx-auto">{t('advertiseDesc')}</p>
           <Link
             href="/contact"
-            className="inline-block bg-amber-400 hover:bg-amber-300 text-emerald-900 font-bold px-8 py-3 rounded-xl transition-colors text-sm"
+            className="inline-block bg-amber-400 hover:bg-amber-300 text-utu-navy font-bold px-8 py-3 rounded-xl transition-colors text-sm"
           >
             {t('contactTeamBtn')}
           </Link>

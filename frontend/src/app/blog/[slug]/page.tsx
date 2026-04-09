@@ -159,27 +159,27 @@ export default async function BlogPostPage(
   const readTime = idx ? t(`post${idx}ReadTime` as Parameters<typeof t>[0]) : '';
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-utu-bg-page">
 
       {/* Hero */}
-      <section className="bg-emerald-900 py-12 px-4">
+      <section className="bg-utu-navy py-12 px-4">
         <div className="max-w-3xl mx-auto">
           <Link
             href="/blog"
-            className="inline-flex items-center gap-1.5 text-emerald-300 hover:text-white text-sm font-medium mb-6 transition-colors"
+            className="inline-flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium mb-6 transition-colors"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
             {t('backToBlog')}
           </Link>
-          <span className="inline-block bg-amber-400 text-emerald-900 text-xs font-semibold px-2.5 py-1 rounded-full mb-4">
+          <span className="inline-block bg-amber-400 text-utu-navy text-xs font-semibold px-2.5 py-1 rounded-full mb-4">
             {category}
           </span>
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-snug">{title}</h1>
-          <div className="flex items-center gap-3 text-emerald-300 text-sm">
+          <div className="flex items-center gap-3 text-white/60 text-sm">
             <span>{date}</span>
-            <span className="w-1 h-1 rounded-full bg-emerald-500" />
+            <span className="w-1 h-1 rounded-full bg-utu-bg-subtle0" />
             <span>{readTime}</span>
           </div>
         </div>
@@ -197,19 +197,19 @@ export default async function BlogPostPage(
         </div>
 
         {/* CTA */}
-        <div className="mt-10 bg-emerald-900 rounded-2xl p-8 text-center">
-          <p className="text-emerald-200 text-sm font-semibold uppercase tracking-widest mb-2">{t('readyToTravel')}</p>
+        <div className="mt-10 bg-utu-navy rounded-2xl p-8 text-center">
+          <p className="text-white/80 text-sm font-semibold uppercase tracking-widest mb-2">{t('readyToTravel')}</p>
           <h3 className="text-xl font-bold text-white mb-4">{t('bookNextJourney')}</h3>
           <Link
             href="/hotels/search"
-            className="inline-block bg-amber-400 hover:bg-amber-300 text-emerald-900 font-semibold text-sm px-6 py-2.5 rounded-full transition-colors"
+            className="inline-block bg-amber-400 hover:bg-amber-300 text-utu-navy font-semibold text-sm px-6 py-2.5 rounded-full transition-colors"
           >
             {t('searchHotelsFlights')}
           </Link>
         </div>
 
         <div className="mt-8 text-center">
-          <Link href="/blog" className="text-sm text-emerald-700 hover:underline font-medium">
+          <Link href="/blog" className="text-sm text-utu-blue hover:underline font-medium">
             {t('readMoreGuides')}
           </Link>
         </div>

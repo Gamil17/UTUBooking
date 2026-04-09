@@ -52,7 +52,7 @@ function InputField({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="w-full border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-primary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-utu-bg-card"
+        className="w-full border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-primary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent bg-utu-bg-card"
       />
     </div>
   );
@@ -204,7 +204,7 @@ export default function HomePage() {
   ], [tNav]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
+    <div className="min-h-screen flex flex-col bg-utu-bg-page font-sans">
 
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
       <HomeHeader
@@ -213,7 +213,7 @@ export default function HomePage() {
       />
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-b from-emerald-900 via-emerald-800 to-teal-700 pt-12 pb-32 px-4 text-center relative overflow-hidden">
+      <section className="bg-gradient-to-b from-utu-navy via-[#1a3a6e] to-utu-blue pt-12 pb-32 px-4 text-center relative overflow-hidden">
         {/* Decorative circles */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-[-60px] start-[-60px] w-64 h-64 rounded-full bg-utu-bg-card" />
@@ -227,7 +227,7 @@ export default function HomePage() {
           <h1 className="text-white text-3xl sm:text-4xl font-bold leading-tight mb-3">
             {tHero('tagline')}
           </h1>
-          <p className="text-emerald-200 text-sm sm:text-base">
+          <p className="text-white/80 text-sm sm:text-base">
             {tHero('subtitle')}
           </p>
         </div>
@@ -245,7 +245,7 @@ export default function HomePage() {
                 onClick={() => setTab(key)}
                 className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors
                   ${tab === key
-                    ? 'text-emerald-700 border-b-2 border-emerald-700 bg-emerald-50/60'
+                    ? 'text-utu-navy border-b-2 border-utu-navy bg-utu-bg-subtle'
                     : 'text-utu-text-muted hover:text-utu-text-primary hover:bg-utu-bg-muted'
                   }`}
               >
@@ -293,7 +293,7 @@ export default function HomePage() {
                   <button
                     onClick={handleHotelSearch}
                     disabled={!hotelForm.location || !hotelForm.checkIn || !hotelForm.checkOut}
-                    className="w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-utu-navy hover:bg-utu-blue active:bg-utu-navy disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
@@ -315,8 +315,8 @@ export default function HomePage() {
                       onClick={() => setFlightForm((f) => ({ ...f, tripType: type }))}
                       className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors border ${
                         flightForm.tripType === type
-                          ? 'bg-emerald-700 text-white border-emerald-700'
-                          : 'bg-utu-bg-card text-utu-text-secondary border-utu-border-default hover:border-emerald-400'
+                          ? 'bg-utu-navy text-white border-utu-navy'
+                          : 'bg-utu-bg-card text-utu-text-secondary border-utu-border-default hover:border-utu-blue'
                       }`}
                     >
                       {type === 'oneway' ? tSearch('oneWay') : tSearch('roundTrip')}
@@ -370,7 +370,7 @@ export default function HomePage() {
                     <button
                       onClick={handleFlightSearch}
                       disabled={!flightForm.from || !flightForm.to || !flightForm.depart}
-                      className="w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                      className="w-full bg-utu-navy hover:bg-utu-blue active:bg-utu-navy disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
@@ -412,7 +412,7 @@ export default function HomePage() {
                     <button
                       onClick={handleCarSearch}
                       disabled={!carForm.pickupLocation || !carForm.pickupDate || !carForm.dropoffDate}
-                      className="w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                      className="w-full bg-utu-navy hover:bg-utu-blue active:bg-utu-navy disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />

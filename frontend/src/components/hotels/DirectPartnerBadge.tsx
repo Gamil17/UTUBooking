@@ -49,10 +49,10 @@ const TIER_STYLES: Record<PartnerTier, { pill: string; icon: string; panel: stri
     heading: 'text-amber-800',
   },
   silver: {
-    pill:    'bg-slate-100 text-slate-700 border border-slate-300',
-    icon:    'text-slate-500',
-    panel:   'border-slate-200 bg-slate-50',
-    heading: 'text-slate-700',
+    pill:    'bg-utu-bg-muted text-utu-text-secondary border border-utu-border-strong',
+    icon:    'text-utu-text-muted',
+    panel:   'border-utu-border-default bg-utu-bg-page',
+    heading: 'text-utu-text-secondary',
   },
   bronze: {
     pill:    'bg-orange-100 text-orange-800 border border-orange-300',

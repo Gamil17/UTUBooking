@@ -84,7 +84,7 @@ const styles = {
     right:           0,
     zIndex:          50,
     backgroundColor: '#111827',
-    borderTop:       '3px solid #10B981',
+    borderTop:       '3px solid #1E3A5F',
     boxShadow:       '0 -4px 24px rgba(0,0,0,0.4)',
     padding:         '20px 24px',
     maxHeight:       '70vh',
@@ -106,7 +106,7 @@ const styles = {
     marginBottom: 10,
   },
   highlight: { color: '#F9FAFB' },
-  link:       { color: '#10B981', textDecoration: 'underline' as const },
+  link:       { color: '#1E3A5F', textDecoration: 'underline' as const },
   note: {
     color:        '#9CA3AF',
     fontSize:     12,
@@ -120,7 +120,7 @@ const styles = {
     alignItems: 'center',
   },
   acceptBtn: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#1E3A5F',
     color:           '#FFFFFF',
     border:          'none',
     borderRadius:    8,

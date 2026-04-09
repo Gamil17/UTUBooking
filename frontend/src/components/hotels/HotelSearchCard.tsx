@@ -26,7 +26,7 @@ function HaramBadge({ meters }: { meters: number | null }) {
   if (!meters) return null;
   const display = meters < 1000 ? `${meters}m` : `${(meters / 1000).toFixed(1)}km`;
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-utu-blue bg-utu-bg-subtle border border-utu-border-default px-2 py-0.5 rounded-full whitespace-nowrap">
       <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
       </svg>
@@ -124,7 +124,7 @@ export default function HotelSearchCard({ offer, onSelect }: Props) {
         {offer.amenities?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {offer.amenities.slice(0, 4).map((a) => (
-              <span key={a} className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+              <span key={a} className="text-[10px] bg-utu-bg-muted text-utu-text-secondary px-2 py-0.5 rounded-full">
                 {a}
               </span>
             ))}
@@ -142,7 +142,7 @@ export default function HotelSearchCard({ offer, onSelect }: Props) {
             </span>
           )}
           {offer.reviewScore != null && (
-            <span className="bg-emerald-700 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+            <span className="bg-utu-navy text-white text-xs font-bold px-1.5 py-0.5 rounded">
               {Number(offer.reviewScore).toFixed(1)}
             </span>
           )}
@@ -154,7 +154,7 @@ export default function HotelSearchCard({ offer, onSelect }: Props) {
           <button
             type="button"
             onClick={() => onSelect(offer.rateKey ?? offer.id)}
-            className="ms-auto bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
+            className="ms-auto bg-utu-navy hover:bg-utu-blue active:bg-utu-navy text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
           >
             {t('seeAvailability')}
           </button>

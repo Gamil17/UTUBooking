@@ -123,7 +123,7 @@ export default function LocaleSwitcher() {
 
         {/* Search */}
         <div className="px-6 py-3 border-b border-utu-border-default">
-          <div className="flex items-center gap-2 border-2 border-emerald-500 rounded-xl px-3 py-2">
+          <div className="flex items-center gap-2 border-2 border-utu-blue rounded-xl px-3 py-2">
             <svg className="w-4 h-4 text-utu-text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <circle cx="11" cy="11" r="8"/>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35"/>
@@ -158,7 +158,7 @@ export default function LocaleSwitcher() {
                     <span className="text-sm font-bold shrink-0 w-8">{lang.label}</span>
                     <span className="flex-1 text-xs text-utu-text-muted truncate">{lang.name}</span>
                     {isSel && (
-                      <svg className="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                      <svg className="w-4 h-4 text-utu-blue shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                       </svg>
                     )}
@@ -176,7 +176,7 @@ export default function LocaleSwitcher() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1 text-emerald-200 hover:text-white transition-colors text-xs font-semibold px-2 py-1.5 rounded-lg hover:bg-utu-bg-card/10"
+        className="flex items-center gap-1 text-white/80 hover:text-white transition-colors text-xs font-semibold px-2 py-1.5 rounded-lg hover:bg-utu-bg-card/10"
         aria-label="Select language"
       >
         {selected.label}

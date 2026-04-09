@@ -56,8 +56,8 @@ export default function ContactForm({ labels }: Props) {
   if (status === 'success') {
     return (
       <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-8 text-center">
-        <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="w-12 h-12 bg-utu-bg-subtle rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-6 h-6 text-utu-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -67,7 +67,7 @@ export default function ContactForm({ labels }: Props) {
     );
   }
 
-  const inputClass = 'border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-primary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent';
+  const inputClass = 'border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-primary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent';
 
   return (
     <form onSubmit={handleSubmit} className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-6 space-y-4">
@@ -111,7 +111,7 @@ export default function ContactForm({ labels }: Props) {
       <button
         type="submit"
         disabled={status === 'loading'}
-        className="w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white text-sm font-semibold py-3 rounded-xl transition-colors disabled:opacity-60"
+        className="w-full bg-utu-navy hover:bg-utu-blue active:bg-utu-navy text-white text-sm font-semibold py-3 rounded-xl transition-colors disabled:opacity-60"
       >
         {status === 'loading' ? labels.sendingLabel : labels.submitBtn}
       </button>

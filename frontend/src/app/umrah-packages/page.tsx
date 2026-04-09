@@ -16,15 +16,15 @@ export default async function UmrahPackagesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-utu-bg-page">
 
-      <section className="bg-emerald-900 py-20 px-4 text-center">
+      <section className="bg-utu-navy py-20 px-4 text-center">
         <p className="text-amber-300 text-xs font-semibold uppercase tracking-widest mb-3">{t('tagline')}</p>
         <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">{t('heroHeading')}</h1>
-        <p className="text-emerald-100 max-w-xl mx-auto text-lg mb-8">{t('heroDesc')}</p>
+        <p className="text-white/80 max-w-xl mx-auto text-lg mb-8">{t('heroDesc')}</p>
         <Link
           href="/hotels/search"
-          className="inline-block bg-amber-400 hover:bg-amber-300 text-emerald-900 font-bold px-8 py-3 rounded-xl transition-colors text-sm"
+          className="inline-block bg-amber-400 hover:bg-amber-300 text-utu-navy font-bold px-8 py-3 rounded-xl transition-colors text-sm"
         >
           {t('searchHotelsBtn')}
         </Link>
@@ -36,10 +36,10 @@ export default async function UmrahPackagesPage() {
             {packages.map((pkg) => (
               <div key={pkg.title} className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-6">
                 <h3 className="font-bold text-utu-text-primary mb-1">{pkg.title}</h3>
-                <div className="text-lg font-black text-emerald-700 mb-1">{pkg.price}</div>
+                <div className="text-lg font-black text-utu-blue mb-1">{pkg.price}</div>
                 <div className="text-xs text-utu-text-muted mb-3">{pkg.nights} {t('perPerson')}</div>
                 <p className="text-sm text-utu-text-muted">{pkg.desc}</p>
-                <Link href="/hotels/search" className="mt-4 block text-center bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold py-2 rounded-lg transition-colors">
+                <Link href="/hotels/search" className="mt-4 block text-center bg-utu-navy hover:bg-utu-blue text-white text-sm font-semibold py-2 rounded-lg transition-colors">
                   {t('searchHotels')}
                 </Link>
               </div>

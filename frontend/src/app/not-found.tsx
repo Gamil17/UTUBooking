@@ -12,7 +12,7 @@ export default async function NotFound() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
       {/* Decorative number */}
-      <p className="text-[120px] font-extrabold leading-none text-emerald-600 opacity-10 select-none">
+      <p className="text-[120px] font-extrabold leading-none text-utu-blue opacity-10 select-none">
         404
       </p>
 
@@ -23,8 +23,8 @@ export default async function NotFound() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/"
-            className="inline-block rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white
-                       hover:bg-emerald-600 transition-colors"
+            className="inline-block rounded-xl bg-utu-blue px-6 py-3 text-sm font-semibold text-white
+                       hover:bg-utu-blue transition-colors"
           >
             {t('goHome')}
           </Link>

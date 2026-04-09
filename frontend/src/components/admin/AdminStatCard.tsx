@@ -9,7 +9,7 @@ interface AdminStatCardProps {
 
 export function AdminStatCard({ label, value, sub, trend }: AdminStatCardProps) {
   const trendColor =
-    trend === 'up'   ? 'text-emerald-600' :
+    trend === 'up'   ? 'text-utu-blue' :
     trend === 'down' ? 'text-red-500'     :
     'text-utu-text-muted';
 

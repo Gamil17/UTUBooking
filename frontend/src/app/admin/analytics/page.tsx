@@ -27,7 +27,7 @@ function StatCard({
   trend?: 'up' | 'down' | 'neutral';
 }) {
   const trendColor =
-    trend === 'up' ? 'text-emerald-600' :
+    trend === 'up' ? 'text-utu-blue' :
     trend === 'down' ? 'text-red-500' :
     'text-utu-text-muted';
   return (
@@ -43,7 +43,7 @@ function StatCard({
   );
 }
 
-function BarRow({ label, value, max, color = 'bg-emerald-600' }: { label: string; value: number; max: number; color?: string }) {
+function BarRow({ label, value, max, color = 'bg-utu-blue' }: { label: string; value: number; max: number; color?: string }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
     <div>
@@ -140,7 +140,7 @@ export default function AdminAnalyticsPage() {
               key={p}
               onClick={() => setPeriod(p)}
               className={`px-4 py-2 text-sm font-medium transition-colors
-                ${period === p ? 'bg-emerald-600 text-white' : 'bg-utu-bg-card text-utu-text-muted hover:bg-utu-bg-muted'}`}
+                ${period === p ? 'bg-utu-blue text-white' : 'bg-utu-bg-card text-utu-text-muted hover:bg-utu-bg-muted'}`}
               style={{ minHeight: 40 }}
               aria-pressed={period === p}
             >
@@ -193,7 +193,7 @@ export default function AdminAnalyticsPage() {
               <h2 className="mb-5 text-base font-semibold text-utu-text-primary">{t('topDestinations')}</h2>
               <div className="space-y-4">
                 <BarRow label={`🕋 ${t('destMakkah')}`}  value={makkahBookings} max={maxDest} color="bg-amber-400" />
-                <BarRow label={`🕌 ${t('destMadinah')}`} value={madinahBookings} max={maxDest} color="bg-emerald-500" />
+                <BarRow label={`🕌 ${t('destMadinah')}`} value={madinahBookings} max={maxDest} color="bg-utu-bg-subtle0" />
               </div>
             </div>
 
@@ -220,7 +220,7 @@ export default function AdminAnalyticsPage() {
                 <p className="mt-1 text-sm text-utu-text-muted">{t('searchToBooking')}</p>
               </div>
               <div className="text-right">
-                <p className="text-4xl font-bold text-emerald-600">{convRate}%</p>
+                <p className="text-4xl font-bold text-utu-blue">{convRate}%</p>
                 <p className="text-xs text-utu-text-muted mt-1">
                   {completedCount.toLocaleString()} / {searchCount.toLocaleString()}
                 </p>
@@ -229,7 +229,7 @@ export default function AdminAnalyticsPage() {
             {/* Visual bar */}
             <div className="mt-4 h-3 w-full rounded-full bg-utu-bg-muted">
               <div
-                className="h-3 rounded-full bg-emerald-600 transition-all duration-700"
+                className="h-3 rounded-full bg-utu-blue transition-all duration-700"
                 style={{ width: `${Math.min(parseFloat(convRate), 100)}%` }}
               />
             </div>

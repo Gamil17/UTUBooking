@@ -40,10 +40,10 @@ export default async function AboutPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="min-h-screen bg-utu-bg-page font-sans">
 
       {/* Hero */}
-      <section className="bg-gradient-to-b from-emerald-900 via-emerald-800 to-teal-700 py-20 px-4 text-center">
+      <section className="bg-gradient-to-b from-utu-navy via-[#1a3a6e] to-teal-700 py-20 px-4 text-center">
         <div className="max-w-3xl mx-auto">
           <p className="text-amber-300 text-xs font-semibold uppercase tracking-widest mb-3">
             {t('heroTagline')}
@@ -51,7 +51,7 @@ export default async function AboutPage() {
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">
             {t('heroHeading')}
           </h1>
-          <p className="text-emerald-100 text-lg max-w-xl mx-auto">
+          <p className="text-white/80 text-lg max-w-xl mx-auto">
             {t('heroDesc')}
           </p>
         </div>
@@ -62,7 +62,7 @@ export default async function AboutPage() {
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {stats.map((s) => (
             <div key={s.label}>
-              <div className="text-3xl font-bold text-emerald-700">{s.value}</div>
+              <div className="text-3xl font-bold text-utu-blue">{s.value}</div>
               <div className="text-sm text-utu-text-muted mt-1">{s.label}</div>
             </div>
           ))}
@@ -85,7 +85,7 @@ export default async function AboutPage() {
           <h2 className="text-2xl font-bold text-utu-text-primary text-center mb-10">{t('valuesHeading')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {values.map((v) => (
-              <div key={v.title} className="bg-slate-50 rounded-2xl p-6 flex gap-4 items-start border border-utu-border-default">
+              <div key={v.title} className="bg-utu-bg-page rounded-2xl p-6 flex gap-4 items-start border border-utu-border-default">
                 <span className="text-3xl" aria-hidden="true">{v.icon}</span>
                 <div>
                   <h3 className="font-semibold text-utu-text-primary mb-1">{v.title}</h3>
@@ -104,7 +104,7 @@ export default async function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {markets.map((m) => (
               <div key={m.region} className="bg-utu-bg-card rounded-xl p-4 border border-utu-border-default shadow-sm">
-                <div className="font-semibold text-emerald-700 text-sm mb-1">{m.region}</div>
+                <div className="font-semibold text-utu-blue text-sm mb-1">{m.region}</div>
                 <div className="text-sm text-utu-text-muted">{m.countries}</div>
               </div>
             ))}
@@ -116,11 +116,11 @@ export default async function AboutPage() {
       <section className="bg-utu-bg-card py-16 px-4">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-utu-text-primary text-center mb-10">{t('journeyHeading')}</h2>
-          <div className="relative border-s-2 border-emerald-200 ps-6 space-y-8">
+          <div className="relative border-s-2 border-utu-border-default ps-6 space-y-8">
             {milestones.map((m) => (
               <div key={m.year} className="relative">
-                <div className="absolute -start-[1.65rem] top-1 w-4 h-4 bg-emerald-600 rounded-full border-2 border-white" />
-                <div className="text-xs font-bold text-emerald-600 uppercase tracking-wide mb-1">{m.year}</div>
+                <div className="absolute -start-[1.65rem] top-1 w-4 h-4 bg-utu-blue rounded-full border-2 border-white" />
+                <div className="text-xs font-bold text-utu-blue uppercase tracking-wide mb-1">{m.year}</div>
                 <div className="text-utu-text-secondary text-sm">{m.event}</div>
               </div>
             ))}
@@ -129,13 +129,13 @@ export default async function AboutPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-emerald-800 py-16 px-4 text-center">
+      <section className="bg-utu-navy py-16 px-4 text-center">
         <div className="max-w-xl mx-auto">
           <h2 className="text-2xl font-bold text-white mb-3">{t('ctaHeading')}</h2>
-          <p className="text-emerald-100 mb-6">{t('ctaDesc')}</p>
+          <p className="text-white/80 mb-6">{t('ctaDesc')}</p>
           <Link
             href="/hotels/search"
-            className="inline-block bg-amber-400 hover:bg-amber-300 text-emerald-900 font-bold px-8 py-3 rounded-xl transition-colors text-sm"
+            className="inline-block bg-amber-400 hover:bg-amber-300 text-utu-navy font-bold px-8 py-3 rounded-xl transition-colors text-sm"
           >
             {t('ctaBtn')}
           </Link>

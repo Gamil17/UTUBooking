@@ -52,8 +52,8 @@ export default function GlobalError({
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <button
           onClick={reset}
-          className="inline-block rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white
-                     hover:bg-emerald-600 transition-colors"
+          className="inline-block rounded-xl bg-utu-blue px-6 py-3 text-sm font-semibold text-white
+                     hover:bg-utu-blue transition-colors"
         >
           {t('tryAgain')}
         </button>

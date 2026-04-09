@@ -61,7 +61,7 @@ export default function HalalBadge({ isHalalFriendly, amenities, compact = true 
   if (compact) {
     return (
       <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-utu-bg-subtle text-utu-navy text-xs font-semibold"
         aria-label={t('badge')}
       >
         <CrescentIcon className="h-3 w-3" />
@@ -77,13 +77,13 @@ export default function HalalBadge({ isHalalFriendly, amenities, compact = true 
 
   return (
     <div
-      className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 space-y-3"
+      className="rounded-2xl border border-utu-border-default bg-utu-bg-subtle p-4 space-y-3"
       role="region"
       aria-label={t('badge')}
     >
       <div className="flex items-center gap-2">
-        <CrescentIcon className="h-5 w-5 text-emerald-600" />
-        <h3 className="text-sm font-semibold text-emerald-800">{t('badge')}</h3>
+        <CrescentIcon className="h-5 w-5 text-utu-blue" />
+        <h3 className="text-sm font-semibold text-utu-navy">{t('badge')}</h3>
       </div>
 
       {activeAmenities.length > 0 && (
@@ -91,7 +91,7 @@ export default function HalalBadge({ isHalalFriendly, amenities, compact = true 
           {activeAmenities.map((key) => (
             <li
               key={key}
-              className="flex items-center gap-2 text-xs text-emerald-700"
+              className="flex items-center gap-2 text-xs text-utu-blue"
               aria-label={t(key as keyof typeof t)}
             >
               <span aria-hidden="true">{AMENITY_ICONS[key]}</span>

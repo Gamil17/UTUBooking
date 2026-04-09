@@ -59,13 +59,13 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-emerald-900 text-white sticky top-0 z-40 shadow-md">
+      <header className="bg-utu-navy text-white sticky top-0 z-40 shadow-md">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-4">
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <div className="w-8 h-8 bg-amber-400 rounded-xl flex items-center justify-center shadow">
-              <span className="text-emerald-900 font-black text-sm">U</span>
+              <span className="text-utu-navy font-black text-sm">U</span>
             </div>
             <span className="font-black text-white text-base tracking-tight hidden sm:block">UTUBooking</span>
           </Link>
@@ -75,7 +75,7 @@ export default function Header() {
           {/* UTUBooking Pro */}
           <Link
             href="/partners#business"
-            className="hidden md:flex items-center gap-1.5 text-emerald-200 hover:text-white transition-colors text-sm font-medium shrink-0"
+            className="hidden md:flex items-center gap-1.5 text-white/80 hover:text-white transition-colors text-sm font-medium shrink-0"
           >
             <svg className="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-10-2h4v2h-4V5zm10 15H4V9h16v11z"/>
@@ -96,7 +96,7 @@ export default function Header() {
                   className={`px-3 py-1.5 text-sm font-medium transition-colors rounded-lg ${
                     active
                       ? 'text-white font-semibold'
-                      : 'text-emerald-200 hover:text-white hover:bg-utu-bg-card/10'
+                      : 'text-white/80 hover:text-white hover:bg-utu-bg-card/10'
                   }`}
                 >
                   {link.label}
@@ -128,7 +128,7 @@ export default function Header() {
             {/* Divider */}
             <span className="hidden lg:block w-px h-4 bg-utu-bg-card/20 mx-1" />
 
-            <Link href="/contact" className="hidden lg:block text-xs font-medium text-emerald-200 hover:text-white transition-colors px-2 py-1.5 rounded-lg hover:bg-utu-bg-card/10">
+            <Link href="/contact" className="hidden lg:block text-xs font-medium text-white/80 hover:text-white transition-colors px-2 py-1.5 rounded-lg hover:bg-utu-bg-card/10">
               {tNav('support')}
             </Link>
 
@@ -146,7 +146,7 @@ export default function Header() {
                       <circle cx="12" cy="7" r="4"/>
                     </svg>
                     <span>{tNav('myTrips')}</span>
-                    <svg className="w-3 h-3 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-3 h-3 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
                     </svg>
                   </button>
@@ -156,7 +156,7 @@ export default function Header() {
                       <Link
                         href="/account"
                         onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-utu-text-secondary hover:bg-slate-50 transition-colors"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-utu-text-secondary hover:bg-utu-bg-muted transition-colors"
                       >
                         <svg className="w-4 h-4 text-utu-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -220,13 +220,13 @@ export default function Header() {
             onClick={() => setMobileOpen(false)}
           />
           {/* Drawer */}
-          <div className="md:hidden fixed top-14 left-0 right-0 z-40 bg-emerald-900 border-t border-white/10 shadow-xl">
+          <div className="md:hidden fixed top-14 left-0 right-0 z-40 bg-utu-navy border-t border-white/10 shadow-xl">
             <nav className="px-4 py-3 space-y-1">
               {NAV.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="flex items-center px-3 py-3 text-sm font-medium text-emerald-100 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
+                  className="flex items-center px-3 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -240,7 +240,7 @@ export default function Header() {
                 <>
                   <Link
                     href="/account"
-                    className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-emerald-100 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
+                    className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -272,7 +272,7 @@ export default function Header() {
 
               <Link
                 href="/contact"
-                className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-emerald-200 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
+                className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
               >
                 {tNav('support')}
               </Link>

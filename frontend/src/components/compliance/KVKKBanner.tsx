@@ -190,7 +190,7 @@ export default function KVKKBanner({ countryCode }: Props) {
         right:           0,
         zIndex:          50,
         backgroundColor: '#111827',
-        borderTop:       '3px solid #10B981',
+        borderTop:       '3px solid #1E3A5F',
         boxShadow:       '0 -4px 24px rgba(0,0,0,0.4)',
         padding:         '20px 24px',
         maxHeight:       '65vh',
@@ -233,7 +233,7 @@ export default function KVKKBanner({ countryCode }: Props) {
         {t('rights')}{' '}
         <a
           href="mailto:kvkk@utubooking.com"
-          style={{ color: '#10B981', textDecoration: 'underline' }}
+          style={{ color: '#1E3A5F', textDecoration: 'underline' }}
           aria-label="KVKK talebi için e-posta gönder"
         >
           kvkk@utubooking.com
@@ -244,7 +244,7 @@ export default function KVKKBanner({ countryCode }: Props) {
         {t('storage')}{' '}
         <a
           href="/privacy"
-          style={{ color: '#10B981', textDecoration: 'underline' }}
+          style={{ color: '#1E3A5F', textDecoration: 'underline' }}
           aria-label="Gizlilik politikasını oku"
         >
           {t('privacyPolicyLink')}
@@ -264,7 +264,7 @@ export default function KVKKBanner({ countryCode }: Props) {
           onClick={handleAccept}
           aria-label="KVKK kapsamında veri işlemeyi kabul et"
           style={{
-            backgroundColor: '#10B981',
+            backgroundColor: '#1E3A5F',
             color:           '#FFFFFF',
             border:          'none',
             borderRadius:    8,

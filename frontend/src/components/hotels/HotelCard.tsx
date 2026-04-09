@@ -149,7 +149,7 @@ export default function HotelCard({ offer, currency, onBook }: Props) {
             )}
 
             {offer.reviewScore != null && (
-              <span className="inline-flex items-center gap-0.5 rounded bg-emerald-600 px-1.5 py-0.5 text-xs font-bold text-white">
+              <span className="inline-flex items-center gap-0.5 rounded bg-utu-blue px-1.5 py-0.5 text-xs font-bold text-white">
                 {offer.reviewScore.toFixed(1)}
               </span>
             )}
@@ -166,7 +166,7 @@ export default function HotelCard({ offer, currency, onBook }: Props) {
 
         {/* Free cancellation */}
         {offer.freeCancellation && (
-          <p className="text-xs font-medium text-emerald-600">
+          <p className="text-xs font-medium text-utu-blue">
             ✓ {t('freeCancellation')}
           </p>
         )}
@@ -196,7 +196,7 @@ export default function HotelCard({ offer, currency, onBook }: Props) {
           <button
             type="button"
             onClick={() => onBook(offer)}
-            className="shrink-0 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 active:bg-emerald-800 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+            className="shrink-0 rounded-xl bg-utu-blue px-5 py-2.5 text-sm font-semibold text-white hover:bg-utu-navy active:bg-utu-navy transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-utu-blue"
           >
             {t('book')}
           </button>

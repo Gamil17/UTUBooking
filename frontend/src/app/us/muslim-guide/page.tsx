@@ -24,7 +24,7 @@ export default function UsMuslimGuidePage() {
         <h1 className="text-2xl font-bold text-utu-text-primary">
           US Muslim Travel Guide
         </h1>
-        <p className="text-base text-emerald-700 font-medium">
+        <p className="text-base text-utu-blue font-medium">
           Your community-by-community guide to halal travel, mosques, and Umrah departures across America.
         </p>
         <p className="text-sm text-utu-text-secondary leading-relaxed">
@@ -32,7 +32,7 @@ export default function UsMuslimGuidePage() {
           major Muslim community with city guides covering halal dining, mosques, Islamic services,
           and the fastest routes to Makkah for Umrah and Hajj.
         </p>
-        <div className="inline-flex items-center gap-2 bg-emerald-50 rounded-xl px-4 py-2 text-sm text-emerald-800">
+        <div className="inline-flex items-center gap-2 bg-utu-bg-subtle rounded-xl px-4 py-2 text-sm text-utu-navy">
           <span aria-hidden="true">🕌</span>
           <span>3.45 million Muslims in the US &middot; {cities.length} city guides</span>
         </div>
@@ -48,15 +48,15 @@ export default function UsMuslimGuidePage() {
             <li key={guide.slug}>
               <Link
                 href={`/us/muslim-guide/${guide.slug}`}
-                className="block rounded-2xl border border-utu-border-default bg-utu-bg-card p-4 hover:shadow-md hover:border-emerald-200 transition-all group"
+                className="block rounded-2xl border border-utu-border-default bg-utu-bg-card p-4 hover:shadow-md hover:border-utu-border-default transition-all group"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-0.5 min-w-0">
-                    <p className="text-sm font-semibold text-utu-text-primary group-hover:text-emerald-700 transition-colors">
+                    <p className="text-sm font-semibold text-utu-text-primary group-hover:text-utu-blue transition-colors">
                       {guide.name}
                       <span className="ml-1.5 text-xs font-normal text-utu-text-muted">{guide.state}</span>
                     </p>
-                    <p className="text-xs text-emerald-700 italic">{guide.tagline}</p>
+                    <p className="text-xs text-utu-blue italic">{guide.tagline}</p>
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                       <span className="text-xs text-utu-text-muted">
                         Muslim pop. {guide.muslimPopEstimate}
@@ -66,7 +66,7 @@ export default function UsMuslimGuidePage() {
                       </span>
                     </div>
                   </div>
-                  <span className="text-emerald-400 group-hover:text-emerald-600 transition-colors shrink-0 mt-1" aria-hidden="true">
+                  <span className="text-utu-blue group-hover:text-utu-blue transition-colors shrink-0 mt-1" aria-hidden="true">
                     &rarr;
                   </span>
                 </div>
@@ -85,7 +85,7 @@ export default function UsMuslimGuidePage() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/hotels/search?destination=Makkah"
-            className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl px-5 py-3 text-sm font-semibold min-h-[44px] transition-colors"
+            className="inline-flex items-center justify-center gap-2 bg-utu-bg-subtle0 hover:bg-utu-blue text-white rounded-xl px-5 py-3 text-sm font-semibold min-h-[44px] transition-colors"
           >
             Hotels in Makkah
           </Link>

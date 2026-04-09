@@ -252,14 +252,14 @@ export default function IndonesianPaymentSelector({
 
   if (payStatus === 'completed') {
     return (
-      <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-8 text-center">
-        <div className="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="rounded-2xl bg-utu-bg-subtle border border-utu-border-default p-8 text-center">
+        <div className="w-14 h-14 bg-utu-bg-subtle0 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-lg font-bold text-emerald-800 mb-1">{t('successTitle')}</h3>
-        <p className="text-sm text-emerald-600">{t('successDesc')}</p>
+        <h3 className="text-lg font-bold text-utu-navy mb-1">{t('successTitle')}</h3>
+        <p className="text-sm text-utu-blue">{t('successDesc')}</p>
         {result?.orderId && (
           <p className="text-xs text-utu-text-muted mt-3">Order ID: {result.orderId}</p>
         )}
@@ -288,7 +288,7 @@ export default function IndonesianPaymentSelector({
               aria-pressed={selected === m.type}
               className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border-2 transition-all text-start
                 ${selected === m.type
-                  ? 'border-emerald-500 bg-emerald-50'
+                  ? 'border-utu-blue bg-utu-bg-subtle'
                   : 'border-utu-border-default bg-utu-bg-card hover:border-utu-border-strong'
                 }`}
               style={{ minHeight: 56 }}
@@ -304,7 +304,7 @@ export default function IndonesianPaymentSelector({
                 <span className="block text-xs text-utu-text-muted">{m.desc}</span>
               </span>
               {selected === m.type && (
-                <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-utu-blue flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               )}
@@ -333,7 +333,7 @@ export default function IndonesianPaymentSelector({
           <button
             onClick={handlePay}
             disabled={!selected}
-            className="w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 disabled:opacity-40 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-utu-navy hover:bg-utu-blue active:bg-utu-navy disabled:opacity-40 text-white font-semibold py-3.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
             style={{ minHeight: 48 }}
           >
             {t('payNow')}
@@ -344,7 +344,7 @@ export default function IndonesianPaymentSelector({
       {/* ── Loading ────────────────────────────────────────────────────────── */}
       {payStatus === 'loading' && (
         <div className="flex flex-col items-center gap-3 py-10">
-          <span className="w-8 h-8 border-3 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
+          <span className="w-8 h-8 border-3 border-utu-border-default border-t-utu-blue rounded-full animate-spin" />
           <p className="text-sm text-utu-text-muted">{t('connecting')}</p>
         </div>
       )}
@@ -433,7 +433,7 @@ export default function IndonesianPaymentSelector({
 
               <div className="bg-utu-bg-muted rounded-lg px-4 py-3">
                 <p className="text-xs text-utu-text-muted mb-1">{t('transferAmount')}</p>
-                <p className="text-lg font-bold text-emerald-700">{formatIdr(result.grossAmount)}</p>
+                <p className="text-lg font-bold text-utu-blue">{formatIdr(result.grossAmount)}</p>
               </div>
 
               {result.expiryTime && (
@@ -467,7 +467,7 @@ export default function IndonesianPaymentSelector({
 
               <div className="bg-utu-bg-muted rounded-lg px-4 py-3">
                 <p className="text-xs text-utu-text-muted mb-1">{t('paymentAmount')}</p>
-                <p className="text-lg font-bold text-emerald-700">{formatIdr(result.grossAmount)}</p>
+                <p className="text-lg font-bold text-utu-blue">{formatIdr(result.grossAmount)}</p>
               </div>
 
               {result.expiryTime && (
@@ -481,13 +481,13 @@ export default function IndonesianPaymentSelector({
           {/* ── Status message + manual check ────────────────────────────── */}
           <div className="flex flex-col items-center gap-3 pt-1">
             <div className="flex items-center gap-2 text-sm text-utu-text-muted">
-              <span className="w-3 h-3 border-2 border-utu-border-strong border-t-emerald-500 rounded-full animate-spin" />
+              <span className="w-3 h-3 border-2 border-utu-border-strong border-t-utu-blue rounded-full animate-spin" />
               {t('waitingConfirmation')}
             </div>
 
             {statusMsg && (
               <p className={`text-sm font-medium ${
-                (payStatus as PayStatus) === 'failed' ? 'text-red-600' : 'text-emerald-600'
+                (payStatus as PayStatus) === 'failed' ? 'text-red-600' : 'text-utu-blue'
               }`}>
                 {statusMsg}
               </p>
@@ -495,7 +495,7 @@ export default function IndonesianPaymentSelector({
 
             <button
               onClick={handleCheckStatus}
-              className="text-sm text-emerald-700 hover:text-emerald-600 underline underline-offset-2"
+              className="text-sm text-utu-blue hover:text-utu-blue underline underline-offset-2"
             >
               {t('checkStatus')}
             </button>

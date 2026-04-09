@@ -71,7 +71,7 @@ const S = {
     display:         'inline-flex',
     alignItems:      'center',
     gap:             8,
-    backgroundColor: variant === 'primary' ? '#10B981' : '#DC2626',
+    backgroundColor: variant === 'primary' ? '#1E3A5F' : '#DC2626',
     color:           '#fff',
     border:          'none',
     borderRadius:    8,
@@ -275,7 +275,7 @@ export default function CcpaOptOutPage() {
         <p style={S.cardBody}>
           California residents may use an authorised agent to submit privacy requests on their
           behalf. Contact{' '}
-          <a href="mailto:privacy@utubooking.com" style={{ color: '#10B981' }}>
+          <a href="mailto:privacy@utubooking.com" style={{ color: '#1E3A5F' }}>
             privacy@utubooking.com
           </a>{' '}
           to obtain the agent authorisation form. We will verify your identity before processing
@@ -285,11 +285,11 @@ export default function CcpaOptOutPage() {
 
       {/* ── Footer links ──────────────────────────────────────── */}
       <p style={{ fontSize: 13, color: '#9CA3AF' }}>
-        <Link href="/privacy#ccpa" style={{ color: '#10B981', textDecoration: 'underline' }}>
+        <Link href="/privacy#ccpa" style={{ color: '#1E3A5F', textDecoration: 'underline' }}>
           Full CCPA privacy disclosures
         </Link>
         {' · '}
-        <a href="mailto:privacy@utubooking.com" style={{ color: '#10B981', textDecoration: 'underline' }}>
+        <a href="mailto:privacy@utubooking.com" style={{ color: '#1E3A5F', textDecoration: 'underline' }}>
           privacy@utubooking.com
         </a>
         {' · '}

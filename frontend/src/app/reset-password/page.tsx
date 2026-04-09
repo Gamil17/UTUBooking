@@ -45,16 +45,16 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-utu-bg-page flex items-center justify-center px-4">
       <div className="w-full max-w-md">
 
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
             <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center shadow">
-              <span className="text-emerald-900 font-black text-base">U</span>
+              <span className="text-utu-navy font-black text-base">U</span>
             </div>
-            <span className="font-black text-emerald-900 text-xl tracking-tight">UTUBooking</span>
+            <span className="font-black text-utu-navy text-xl tracking-tight">UTUBooking</span>
           </Link>
         </div>
 
@@ -62,13 +62,13 @@ export default function ResetPasswordPage() {
 
           {status === 'success' ? (
             <div className="text-center space-y-4">
-              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
-                <span className="text-emerald-700 text-xl" aria-hidden="true">&#10003;</span>
+              <div className="w-12 h-12 bg-utu-bg-subtle rounded-full flex items-center justify-center mx-auto">
+                <span className="text-utu-blue text-xl" aria-hidden="true">&#10003;</span>
               </div>
               <p className="text-sm text-utu-text-secondary">{t('resetPasswordSuccess')}</p>
               <Link
                 href="/login"
-                className="block w-full text-center bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm"
+                className="block w-full text-center bg-utu-navy hover:bg-utu-blue text-white font-semibold py-2.5 rounded-xl transition-colors text-sm"
               >
                 {t('signIn')}
               </Link>
@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
               <p className="text-sm text-red-600">{t('resetPasswordError')}</p>
               <Link
                 href="/forgot-password"
-                className="text-sm text-emerald-700 hover:underline block"
+                className="text-sm text-utu-blue hover:underline block"
               >
                 {t('requestNewLink')}
               </Link>
@@ -100,7 +100,7 @@ export default function ResetPasswordPage() {
                     autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent transition"
                     placeholder={t('passwordPlaceholder')}
                   />
                 </div>
@@ -115,7 +115,7 @@ export default function ResetPasswordPage() {
                     autoComplete="new-password"
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                    className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent transition"
                     placeholder={t('passwordPlaceholder')}
                   />
                 </div>
@@ -127,7 +127,7 @@ export default function ResetPasswordPage() {
                 <button
                   type="submit"
                   disabled={status === 'submitting'}
-                  className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60"
+                  className="w-full py-2.5 rounded-xl bg-utu-navy hover:bg-utu-blue text-white text-sm font-semibold transition-colors disabled:opacity-60"
                 >
                   {status === 'submitting' ? t('resetPasswordSubmitting') : t('resetPasswordSubmit')}
                 </button>

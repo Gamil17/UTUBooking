@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 
 const DEALS = [
   { titleKey: 'deal1Title', codeKey: 'deal1Code', descKey: 'deal1Desc', expiryKey: 'deal1Expiry', color: 'border-amber-300 bg-amber-50' },
-  { titleKey: 'deal2Title', codeKey: 'deal2Code', descKey: 'deal2Desc', expiryKey: 'deal2Expiry', color: 'border-emerald-300 bg-emerald-50' },
+  { titleKey: 'deal2Title', codeKey: 'deal2Code', descKey: 'deal2Desc', expiryKey: 'deal2Expiry', color: 'border-utu-border-default bg-utu-bg-subtle' },
   { titleKey: 'deal3Title', codeKey: 'deal3Code', descKey: 'deal3Desc', expiryKey: 'deal3Expiry', color: 'border-blue-300 bg-blue-50' },
   { titleKey: 'deal4Title', codeKey: 'deal4Code', descKey: 'deal4Desc', expiryKey: 'deal4Expiry', color: 'border-purple-300 bg-purple-50' },
 ] as const;
@@ -26,30 +26,30 @@ export default function PromoCodesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-utu-bg-page">
 
       {/* Hero */}
-      <section className="bg-emerald-900 py-20 px-4 text-center">
+      <section className="bg-utu-navy py-20 px-4 text-center">
         <p className="text-amber-300 text-xs font-semibold uppercase tracking-widest mb-3">
           {t('heroTagline')}
         </p>
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{t('heroHeading')}</h1>
-        <p className="text-emerald-100 max-w-xl mx-auto text-lg mb-8">{t('heroDesc')}</p>
+        <p className="text-white/80 max-w-xl mx-auto text-lg mb-8">{t('heroDesc')}</p>
 
         {/* Code check input */}
         <div className="max-w-md mx-auto">
-          <p className="text-sm text-emerald-200 mb-3">{t('checkCode')}</p>
+          <p className="text-sm text-white/80 mb-3">{t('checkCode')}</p>
           <div className="flex gap-2">
             <input
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder={t('codePlaceholder')}
-              className="flex-1 rounded-xl border border-emerald-600 bg-emerald-800 px-4 py-3 text-sm text-white placeholder:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="flex-1 rounded-xl border border-utu-blue bg-utu-navy px-4 py-3 text-sm text-white placeholder:text-utu-blue focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
             <Link
               href={`/?promo=${encodeURIComponent(code)}`}
-              className="rounded-xl bg-amber-400 hover:bg-amber-300 text-emerald-900 font-bold px-5 py-3 text-sm transition-colors"
+              className="rounded-xl bg-amber-400 hover:bg-amber-300 text-utu-navy font-bold px-5 py-3 text-sm transition-colors"
             >
               {t('applyBtn')}
             </Link>
@@ -99,7 +99,7 @@ export default function PromoCodesPage() {
           <ol className="space-y-4">
             {HOW_TO_STEPS.map((key, i) => (
               <li key={key} className="flex items-start gap-4">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-utu-blue text-sm font-bold text-white">
                   {i + 1}
                 </span>
                 <p className="pt-1 text-sm text-utu-text-secondary">{t(key)}</p>
@@ -115,7 +115,7 @@ export default function PromoCodesPage() {
         <ul className="space-y-2">
           {TERMS.map((key) => (
             <li key={key} className="flex items-start gap-2 text-sm text-utu-text-muted">
-              <span className="mt-1 shrink-0 text-emerald-600">•</span>
+              <span className="mt-1 shrink-0 text-utu-blue">•</span>
               {t(key)}
             </li>
           ))}

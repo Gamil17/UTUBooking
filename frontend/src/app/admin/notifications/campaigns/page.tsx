@@ -16,7 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
   draft:     'bg-utu-bg-muted   text-utu-text-secondary',
   scheduled: 'bg-blue-100   text-blue-700',
   sending:   'bg-amber-100  text-amber-700',
-  sent:      'bg-emerald-100 text-emerald-700',
+  sent:      'bg-utu-bg-subtle text-utu-blue',
   cancelled: 'bg-red-100    text-red-600',
 };
 
@@ -93,7 +93,7 @@ export default function CampaignsPage() {
         <h1 className="text-2xl font-bold text-utu-text-primary">{t('campaigns')}</h1>
         <button
           onClick={() => setPanelOpen(true)}
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600"
+          className="rounded-lg bg-utu-blue px-4 py-2 text-sm font-medium text-white hover:bg-utu-blue"
         >
           {t('createCampaign')}
         </button>
@@ -135,7 +135,7 @@ export default function CampaignsPage() {
                     <td className="px-4 py-3 text-xs text-utu-text-muted">{formatDate(c.scheduled_for)}</td>
                     <td className="px-4 py-3 text-utu-text-secondary">{c.total_recipients ?? '—'}</td>
                     <td className="px-4 py-3 text-utu-text-secondary">
-                      <span className="text-emerald-600">{c.sent_count}</span>
+                      <span className="text-utu-blue">{c.sent_count}</span>
                       {' / '}
                       <span className="text-red-500">{c.failed_count}</span>
                     </td>
@@ -148,7 +148,7 @@ export default function CampaignsPage() {
                           <button
                             onClick={() => sendMutation.mutate(c.id)}
                             disabled={sendMutation.isPending}
-                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
+                            className="rounded bg-utu-blue px-3 py-1 text-xs font-medium text-white hover:bg-utu-blue disabled:opacity-40"
                           >
                             {t('sendNow')}
                           </button>
@@ -218,7 +218,7 @@ export default function CampaignsPage() {
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue"
                   placeholder={t('campaignNamePlaceholder')}
                 />
               </div>
@@ -229,7 +229,7 @@ export default function CampaignsPage() {
                   type="text"
                   value={form.subjectEn}
                   onChange={(e) => setForm((f) => ({ ...f, subjectEn: e.target.value }))}
-                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue"
                   placeholder={t('subjectEnPlaceholder')}
                 />
               </div>
@@ -241,7 +241,7 @@ export default function CampaignsPage() {
                   dir="rtl"
                   value={form.subjectAr}
                   onChange={(e) => setForm((f) => ({ ...f, subjectAr: e.target.value }))}
-                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue"
                   placeholder={t('subjectArPlaceholder')}
                 />
               </div>
@@ -252,7 +252,7 @@ export default function CampaignsPage() {
                   type="datetime-local"
                   value={form.scheduledFor}
                   onChange={(e) => setForm((f) => ({ ...f, scheduledFor: e.target.value }))}
-                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  className="w-full rounded-lg border border-utu-border-default px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue"
                 />
               </div>
 
@@ -261,7 +261,7 @@ export default function CampaignsPage() {
                   <label className="text-sm font-medium text-utu-text-secondary">{t('dealItems')}</label>
                   <button
                     onClick={() => setDeals((d) => [...d, emptyDeal()])}
-                    className="text-xs font-medium text-emerald-600 hover:underline"
+                    className="text-xs font-medium text-utu-blue hover:underline"
                   >
                     {t('addDeal')}
                   </button>
@@ -285,7 +285,7 @@ export default function CampaignsPage() {
                         placeholder={t('dealTitleEnPlaceholder')}
                         value={deal.title_en}
                         onChange={(e) => updateDeal(i, 'title_en', e.target.value)}
-                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-utu-blue"
                       />
                       <input
                         type="text"
@@ -293,7 +293,7 @@ export default function CampaignsPage() {
                         placeholder={t('dealTitleArPlaceholder')}
                         value={deal.title_ar ?? ''}
                         onChange={(e) => updateDeal(i, 'title_ar', e.target.value)}
-                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-utu-blue"
                       />
                       <div className="grid grid-cols-2 gap-2">
                         <input
@@ -301,14 +301,14 @@ export default function CampaignsPage() {
                           placeholder={t('dealPricePlaceholder')}
                           value={deal.price || ''}
                           onChange={(e) => updateDeal(i, 'price', parseFloat(e.target.value) || 0)}
-                          className="rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                          className="rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-utu-blue"
                         />
                         <input
                           type="text"
                           placeholder={t('dealCurrencyPlaceholder')}
                           value={deal.currency}
                           onChange={(e) => updateDeal(i, 'currency', e.target.value)}
-                          className="rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                          className="rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-utu-blue"
                         />
                       </div>
                       <input
@@ -316,14 +316,14 @@ export default function CampaignsPage() {
                         placeholder={t('dealDestinationPlaceholder')}
                         value={deal.destination}
                         onChange={(e) => updateDeal(i, 'destination', e.target.value)}
-                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-utu-blue"
                       />
                       <input
                         type="url"
                         placeholder={t('dealCtaUrlPlaceholder')}
                         value={deal.cta_url}
                         onChange={(e) => updateDeal(i, 'cta_url', e.target.value)}
-                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                        className="w-full rounded border border-utu-border-default px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-utu-blue"
                       />
                     </div>
                   ))}
@@ -346,7 +346,7 @@ export default function CampaignsPage() {
                 <button
                   onClick={() => createMutation.mutate()}
                   disabled={createMutation.isPending || !form.name || !form.subjectEn || deals.filter((d) => d.title_en).length === 0}
-                  className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
+                  className="flex-1 rounded-lg bg-utu-blue py-2.5 text-sm font-medium text-white hover:bg-utu-blue disabled:opacity-40"
                 >
                   {createMutation.isPending ? t('saving') : t('saveCampaign')}
                 </button>

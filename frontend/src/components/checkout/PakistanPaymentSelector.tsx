@@ -180,9 +180,9 @@ export default function PakistanPaymentSelector({
       {step === 'select' && (
         <div className="space-y-5">
           {/* Amount header */}
-          <div className="text-center bg-emerald-50 rounded-2xl py-4 px-6 border border-emerald-100">
-            <p className="text-xs text-emerald-600 mb-1">کل رقم</p>
-            <p className="text-2xl font-bold text-emerald-800" style={{ lineHeight: 2 }}>
+          <div className="text-center bg-utu-bg-subtle rounded-2xl py-4 px-6 border border-utu-border-default">
+            <p className="text-xs text-utu-blue mb-1">کل رقم</p>
+            <p className="text-2xl font-bold text-utu-navy" style={{ lineHeight: 2 }}>
               {formattedAmount}
             </p>
           </div>
@@ -204,7 +204,7 @@ export default function PakistanPaymentSelector({
                   className={[
                     'w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-right',
                     checked
-                      ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+                      ? 'border-utu-blue bg-utu-bg-subtle shadow-sm'
                       : 'border-utu-border-default bg-utu-bg-card hover:border-utu-border-strong',
                   ].join(' ')}
                   aria-pressed={checked}
@@ -230,7 +230,7 @@ export default function PakistanPaymentSelector({
                   {/* Radio indicator */}
                   <div className={[
                     'w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center',
-                    checked ? 'border-emerald-500 bg-emerald-500' : 'border-utu-border-strong',
+                    checked ? 'border-utu-blue bg-utu-bg-subtle0' : 'border-utu-border-strong',
                   ].join(' ')}>
                     {checked && <div className="w-2 h-2 rounded-full bg-utu-bg-card" />}
                   </div>
@@ -256,7 +256,7 @@ export default function PakistanPaymentSelector({
               placeholder="03xxxxxxxxx"
               value={mobileNumber}
               onChange={e => { setMobileNumber(e.target.value); setErrorMessage(''); }}
-              className="w-full border border-utu-border-strong rounded-xl px-4 py-3 text-base text-utu-text-primary focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-gray-400 min-h-[44px]"
+              className="w-full border border-utu-border-strong rounded-xl px-4 py-3 text-base text-utu-text-primary focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent placeholder-gray-400 min-h-[44px]"
               style={{ fontFamily: 'Inter, sans-serif', textAlign: 'left' }}
               maxLength={13}
             />
@@ -290,7 +290,7 @@ export default function PakistanPaymentSelector({
                 'flex-2 flex-grow rounded-xl py-3 text-white text-sm font-semibold transition-colors min-h-[44px] flex items-center justify-center gap-2',
                 submitting || !mobileNumber
                   ? 'bg-utu-border-strong cursor-not-allowed'
-                  : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800',
+                  : 'bg-utu-blue hover:bg-utu-navy active:bg-utu-navy',
               ].join(' ')}
               style={{ lineHeight: 2 }}
             >
@@ -328,7 +328,7 @@ export default function PakistanPaymentSelector({
           {/* Amount reminder */}
           <div className="bg-utu-bg-muted rounded-xl py-3 px-5">
             <p className="text-xs text-utu-text-muted" style={{ lineHeight: 2 }}>ادائیگی کی رقم</p>
-            <p className="text-xl font-bold text-emerald-700" style={{ lineHeight: 2 }}>
+            <p className="text-xl font-bold text-utu-blue" style={{ lineHeight: 2 }}>
               {formattedAmount}
             </p>
           </div>
@@ -337,7 +337,7 @@ export default function PakistanPaymentSelector({
           <div className="space-y-1">
             <div className="w-full bg-utu-border-default rounded-full h-1.5">
               <div
-                className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300"
+                className="bg-utu-bg-subtle0 h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${100 - progress}%` }}
               />
             </div>
@@ -348,7 +348,7 @@ export default function PakistanPaymentSelector({
 
           {/* Spinning indicator */}
           <div className="flex items-center justify-center gap-2 text-sm text-utu-text-muted">
-            <span className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+            <span className="w-4 h-4 border-2 border-utu-blue border-t-transparent rounded-full animate-spin" />
             <span style={{ lineHeight: 2 }}>تصدیق کا انتظار ہے…</span>
           </div>
 
@@ -367,12 +367,12 @@ export default function PakistanPaymentSelector({
       {/* ── Step 3: Completed ─────────────────────────────────────────────── */}
       {step === 'completed' && (
         <div className="text-center space-y-4 py-6">
-          <div className="w-16 h-16 bg-emerald-100 rounded-full mx-auto flex items-center justify-center">
-            <svg className="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <div className="w-16 h-16 bg-utu-bg-subtle rounded-full mx-auto flex items-center justify-center">
+            <svg className="w-8 h-8 text-utu-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 className="text-lg font-bold text-emerald-700" style={{ lineHeight: 2 }}>
+          <h3 className="text-lg font-bold text-utu-blue" style={{ lineHeight: 2 }}>
             ادائیگی کامیاب!
           </h3>
           <p className="text-sm text-utu-text-secondary" style={{ lineHeight: 2 }}>
@@ -399,7 +399,7 @@ export default function PakistanPaymentSelector({
           <button
             type="button"
             onClick={() => { setStep('select'); setErrorMessage(''); }}
-            className="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-6 py-3 rounded-xl min-h-[44px]"
+            className="mt-2 bg-utu-blue hover:bg-utu-navy text-white text-sm font-semibold px-6 py-3 rounded-xl min-h-[44px]"
             style={{ lineHeight: 2 }}
           >
             دوبارہ کوشش کریں

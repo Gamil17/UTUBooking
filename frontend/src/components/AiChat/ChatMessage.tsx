@@ -31,7 +31,7 @@ function ToolPill({ name, done }: { name: string; done: boolean }) {
     : (name === 'search_hotels' ? tc('searchingHotels') : name === 'search_flights' ? tc('searchingFlights') : tc('searchingTrip'));
 
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 me-1 mb-1">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-utu-bg-subtle text-utu-blue border border-utu-border-default me-1 mb-1">
       {done ? '✅' : '🔍'} {label}
     </span>
   );
@@ -60,7 +60,7 @@ export default function ChatMessage({ message, dir }: Props) {
       dir={dir}
     >
       {!isUser && (
-        <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 me-2 mt-0.5">
+        <div className="w-7 h-7 rounded-full bg-utu-bg-subtle0 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 me-2 mt-0.5">
           A
         </div>
       )}
@@ -80,7 +80,7 @@ export default function ChatMessage({ message, dir }: Props) {
           className={[
             'px-3 py-2 rounded-2xl text-sm leading-relaxed',
             isUser
-              ? 'bg-emerald-500 text-white rounded-br-sm'
+              ? 'bg-utu-bg-subtle0 text-white rounded-br-sm'
               : 'bg-utu-bg-card text-utu-text-primary border border-utu-border-default rounded-bl-sm shadow-sm',
           ].join(' ')}
         >

@@ -9,7 +9,7 @@
 
 UTUBooking.com is a multi-market travel booking platform purpose-built for Muslim travelers. Starting from Saudi Arabia and the Gulf, the platform has expanded across 25+ markets covering the Muslim World, Europe, North America, and South America.
 
-**Current version:** `v1.4.0 "Sales Engine"` — 12 phases complete, 8 AWS regions live, full email automation.
+**Current version:** `v1.5.0 "Design System"` — 12 phases complete, 8 AWS regions live, full email automation.
 
 ---
 
@@ -229,7 +229,8 @@ npm test -- --testPathPattern=payment   # payment gateway tests
 | v1.1.0 | Muslim World | 2026-02 | TR/ID/MY/PK/IN expansion (Phases 5-7) |
 | v1.2.0 | Global Ummah | 2026-03 | EU/UK/US/CA/BR + full compliance (Phases 8-12) |
 | v1.3.0 | Global Ummah | 2026-03 | AMEC Solutions branding + version alignment |
-| v1.4.0 | Sales Engine | 2026-03 | Email automation — abandoned recovery, price alerts, reminders, campaigns |
+| v1.4.0 | Sales Engine   | 2026-03 | Email automation — abandoned recovery, price alerts, reminders, campaigns |
+| v1.5.0 | Design System  | 2026-04 | React Compiler ESLint compliance + design token color migration (navy/blue palette) |
 
 ---
 

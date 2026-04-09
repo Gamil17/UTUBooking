@@ -229,10 +229,10 @@ export default function CarsSearchPage() {
   const topPickId = displayedCars[0]?.id ?? null;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-utu-bg-page">
 
       {/* ── Sticky search bar ─────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-utu-bg-card shadow-sm border-b border-slate-100">
+      <div className="sticky top-0 z-30 bg-utu-bg-card shadow-sm border-b border-utu-border-default">
         <div className="max-w-7xl mx-auto px-4">
           <CarSearchBar
             initialParams={searchParams}
@@ -279,7 +279,7 @@ export default function CarsSearchPage() {
                       onClick={() => setActiveCategory(active ? null : key)}
                       className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl border text-xs font-medium shrink-0 transition-colors ${
                         active
-                          ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+                          ? 'border-utu-blue bg-utu-bg-subtle text-utu-navy'
                           : 'border-utu-border-default bg-utu-bg-card text-utu-text-secondary hover:bg-utu-bg-muted'
                       }`}
                     >
@@ -300,7 +300,7 @@ export default function CarsSearchPage() {
                     onClick={() => setSortBy(key)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                       sortBy === key
-                        ? 'bg-emerald-700 text-white'
+                        ? 'bg-utu-navy text-white'
                         : 'text-utu-text-muted hover:text-utu-text-primary hover:bg-utu-bg-muted'
                     }`}
                   >
@@ -371,7 +371,7 @@ export default function CarsSearchPage() {
           onClick={(e) => e.target === e.currentTarget && setFiltersOpen(false)}
         >
           <div className="absolute inset-0 bg-black/40" />
-          <div className="absolute bottom-0 left-0 right-0 bg-slate-50 rounded-t-2xl max-h-[85vh] overflow-y-auto p-4">
+          <div className="absolute bottom-0 left-0 right-0 bg-utu-bg-page rounded-t-2xl max-h-[85vh] overflow-y-auto p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-utu-text-primary">{t('filters')}</h2>
               <button
@@ -388,7 +388,7 @@ export default function CarsSearchPage() {
             />
             <button
               onClick={() => setFiltersOpen(false)}
-              className="w-full mt-4 bg-emerald-700 text-white font-semibold py-3 rounded-xl text-sm"
+              className="w-full mt-4 bg-utu-navy text-white font-semibold py-3 rounded-xl text-sm"
             >
               Show {displayedCars.length} cars
             </button>

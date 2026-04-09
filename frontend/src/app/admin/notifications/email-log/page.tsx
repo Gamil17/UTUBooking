@@ -10,13 +10,13 @@ const TYPE_COLORS: Record<string, string> = {
   abandoned_booking_recovery: 'bg-amber-100 text-amber-700',
   check_in_reminder:          'bg-blue-100  text-blue-700',
   price_change_alert:         'bg-purple-100 text-purple-700',
-  monthly_deal_digest:        'bg-emerald-100 text-emerald-700',
+  monthly_deal_digest:        'bg-utu-bg-subtle text-utu-blue',
 };
 
 const STATUS_COLORS: Record<string, string> = {
   queued:    'bg-utu-bg-muted   text-utu-text-secondary',
   sent:      'bg-blue-100   text-blue-700',
-  delivered: 'bg-emerald-100 text-emerald-700',
+  delivered: 'bg-utu-bg-subtle text-utu-blue',
   opened:    'bg-green-100  text-green-700',
   bounced:   'bg-red-100    text-red-700',
   failed:    'bg-red-100    text-red-700',
@@ -84,7 +84,7 @@ export default function EmailLogPage() {
         <select
           value={emailType}
           onChange={handleFilterChange(setEmailType)}
-          className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2 text-sm text-utu-text-secondary focus:outline-none focus:ring-2 focus:ring-emerald-600"
+          className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2 text-sm text-utu-text-secondary focus:outline-none focus:ring-2 focus:ring-utu-blue"
         >
           {EMAIL_TYPES.map((t) => (
             <option key={t.value} value={t.value}>{t.label}</option>
@@ -94,7 +94,7 @@ export default function EmailLogPage() {
         <select
           value={deliveryStatus}
           onChange={handleFilterChange(setDeliveryStatus)}
-          className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2 text-sm text-utu-text-secondary focus:outline-none focus:ring-2 focus:ring-emerald-600"
+          className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2 text-sm text-utu-text-secondary focus:outline-none focus:ring-2 focus:ring-utu-blue"
         >
           {DELIVERY_STATUSES.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>
@@ -106,7 +106,7 @@ export default function EmailLogPage() {
           placeholder={t('bookingRefPlaceholder')}
           value={bookingRef}
           onChange={handleFilterChange(setBookingRef)}
-          className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2 text-sm text-utu-text-secondary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-emerald-600"
+          className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2 text-sm text-utu-text-secondary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-utu-blue"
         />
       </div>
 

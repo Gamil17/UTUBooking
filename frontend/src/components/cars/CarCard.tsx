@@ -173,10 +173,10 @@ export default function CarCard({ offer, isTopPick, onSelect }: Props) {
           {/* Policy pills */}
           <div className="flex flex-wrap gap-1.5 text-[10px]">
             {fuelPolicy && (
-              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{fuelPolicy}</span>
+              <span className="bg-utu-bg-muted text-utu-text-secondary px-2 py-0.5 rounded-full">{fuelPolicy}</span>
             )}
             {pickupType && (
-              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+              <span className="bg-utu-bg-muted text-utu-text-secondary px-2 py-0.5 rounded-full">
                 {pickupType === 'in_terminal' ? t('inTerminal') : t('meetGreet')}
               </span>
             )}
@@ -192,7 +192,7 @@ export default function CarCard({ offer, isTopPick, onSelect }: Props) {
             </span>
             {rating != null && (
               <div className="flex items-center gap-1">
-                <span className="bg-emerald-700 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                <span className="bg-utu-navy text-white text-xs font-bold px-1.5 py-0.5 rounded">
                   {Number(rating).toFixed(1)}
                 </span>
                 {reviewLabel && <span className="text-xs text-utu-text-muted">{reviewLabel}</span>}
@@ -204,7 +204,7 @@ export default function CarCard({ offer, isTopPick, onSelect }: Props) {
             <button
               type="button"
               onClick={() => onSelect(offer.id)}
-              className="ms-auto bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white text-xs font-semibold px-5 py-2 rounded-xl transition-colors"
+              className="ms-auto bg-utu-navy hover:bg-utu-blue active:bg-utu-navy text-white text-xs font-semibold px-5 py-2 rounded-xl transition-colors"
             >
               {t('viewDeal')}
             </button>

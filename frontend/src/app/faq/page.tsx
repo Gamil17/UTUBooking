@@ -114,7 +114,7 @@ const severityStyles: Record<string, { bar: string; badge: string; badgeText: st
   high:   { bar: 'bg-red-500',    badge: 'bg-red-100',    badgeText: 'text-red-700' },
   medium: { bar: 'bg-amber-500',  badge: 'bg-amber-100',  badgeText: 'text-amber-700' },
   low:    { bar: 'bg-blue-500',   badge: 'bg-blue-100',   badgeText: 'text-blue-700' },
-  info:   { bar: 'bg-emerald-500',badge: 'bg-emerald-100',badgeText: 'text-emerald-700' },
+  info:   { bar: 'bg-utu-bg-subtle0',badge: 'bg-utu-bg-subtle',badgeText: 'text-utu-blue' },
 };
 
 // ─── Components ────────────────────────────────────────────────────────────────
@@ -307,13 +307,13 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="min-h-screen bg-utu-bg-page font-sans">
 
       {/* Hero */}
-      <section className="bg-gradient-to-b from-emerald-900 to-emerald-800 py-14 px-4 text-center">
+      <section className="bg-gradient-to-b from-utu-navy to-utu-blue py-14 px-4 text-center">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-white mb-3">{t('heroHeading')}</h1>
-          <p className="text-emerald-100 text-base">{t('heroDesc')}</p>
+          <p className="text-white/80 text-base">{t('heroDesc')}</p>
           {mainTab === 'faq' && (
             <div className="mt-6 max-w-lg mx-auto">
               <div className="flex items-center bg-utu-bg-card rounded-xl overflow-hidden shadow-lg">
@@ -330,7 +330,7 @@ export default function FAQPage() {
                 <button
                   type="button"
                   onClick={() => setActiveCategory(null)}
-                  className="bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-3 text-sm font-medium transition-colors"
+                  className="bg-utu-navy hover:bg-utu-blue text-white px-5 py-3 text-sm font-medium transition-colors"
                 >
                   {t('searchBtn')}
                 </button>
@@ -353,8 +353,8 @@ export default function FAQPage() {
               onClick={() => { setMainTab(tab.key as typeof mainTab); setSearch(''); setActiveCategory(null); }}
               className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
                 mainTab === tab.key
-                  ? 'bg-emerald-700 text-white'
-                  : 'bg-slate-100 text-utu-text-secondary hover:bg-emerald-50 hover:text-emerald-700'
+                  ? 'bg-utu-navy text-white'
+                  : 'bg-utu-bg-muted text-utu-text-secondary hover:bg-utu-bg-subtle hover:text-utu-blue'
               }`}
             >
               {tab.icon} {tab.label}
@@ -373,7 +373,7 @@ export default function FAQPage() {
                 <button
                   onClick={() => setActiveCategory(null)}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    activeCategory === null ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-utu-text-secondary hover:bg-emerald-50 hover:text-emerald-700'
+                    activeCategory === null ? 'bg-utu-navy text-white' : 'bg-utu-bg-muted text-utu-text-secondary hover:bg-utu-bg-subtle hover:text-utu-blue'
                   }`}
                 >
                   {t('allTopics')}
@@ -383,7 +383,7 @@ export default function FAQPage() {
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id === activeCategory ? null : cat.id)}
                     className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      activeCategory === cat.id ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-utu-text-secondary hover:bg-emerald-50 hover:text-emerald-700'
+                      activeCategory === cat.id ? 'bg-utu-navy text-white' : 'bg-utu-bg-muted text-utu-text-secondary hover:bg-utu-bg-subtle hover:text-utu-blue'
                     }`}
                   >
                     {cat.icon} {cat.title}
@@ -400,13 +400,13 @@ export default function FAQPage() {
                   <p className="text-utu-text-muted text-sm">{t('noResults', { search })}</p>
                   <p className="text-utu-text-muted text-xs mt-1">
                     {t('noResultsHint')}{' '}
-                    <Link href="/contact" className="text-emerald-700 hover:underline">{t('contactSupportLink')}</Link>.
+                    <Link href="/contact" className="text-utu-blue hover:underline">{t('contactSupportLink')}</Link>.
                   </p>
                 </div>
               )}
               {filteredFAQs.map((cat) => (
                 <div key={cat.id} id={cat.id} className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-3 px-6 py-4 border-b border-utu-border-default bg-slate-50">
+                  <div className="flex items-center gap-3 px-6 py-4 border-b border-utu-border-default bg-utu-bg-page">
                     <span className="text-2xl">{cat.icon}</span>
                     <h2 className="font-bold text-utu-text-primary text-base">{cat.title}</h2>
                     <span className="ms-auto text-xs text-utu-text-muted">{t('questionsLabel', { count: cat.faqs.length })}</span>
@@ -443,7 +443,7 @@ export default function FAQPage() {
                   key={r}
                   onClick={() => setRegionFilter(r)}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                    regionFilter === r ? 'bg-emerald-700 text-white' : 'bg-utu-bg-card border border-utu-border-default text-utu-text-secondary hover:border-emerald-300 hover:text-emerald-700'
+                    regionFilter === r ? 'bg-utu-navy text-white' : 'bg-utu-bg-card border border-utu-border-default text-utu-text-secondary hover:border-utu-border-default hover:text-utu-blue'
                   }`}
                 >
                   {r}
@@ -456,7 +456,7 @@ export default function FAQPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
                   <thead>
-                    <tr className="bg-emerald-800 text-white">
+                    <tr className="bg-utu-navy text-white">
                       <th className="text-start px-4 py-3 font-semibold text-xs uppercase tracking-wide">{t('colAirline')}</th>
                       <th className="text-start px-4 py-3 font-semibold text-xs uppercase tracking-wide">{t('colRegion')}</th>
                       <th className="text-start px-4 py-3 font-semibold text-xs uppercase tracking-wide">{t('colChanges')}</th>
@@ -466,14 +466,14 @@ export default function FAQPage() {
                   </thead>
                   <tbody>
                     {filteredAirlines.map((row, i) => (
-                      <tr key={row.code} className={i % 2 === 0 ? 'bg-utu-bg-card' : 'bg-slate-50'}>
+                      <tr key={row.code} className={i % 2 === 0 ? 'bg-utu-bg-card' : 'bg-utu-bg-page'}>
                         <td className="px-4 py-3 font-medium text-utu-text-primary">
                           <div>{row.airline}</div>
                           <div className="text-xs text-utu-text-muted font-mono">{row.code}</div>
                           {row.note && <div className="text-xs text-amber-600 mt-0.5">{row.note}</div>}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">{row.region}</span>
+                          <span className="text-xs bg-utu-bg-muted text-utu-text-secondary px-2 py-0.5 rounded-full font-medium">{row.region}</span>
                         </td>
                         <td className="px-4 py-3 text-utu-text-secondary text-xs leading-relaxed max-w-[180px]">{row.changes}</td>
                         <td className="px-4 py-3 text-utu-text-secondary text-xs leading-relaxed max-w-[140px]">{row.refunds}</td>
@@ -483,9 +483,9 @@ export default function FAQPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="px-4 py-3 bg-slate-50 border-t border-utu-border-default flex items-center justify-between">
+              <div className="px-4 py-3 bg-utu-bg-page border-t border-utu-border-default flex items-center justify-between">
                 <span className="text-xs text-utu-text-muted">{t('airlinesShown', { count: filteredAirlines.length })}</span>
-                <Link href="/contact" className="text-xs text-emerald-700 hover:underline font-medium">
+                <Link href="/contact" className="text-xs text-utu-blue hover:underline font-medium">
                   {t('airlineSupportLink')}
                 </Link>
               </div>
@@ -525,7 +525,7 @@ export default function FAQPage() {
                       <p className="text-sm text-utu-text-secondary leading-relaxed mb-3">{adv.body}</p>
                       <a
                         href={adv.actionHref}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-utu-blue hover:text-utu-navy hover:underline"
                       >
                         {adv.action} →
                       </a>
@@ -535,7 +535,7 @@ export default function FAQPage() {
               })}
             </div>
 
-            <div className="mt-6 bg-slate-100 rounded-xl px-4 py-3 text-xs text-utu-text-muted">
+            <div className="mt-6 bg-utu-bg-muted rounded-xl px-4 py-3 text-xs text-utu-text-muted">
               {t('advisoryDisclaimer')}
             </div>
           </div>
@@ -544,13 +544,13 @@ export default function FAQPage() {
 
       {/* Still need help CTA */}
       <section className="py-12 px-4">
-        <div className="max-w-xl mx-auto bg-emerald-800 rounded-2xl p-8 text-center text-white">
+        <div className="max-w-xl mx-auto bg-utu-navy rounded-2xl p-8 text-center text-white">
           <h2 className="text-xl font-bold mb-2">{t('helpHeading')}</h2>
-          <p className="text-emerald-200 text-sm mb-6">{t('helpDesc')}</p>
+          <p className="text-white/80 text-sm mb-6">{t('helpDesc')}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/contact"
-              className="bg-utu-bg-card text-emerald-800 font-semibold text-sm px-6 py-2.5 rounded-xl hover:bg-emerald-50 transition-colors"
+              className="bg-utu-bg-card text-utu-navy font-semibold text-sm px-6 py-2.5 rounded-xl hover:bg-utu-bg-subtle transition-colors"
             >
               {t('contactSupportBtn')}
             </Link>

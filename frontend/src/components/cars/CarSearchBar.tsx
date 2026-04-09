@@ -74,11 +74,11 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
 
         {/* Pickup location */}
         <div className="flex-[2] min-w-[180px]">
-          <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+          <label className="text-[10px] font-semibold text-utu-text-muted uppercase tracking-wide block mb-1">
             {t('pickupLocation')}
           </label>
           <div className="relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-utu-text-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <circle cx="11" cy="11" r="8"/><path strokeLinecap="round" d="M21 21l-4.35-4.35"/>
             </svg>
             <input
@@ -86,13 +86,13 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
               value={params.pickupLocation}
               onChange={(e) => set('pickupLocation', e.target.value)}
               placeholder={t('pickupLocationHint')}
-              className="w-full border border-slate-200 rounded-xl ps-9 pe-8 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full border border-utu-border-default rounded-xl ps-9 pe-8 py-2.5 text-sm text-utu-text-primary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-utu-blue"
             />
             {params.pickupLocation && (
               <button
                 type="button"
                 onClick={() => set('pickupLocation', '')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-utu-text-muted hover:text-utu-text-secondary"
                 aria-label="Clear"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -116,13 +116,13 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
 
         {/* Pick-up time */}
         <div className="w-28 shrink-0">
-          <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+          <label className="text-[10px] font-semibold text-utu-text-muted uppercase tracking-wide block mb-1">
             {t('pickupTime')}
           </label>
           <select
             value={params.pickupTime}
             onChange={(e) => set('pickupTime', e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-utu-bg-card focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-secondary bg-utu-bg-card focus:outline-none focus:ring-2 focus:ring-utu-blue"
           >
             {TIME_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -143,13 +143,13 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
 
         {/* Drop-off time */}
         <div className="w-28 shrink-0">
-          <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+          <label className="text-[10px] font-semibold text-utu-text-muted uppercase tracking-wide block mb-1">
             {t('dropoffTime')}
           </label>
           <select
             value={params.dropoffTime}
             onChange={(e) => set('dropoffTime', e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-utu-bg-card focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-secondary bg-utu-bg-card focus:outline-none focus:ring-2 focus:ring-utu-blue"
           >
             {TIME_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -162,7 +162,7 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
           type="button"
           onClick={handleSearch}
           disabled={!canSearch || isLoading}
-          className="h-[42px] px-6 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors flex items-center gap-2 shrink-0"
+          className="h-[42px] px-6 bg-utu-navy hover:bg-utu-blue active:bg-utu-navy disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors flex items-center gap-2 shrink-0"
         >
           {isLoading
             ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -188,7 +188,7 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
             onClick={toggleDifferentDropoff}
             className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
               params.differentDropoff
-                ? 'bg-emerald-700 border-emerald-700'
+                ? 'bg-utu-navy border-utu-navy'
                 : 'border-utu-border-strong bg-utu-bg-card'
             }`}
           >
@@ -210,7 +210,7 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
             onClick={() => set('driverAge30to65', !params.driverAge30to65)}
             className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
               params.driverAge30to65
-                ? 'bg-emerald-700 border-emerald-700'
+                ? 'bg-utu-navy border-utu-navy'
                 : 'border-utu-border-strong bg-utu-bg-card'
             }`}
           >
@@ -226,7 +226,7 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
         {/* Different dropoff location input */}
         {params.differentDropoff && (
           <div className="flex-1 min-w-[200px]">
-            <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+            <label className="text-[10px] font-semibold text-utu-text-muted uppercase tracking-wide block mb-1">
               {t('dropoffLocation')}
             </label>
             <input
@@ -234,7 +234,7 @@ export default function CarSearchBar({ initialParams, onSearch, isLoading }: Pro
               value={params.dropoffLocation}
               onChange={(e) => set('dropoffLocation', e.target.value)}
               placeholder={t('pickupLocationHint')}
-              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full border border-utu-border-default rounded-xl px-3 py-2 text-sm text-utu-text-primary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-utu-blue"
             />
           </div>
         )}

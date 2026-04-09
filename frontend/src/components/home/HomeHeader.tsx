@@ -109,14 +109,14 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
 
         {/* ── Top bar ───────────────────────────────────────────────────────── */}
         <div className={`transition-colors duration-300 ${
-          scrolled ? 'bg-emerald-950 shadow-lg' : 'bg-emerald-900/95 backdrop-blur-sm'
+          scrolled ? 'bg-utu-navy shadow-lg' : 'bg-utu-navy/95 backdrop-blur-sm'
         }`}>
           <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-4">
 
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 shrink-0">
               <div className="w-8 h-8 bg-amber-400 rounded-xl flex items-center justify-center shadow">
-                <span className="text-emerald-900 font-black text-sm">U</span>
+                <span className="text-utu-navy font-black text-sm">U</span>
               </div>
               <span className="font-black text-white text-base tracking-tight hidden sm:block">UTUBooking</span>
             </Link>
@@ -127,13 +127,13 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
             {/* UTUBooking Pro link */}
             <Link
               href="/partners#business"
-              className="hidden md:flex items-center gap-1.5 text-emerald-200 hover:text-white transition-colors text-sm font-medium shrink-0"
+              className="hidden md:flex items-center gap-1.5 text-white/80 hover:text-white transition-colors text-sm font-medium shrink-0"
             >
               <svg className="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-10-2h4v2h-4V5zm10 15H4V9h16v11z"/>
               </svg>
               <span className="leading-none">UTUBooking Pro</span>
-              <span className="text-[10px] text-emerald-400 font-normal hidden lg:block">for Business Travel</span>
+              <span className="text-[10px] text-utu-blue font-normal hidden lg:block">for Business Travel</span>
             </Link>
 
             {/* Primary nav tabs — visible when NOT scrolled on desktop */}
@@ -146,7 +146,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       tab === t.key
                         ? 'text-white border-b-2 border-amber-400 rounded-none pb-[calc(0.375rem+2px)]'
-                        : 'text-emerald-200 hover:text-white'
+                        : 'text-white/80 hover:text-white'
                     }`}
                   >
                     <t.Icon className="w-3.5 h-3.5" />
@@ -155,7 +155,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
                 ))}
                 <Link
                   href="/promo-codes"
-                  className="px-3 py-1.5 text-sm font-medium text-emerald-200 hover:text-white transition-colors"
+                  className="px-3 py-1.5 text-sm font-medium text-white/80 hover:text-white transition-colors"
                 >
                   {tNav('promoCodes')}
                 </Link>
@@ -178,7 +178,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
 
               <Link
                 href="/contact"
-                className="hidden lg:block text-xs font-medium text-emerald-200 hover:text-white transition-colors px-2 py-1.5 rounded-lg hover:bg-utu-bg-card/10"
+                className="hidden lg:block text-xs font-medium text-white/80 hover:text-white transition-colors px-2 py-1.5 rounded-lg hover:bg-utu-bg-card/10"
               >
                 {tNav('support')}
               </Link>
@@ -194,7 +194,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
                     >
                       <UserIcon className="w-3.5 h-3.5" />
                       <span className="hidden sm:block">{tNav('myTrips')}</span>
-                      <svg className="w-3 h-3 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <svg className="w-3 h-3 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
                       </svg>
                     </button>
@@ -204,7 +204,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
                         <Link
                           href="/account"
                           onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-utu-text-secondary hover:bg-slate-50 transition-colors"
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-utu-text-secondary hover:bg-utu-bg-page transition-colors"
                         >
                           <svg className="w-4 h-4 text-utu-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -259,7 +259,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
         {/* ── Sticky pill tabs — appear after scrolling past hero ──────────── */}
         <div className={`transition-all duration-300 overflow-hidden ${
           scrolled ? 'max-h-16 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
-        } bg-emerald-950/95 backdrop-blur-sm border-t border-white/10 shadow-lg`}>
+        } bg-utu-navy/95 backdrop-blur-sm border-t border-white/10 shadow-lg`}>
           <div className="max-w-7xl mx-auto px-4 py-2 flex justify-center">
             <div className="inline-flex items-center bg-utu-bg-card/10 rounded-full p-1 gap-0.5">
               {TABS.map((t) => (
@@ -268,7 +268,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
                   onClick={() => { onTabChange(t.key); scrollToSearch(); }}
                   className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
                     tab === t.key
-                      ? 'bg-utu-bg-card text-emerald-900 shadow'
+                      ? 'bg-utu-bg-card text-utu-navy shadow'
                       : 'text-white/80 hover:text-white hover:bg-utu-bg-card/10'
                   }`}
                 >
@@ -289,7 +289,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
             className="md:hidden fixed inset-0 z-30 bg-black/40"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="md:hidden fixed top-14 left-0 right-0 z-40 bg-emerald-900 border-t border-white/10 shadow-xl">
+          <div className="md:hidden fixed top-14 left-0 right-0 z-40 bg-utu-navy border-t border-white/10 shadow-xl">
             <nav className="px-4 py-3 space-y-1">
               {TABS.map((t) => (
                 <button
@@ -298,7 +298,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
                   className={`w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl transition-colors ${
                     tab === t.key
                       ? 'text-white bg-utu-bg-card/10'
-                      : 'text-emerald-100 hover:text-white hover:bg-utu-bg-card/10'
+                      : 'text-white/80 hover:text-white hover:bg-utu-bg-card/10'
                   }`}
                 >
                   <t.Icon className="w-4 h-4" />
@@ -308,7 +308,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
               <Link
                 href="/promo-codes"
                 onClick={() => setMobileOpen(false)}
-                className="flex items-center px-3 py-3 text-sm font-medium text-emerald-100 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
+                className="flex items-center px-3 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
               >
                 {tNav('promoCodes')}
               </Link>
@@ -322,7 +322,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
                   <Link
                     href="/account"
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-emerald-100 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
+                    className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
                   >
                     <UserIcon className="w-4 h-4" />
                     {tNav('myTrips')}
@@ -351,7 +351,7 @@ export default function HomeHeader({ tab, onTabChange }: Props) {
               <Link
                 href="/contact"
                 onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-emerald-200 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
+                className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
               >
                 {tNav('support')}
               </Link>

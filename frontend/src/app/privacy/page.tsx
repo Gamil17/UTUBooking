@@ -45,7 +45,7 @@ const S = {
     marginTop:    36,
     marginBottom: 12,
     paddingBottom: 6,
-    borderBottom: '2px solid #10B981',
+    borderBottom: '2px solid #1E3A5F',
   } as React.CSSProperties,
   h3: {
     fontSize:     15,
@@ -98,7 +98,7 @@ const S = {
     color:           '#166534',
   } as React.CSSProperties,
   link: {
-    color:          '#10B981',
+    color:          '#1E3A5F',
     textDecoration: 'underline',
   } as React.CSSProperties,
   divider: {
@@ -110,18 +110,18 @@ const S = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="min-h-screen bg-utu-bg-page font-sans">
 
       {/* Navbar */}
-      <header className="bg-emerald-800 text-white sticky top-0 z-30 shadow-md">
+      <header className="bg-utu-navy text-white sticky top-0 z-30 shadow-md">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-7 h-7 bg-amber-400 rounded-lg flex items-center justify-center">
-              <span className="text-emerald-900 font-black text-xs">U</span>
+              <span className="text-utu-navy font-black text-xs">U</span>
             </div>
             <span className="font-bold text-base tracking-tight">UTUBooking</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-emerald-100">
+          <nav className="hidden md:flex items-center gap-6 text-sm text-white/80">
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
             <Link href="/#contact" className="hover:text-white transition-colors">Contact Us</Link>
           </nav>
@@ -132,10 +132,10 @@ export default function PrivacyPage() {
       </header>
 
       {/* Header */}
-      <section className="bg-emerald-800 py-12 px-4 text-center">
+      <section className="bg-utu-navy py-12 px-4 text-center">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-white mb-2">Privacy Policy</h1>
-          <p className="text-emerald-200 text-sm">Last updated: 24 March 2026 · Version 1.0</p>
+          <p className="text-white/80 text-sm">Last updated: 24 March 2026 · Version 1.0</p>
           <p className="mt-3 text-amber-300 text-xs font-semibold uppercase tracking-widest">
             Draft — Pending legal review before publication
           </p>

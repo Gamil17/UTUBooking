@@ -126,7 +126,7 @@ export default function IncompleteBookingsPage() {
                           <button
                             onClick={() => triggerMutation.mutate(row.booking_id)}
                             disabled={triggerMutation.isPending || row.email_count >= MAX_RECOVERY}
-                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
+                            className="rounded bg-utu-blue px-3 py-1 text-xs font-medium text-white hover:bg-utu-blue disabled:opacity-40"
                           >
                             {feedback[row.booking_id] ?? t('sendNow')}
                           </button>

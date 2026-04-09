@@ -40,7 +40,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           <AiChatWidget />
           <AppProgressBar
             height="3px"
-            color="#10B981" /* EXCEPTION: brand progress bar — matches site primary until navy migration */
+            color="#1E3A5F" /* EXCEPTION: brand progress bar — matches site primary until navy migration */
             options={{ showSpinner: false }}
           />
         </QueryClientProvider>

@@ -41,7 +41,7 @@ export function AdminNav({ sections }: AdminNavProps) {
                   href={item.href}
                   className={`block rounded-md px-3 py-2 font-medium transition-colors
                     ${isActive(item.href)
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-utu-blue text-white'
                       : 'text-utu-text-secondary hover:bg-utu-bg-muted'}`}
                 >
                   {item.label}

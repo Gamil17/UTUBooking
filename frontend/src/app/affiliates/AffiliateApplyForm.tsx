@@ -69,11 +69,11 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
 
   if (status === 'success') {
     return (
-      <div className="max-w-xl mx-auto bg-emerald-50 border border-emerald-200 rounded-2xl p-8 text-center">
-        <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-emerald-700 text-xl" aria-hidden="true">&#10003;</span>
+      <div className="max-w-xl mx-auto bg-utu-bg-subtle border border-utu-border-default rounded-2xl p-8 text-center">
+        <div className="w-12 h-12 bg-utu-bg-subtle rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="text-utu-blue text-xl" aria-hidden="true">&#10003;</span>
         </div>
-        <p className="text-emerald-800 font-semibold">{l.formSuccess}</p>
+        <p className="text-utu-navy font-semibold">{l.formSuccess}</p>
       </div>
     );
   }
@@ -91,7 +91,7 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
             required
             value={fields.name}
             onChange={(e) => set('name', e.target.value)}
-            className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue"
           />
         </div>
 
@@ -102,7 +102,7 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
             required
             value={fields.email}
             onChange={(e) => set('email', e.target.value)}
-            className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue"
           />
         </div>
 
@@ -114,7 +114,7 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
             value={fields.website}
             onChange={(e) => set('website', e.target.value)}
             placeholder="https://"
-            className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue"
           />
         </div>
 
@@ -125,7 +125,7 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
               required
               value={fields.platform}
               onChange={(e) => set('platform', e.target.value)}
-              className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-utu-bg-card"
+              className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue bg-utu-bg-card"
             >
               <option value="" disabled />
               <option value="blog">{l.formPlatformBlog}</option>
@@ -143,7 +143,7 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
               required
               value={fields.audience}
               onChange={(e) => set('audience', e.target.value)}
-              className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-utu-bg-card"
+              className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue bg-utu-bg-card"
             >
               <option value="" disabled />
               <option value="<1k">{l.formAudience1k}</option>
@@ -160,7 +160,7 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
             rows={3}
             value={fields.message}
             onChange={(e) => set('message', e.target.value)}
-            className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+            className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue resize-none"
           />
         </div>
 
@@ -174,7 +174,7 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
         <button
           type="submit"
           disabled={status === 'submitting'}
-          className="w-full bg-emerald-700 hover:bg-emerald-600 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+          className="w-full bg-utu-navy hover:bg-utu-blue disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
         >
           {status === 'submitting' ? l.formSubmitting : l.formSubmit}
         </button>

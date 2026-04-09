@@ -5,7 +5,7 @@ import type { FlightOffer } from '@/lib/api';
 
 // ─── Airline colour palette (deterministic hash) ──────────────────────────────
 const AIRLINE_COLORS = [
-  'bg-emerald-600', 'bg-blue-600', 'bg-amber-500',
+  'bg-utu-blue', 'bg-blue-600', 'bg-amber-500',
   'bg-indigo-600',  'bg-teal-600', 'bg-rose-500',
   'bg-violet-600',  'bg-orange-500',
 ];
@@ -41,8 +41,8 @@ function StopLine({ stops }: { stops: number }) {
           <circle cx="80" cy="8" r="4" fill="#6b7280" />
         </>
       )}
-      <circle cx="0"   cy="8" r="4" fill="#059669" />
-      <circle cx="120" cy="8" r="4" fill="#059669" />
+      <circle cx="0"   cy="8" r="4" fill="#1E3A5F" />
+      <circle cx="120" cy="8" r="4" fill="#1E3A5F" />
     </svg>
   );
 }
@@ -85,7 +85,7 @@ function LegRow({ offer, label }: { offer: FlightOffer; label?: string }) {
 // ─── Tag pill ─────────────────────────────────────────────────────────────────
 const TAG_STYLES: Record<string, string> = {
   cheapest:   'bg-amber-100 text-amber-700',
-  best_value: 'bg-emerald-100 text-emerald-700',
+  best_value: 'bg-utu-bg-subtle text-utu-blue',
   direct:     'bg-blue-100 text-blue-700',
 };
 
@@ -142,20 +142,20 @@ export default function FlightCard({ offer, isReturn, tags, onSelect }: FlightCa
         {/* Price + CTA */}
         <div className="shrink-0 text-right flex flex-col items-end gap-2 ms-2">
           <div>
-            <p className="text-lg font-bold text-emerald-700 leading-none">{fmtPrice(offer.price, offer.currency)}</p>
+            <p className="text-lg font-bold text-utu-blue leading-none">{fmtPrice(offer.price, offer.currency)}</p>
             <p className="text-[11px] text-utu-text-muted mt-0.5">{t('perPerson')}</p>
           </div>
 
           <button
             onClick={() => onSelect(offer.id)}
-            className="bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
+            className="bg-utu-navy hover:bg-utu-blue active:bg-utu-navy text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors"
           >
             {t('select')}
           </button>
 
           <div className="flex flex-col gap-1 items-end">
             {offer.isRefundable && (
-              <span className="text-[10px] text-emerald-600 font-medium">{t('refundable')}</span>
+              <span className="text-[10px] text-utu-blue font-medium">{t('refundable')}</span>
             )}
             {offer.baggageIncluded && (
               <span className="flex items-center gap-0.5 text-[10px] text-utu-text-muted">

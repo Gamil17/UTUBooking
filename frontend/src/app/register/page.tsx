@@ -67,16 +67,16 @@ export default function RegisterPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-utu-bg-page flex items-center justify-center px-4">
       <div className="w-full max-w-md">
 
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
             <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center shadow">
-              <span className="text-emerald-900 font-black text-base">U</span>
+              <span className="text-utu-navy font-black text-base">U</span>
             </div>
-            <span className="font-black text-emerald-900 text-xl tracking-tight">UTUBooking</span>
+            <span className="font-black text-utu-navy text-xl tracking-tight">UTUBooking</span>
           </Link>
           <p className="mt-3 text-sm text-utu-text-muted">{t('createFreeAccount')}</p>
         </div>
@@ -104,7 +104,7 @@ export default function RegisterPage() {
                   required
                   value={form.firstName}
                   onChange={(e) => setField('firstName', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                  className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent transition"
                 />
               </div>
               <div>
@@ -118,7 +118,7 @@ export default function RegisterPage() {
                   required
                   value={form.lastName}
                   onChange={(e) => setField('lastName', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                  className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent transition"
                 />
               </div>
             </div>
@@ -134,7 +134,7 @@ export default function RegisterPage() {
                 required
                 value={form.email}
                 onChange={(e) => setField('email', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent transition"
               />
             </div>
 
@@ -150,7 +150,7 @@ export default function RegisterPage() {
                 minLength={8}
                 value={form.password}
                 onChange={(e) => setField('password', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                className="w-full px-4 py-2.5 rounded-xl border border-utu-border-default text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent transition"
               />
               <p className="mt-1 text-xs text-utu-text-muted">{t('minChars')}</p>
             </div>
@@ -166,7 +166,7 @@ export default function RegisterPage() {
                 required
                 value={form.confirm}
                 onChange={(e) => setField('confirm', e.target.value)}
-                className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition ${
+                className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent transition ${
                   form.confirm && form.confirm !== form.password
                     ? 'border-red-300 bg-red-50'
                     : 'border-utu-border-default'
@@ -177,7 +177,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="w-full py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60"
+              className="w-full py-2.5 rounded-xl bg-utu-navy hover:bg-utu-blue text-white text-sm font-semibold transition-colors disabled:opacity-60"
             >
               {loading ? t('creatingAccount') : t('createAccount')}
             </button>
@@ -185,7 +185,7 @@ export default function RegisterPage() {
 
           <p className="mt-6 text-center text-xs text-utu-text-muted">
             {t('alreadyHaveAccount')}{' '}
-            <Link href="/login" className="text-emerald-700 font-medium hover:underline">
+            <Link href="/login" className="text-utu-blue font-medium hover:underline">
               {t('signIn')}
             </Link>
           </p>

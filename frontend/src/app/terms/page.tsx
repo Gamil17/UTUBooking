@@ -41,7 +41,7 @@ const sections = [
   {
     id: '3',
     heading: '3. Privacy',
-    content: <p>Your use of UTUBooking is also governed by our <Link href="/privacy" className="text-emerald-700 hover:underline">Data Privacy Policy</Link>. By using our services, you consent to the data practices described in that policy.</p>,
+    content: <p>Your use of UTUBooking is also governed by our <Link href="/privacy" className="text-utu-blue hover:underline">Data Privacy Policy</Link>. By using our services, you consent to the data practices described in that policy.</p>,
   },
   {
     id: '4',
@@ -52,7 +52,7 @@ const sections = [
         <ul className="mt-3 space-y-1 list-disc list-inside text-utu-text-secondary">
           <li>Maintaining the confidentiality of your password</li>
           <li>All activity that occurs under your account</li>
-          <li>Notifying us immediately of any unauthorized access at <a href="mailto:privacy@utubooking.com" className="text-emerald-700 hover:underline">privacy@utubooking.com</a></li>
+          <li>Notifying us immediately of any unauthorized access at <a href="mailto:privacy@utubooking.com" className="text-utu-blue hover:underline">privacy@utubooking.com</a></li>
         </ul>
         <p className="mt-3">AMEC Solutions disclaims liability for damages resulting from failure to maintain account security.</p>
       </>
@@ -105,7 +105,7 @@ const sections = [
           <h3 className="font-semibold text-utu-text-primary mb-2">10.6 Payment Methods by Region</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
-              <thead><tr className="bg-emerald-50"><th className="text-left p-2 border border-utu-border-default font-semibold text-utu-text-secondary">Region</th><th className="text-left p-2 border border-utu-border-default font-semibold text-utu-text-secondary">Payment Methods</th></tr></thead>
+              <thead><tr className="bg-utu-bg-subtle"><th className="text-left p-2 border border-utu-border-default font-semibold text-utu-text-secondary">Region</th><th className="text-left p-2 border border-utu-border-default font-semibold text-utu-text-secondary">Payment Methods</th></tr></thead>
               <tbody className="text-utu-text-secondary">
                 {[
                   ['Saudi Arabia / Gulf', 'STC Pay, Mada, Stripe'],
@@ -135,7 +135,7 @@ const sections = [
   {
     id: '11',
     heading: '11. Fraud Management',
-    content: <p>Bookings or accounts showing signs of fraud or suspicious activity may be cancelled without notice. AMEC Solutions reserves the right to pursue criminal and civil action. To contest a cancellation, contact <a href="mailto:support@utubooking.com" className="text-emerald-700 hover:underline">support@utubooking.com</a>.</p>,
+    content: <p>Bookings or accounts showing signs of fraud or suspicious activity may be cancelled without notice. AMEC Solutions reserves the right to pursue criminal and civil action. To contest a cancellation, contact <a href="mailto:support@utubooking.com" className="text-utu-blue hover:underline">support@utubooking.com</a>.</p>,
   },
   {
     id: '12',
@@ -193,9 +193,9 @@ const sections = [
     content: (
       <div className="space-y-1 text-utu-text-secondary">
         <p><strong className="text-utu-text-primary">AMEC Solutions — UTUBooking.com</strong></p>
-        <p>General: <a href="mailto:support@utubooking.com" className="text-emerald-700 hover:underline">support@utubooking.com</a></p>
-        <p>Legal: <a href="mailto:legal@utubooking.com" className="text-emerald-700 hover:underline">legal@utubooking.com</a></p>
-        <p>Privacy: <a href="mailto:privacy@utubooking.com" className="text-emerald-700 hover:underline">privacy@utubooking.com</a></p>
+        <p>General: <a href="mailto:support@utubooking.com" className="text-utu-blue hover:underline">support@utubooking.com</a></p>
+        <p>Legal: <a href="mailto:legal@utubooking.com" className="text-utu-blue hover:underline">legal@utubooking.com</a></p>
+        <p>Privacy: <a href="mailto:privacy@utubooking.com" className="text-utu-blue hover:underline">privacy@utubooking.com</a></p>
       </div>
     ),
   },
@@ -203,18 +203,18 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="min-h-screen bg-utu-bg-page font-sans">
 
       {/* Navbar */}
-      <header className="bg-emerald-800 text-white sticky top-0 z-30 shadow-md">
+      <header className="bg-utu-navy text-white sticky top-0 z-30 shadow-md">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-7 h-7 bg-amber-400 rounded-lg flex items-center justify-center">
-              <span className="text-emerald-900 font-black text-xs">U</span>
+              <span className="text-utu-navy font-black text-xs">U</span>
             </div>
             <span className="font-bold text-base tracking-tight">UTUBooking</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-emerald-100">
+          <nav className="hidden md:flex items-center gap-6 text-sm text-white/80">
             <Link href="/about" className="hover:text-white transition-colors">About</Link>
             <Link href="/#contact" className="hover:text-white transition-colors">Contact Us</Link>
           </nav>
@@ -225,10 +225,10 @@ export default function TermsPage() {
       </header>
 
       {/* Header */}
-      <section className="bg-emerald-800 py-12 px-4 text-center">
+      <section className="bg-utu-navy py-12 px-4 text-center">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-white mb-2">Terms of Service</h1>
-          <p className="text-emerald-200 text-sm">Last updated: March 2026 — AMEC Solutions</p>
+          <p className="text-white/80 text-sm">Last updated: March 2026 — AMEC Solutions</p>
           <p className="mt-3 text-amber-300 text-xs font-semibold uppercase tracking-widest">
             Draft — Pending legal review before publication
           </p>
@@ -243,7 +243,7 @@ export default function TermsPage() {
           <h2 className="font-semibold text-utu-text-primary mb-3 text-sm uppercase tracking-wide">Contents</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
             {sections.map((s) => (
-              <a key={s.id} href={`#${s.id}`} className="text-sm text-emerald-700 hover:underline py-0.5">
+              <a key={s.id} href={`#${s.id}`} className="text-sm text-utu-blue hover:underline py-0.5">
                 {s.heading}
               </a>
             ))}

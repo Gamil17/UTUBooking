@@ -122,7 +122,7 @@ export default function HotelFilters({ offers, filters, onChange }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-bold text-utu-text-primary">{t('filters')}</h2>
-        <button onClick={reset} className="text-xs text-emerald-700 hover:underline">{t('clearFilters')}</button>
+        <button onClick={reset} className="text-xs text-utu-blue hover:underline">{t('clearFilters')}</button>
       </div>
 
       {/* Free Cancellation quick toggle */}
@@ -132,7 +132,7 @@ export default function HotelFilters({ offers, filters, onChange }: Props) {
           role="switch"
           aria-checked={filters.freeCancelOnly}
           onClick={() => onChange({ ...filters, freeCancelOnly: !filters.freeCancelOnly })}
-          className={`w-10 h-5 rounded-full transition-colors relative ${filters.freeCancelOnly ? 'bg-emerald-600' : 'bg-utu-border-default'}`}
+          className={`w-10 h-5 rounded-full transition-colors relative ${filters.freeCancelOnly ? 'bg-utu-blue' : 'bg-utu-border-default'}`}
         >
           <span className={`absolute top-0.5 w-4 h-4 bg-utu-bg-card rounded-full shadow transition-transform ${filters.freeCancelOnly ? 'translate-x-5' : 'translate-x-0.5'}`} />
         </button>
@@ -152,7 +152,7 @@ export default function HotelFilters({ offers, filters, onChange }: Props) {
                 className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-colors disabled:opacity-40 ${
                   active
                     ? 'border-amber-400 bg-amber-50 text-amber-800'
-                    : 'border-utu-border-default bg-slate-50 text-utu-text-secondary hover:bg-utu-bg-muted'
+                    : 'border-utu-border-default bg-utu-bg-page text-utu-text-secondary hover:bg-utu-bg-muted'
                 }`}
               >
                 <svg className={`w-3 h-3 ${active ? 'text-amber-400' : 'text-utu-text-muted'}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -177,11 +177,11 @@ export default function HotelFilters({ offers, filters, onChange }: Props) {
                 onClick={() => onChange({ ...filters, reviewMin: active ? 0 : min })}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors ${
                   active
-                    ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                    : 'border-utu-border-default bg-slate-50 text-utu-text-secondary hover:bg-utu-bg-muted'
+                    ? 'border-utu-blue bg-utu-bg-subtle text-utu-navy'
+                    : 'border-utu-border-default bg-utu-bg-page text-utu-text-secondary hover:bg-utu-bg-muted'
                 }`}
               >
-                <span className="bg-emerald-700 text-white text-[9px] font-bold px-1 py-0.5 rounded">{min}+</span>
+                <span className="bg-utu-navy text-white text-[9px] font-bold px-1 py-0.5 rounded">{min}+</span>
                 {label}
               </button>
             );
@@ -215,7 +215,7 @@ export default function HotelFilters({ offers, filters, onChange }: Props) {
             style={{ zIndex: 4 }}
           />
           <div
-            className="absolute h-1 bg-emerald-500 rounded-full pointer-events-none"
+            className="absolute h-1 bg-utu-bg-subtle0 rounded-full pointer-events-none"
             style={{
               left:  `${((filters.priceMin - filters.priceFloor) / (filters.priceCap - filters.priceFloor || 1)) * 100}%`,
               right: `${100 - ((filters.priceMax - filters.priceFloor) / (filters.priceCap - filters.priceFloor || 1)) * 100}%`,
@@ -238,8 +238,8 @@ export default function HotelFilters({ offers, filters, onChange }: Props) {
                   onClick={() => onChange({ ...filters, distanceMax: active ? filters.distanceCap : m })}
                   className={`py-2 rounded-xl border text-xs font-semibold transition-colors ${
                     active
-                      ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                      : 'border-utu-border-default bg-slate-50 text-utu-text-secondary hover:bg-utu-bg-muted'
+                      ? 'border-utu-blue bg-utu-bg-subtle text-utu-navy'
+                      : 'border-utu-border-default bg-utu-bg-page text-utu-text-secondary hover:bg-utu-bg-muted'
                   }`}
                 >
                   &lt; {fmtDist(m)}
@@ -260,7 +260,7 @@ export default function HotelFilters({ offers, filters, onChange }: Props) {
                   type="checkbox"
                   checked={filters.propertyTypes.has(pt)}
                   onChange={() => togglePropertyType(pt)}
-                  className="rounded border-utu-border-strong text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-utu-border-strong text-utu-blue focus:ring-utu-blue"
                 />
                 <span className="flex-1 text-utu-text-secondary text-xs">{pt}</span>
               </label>
@@ -279,7 +279,7 @@ export default function HotelFilters({ offers, filters, onChange }: Props) {
                   type="checkbox"
                   checked={filters.amenities.has(a)}
                   onChange={() => toggleAmenity(a)}
-                  className="rounded border-utu-border-strong text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-utu-border-strong text-utu-blue focus:ring-utu-blue"
                 />
                 <span className="flex-1 text-utu-text-secondary text-xs">{a}</span>
               </label>

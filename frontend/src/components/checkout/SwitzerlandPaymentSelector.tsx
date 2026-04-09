@@ -182,16 +182,16 @@ export default function SwitzerlandPaymentSelector({
   const tabCls = (active: boolean) =>
     [
       'flex-1 py-2.5 text-sm font-semibold rounded-xl transition-colors min-h-[44px]',
-      active ? 'bg-emerald-600 text-white shadow-sm' : 'text-utu-text-secondary hover:bg-utu-bg-muted',
+      active ? 'bg-utu-blue text-white shadow-sm' : 'text-utu-text-secondary hover:bg-utu-bg-muted',
     ].join(' ');
 
   return (
     <div className="w-full max-w-md mx-auto space-y-5">
 
       {/* Amount */}
-      <div className="text-center bg-emerald-50 rounded-2xl py-4 px-6 border border-emerald-100">
-        <p className="text-xs text-emerald-600 mb-1">Gesamtbetrag</p>
-        <p className="text-2xl font-bold text-emerald-800">{formattedAmount}</p>
+      <div className="text-center bg-utu-bg-subtle rounded-2xl py-4 px-6 border border-utu-border-default">
+        <p className="text-xs text-utu-blue mb-1">Gesamtbetrag</p>
+        <p className="text-2xl font-bold text-utu-navy">{formattedAmount}</p>
       </div>
 
       {/* Method tabs */}
@@ -305,7 +305,7 @@ export default function SwitzerlandPaymentSelector({
 
               {/* Waiting indicator */}
               <div className="flex items-center justify-center gap-2 text-sm text-utu-text-muted">
-                <span className="w-3 h-3 border-2 border-utu-border-strong border-t-emerald-500 rounded-full animate-spin" />
+                <span className="w-3 h-3 border-2 border-utu-border-strong border-t-utu-blue rounded-full animate-spin" />
                 Warte auf Zahlung in TWINT-App…
               </div>
             </div>
@@ -313,9 +313,9 @@ export default function SwitzerlandPaymentSelector({
 
           {/* Done */}
           {phase === 'done' && (
-            <div className="text-center bg-emerald-50 rounded-2xl py-6 border border-emerald-100">
+            <div className="text-center bg-utu-bg-subtle rounded-2xl py-6 border border-utu-border-default">
               <p className="text-2xl mb-1">✓</p>
-              <p className="text-base font-semibold text-emerald-800">TWINT-Zahlung erfolgreich</p>
+              <p className="text-base font-semibold text-utu-navy">TWINT-Zahlung erfolgreich</p>
             </div>
           )}
         </div>
@@ -346,7 +346,7 @@ export default function SwitzerlandPaymentSelector({
                 detail: { bookingId, amount: amountCHF, currency: 'CHF', countryCode: 'CH' },
               }));
             }}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-3.5 text-sm font-semibold min-h-[44px] transition-colors"
+            className="w-full bg-utu-blue hover:bg-utu-navy text-white rounded-xl py-3.5 text-sm font-semibold min-h-[44px] transition-colors"
           >
             Weiter zur Kartenzahlung →
           </button>

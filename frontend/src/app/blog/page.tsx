@@ -27,13 +27,13 @@ export default async function BlogPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-utu-bg-page">
 
       {/* Hero */}
-      <section className="bg-emerald-900 py-16 px-4 text-center">
+      <section className="bg-utu-navy py-16 px-4 text-center">
         <p className="text-amber-300 text-xs font-semibold uppercase tracking-widest mb-3">{t('tagline')}</p>
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">{t('heroHeading')}</h1>
-        <p className="text-emerald-100 max-w-xl mx-auto text-base">{t('heroDesc')}</p>
+        <p className="text-white/80 max-w-xl mx-auto text-base">{t('heroDesc')}</p>
       </section>
 
       <BlogPostsGrid

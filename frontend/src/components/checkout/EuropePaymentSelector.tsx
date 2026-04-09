@@ -185,7 +185,7 @@ export default function EuropePaymentSelector({
         const appearance = {
           theme:     'stripe' as const,
           variables: {
-            colorPrimary:       '#10B981',   // brand green
+            colorPrimary:       '#2563EB',   // brand green
             colorBackground:    '#ffffff',
             colorText:          '#111827',
             colorDanger:        '#ef4444',
@@ -196,7 +196,7 @@ export default function EuropePaymentSelector({
           },
           rules: {
             '.Input': { border: '1px solid #E5E7EB', padding: '12px 16px', minHeight: '44px' },
-            '.Input:focus': { borderColor: '#10B981', boxShadow: '0 0 0 2px rgba(16,185,129,0.2)' },
+            '.Input:focus': { borderColor: '#2563EB', boxShadow: '0 0 0 2px rgba(16,185,129,0.2)' },
             '.Label': { color: '#374151', fontWeight: '500', fontSize: '14px' },
           },
         };
@@ -269,16 +269,16 @@ export default function EuropePaymentSelector({
     'w-full rounded-xl py-3.5 text-white text-sm font-semibold min-h-[44px] ' +
     'flex items-center justify-center gap-2 transition-colors ';
 
-  const btnActive  = 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800';
+  const btnActive  = 'bg-utu-blue hover:bg-utu-navy active:bg-utu-navy';
   const btnDisabled = 'bg-utu-border-strong cursor-not-allowed';
 
   return (
     <div className="w-full max-w-md mx-auto space-y-5">
 
       {/* Amount header */}
-      <div className="text-center bg-emerald-50 rounded-2xl py-4 px-6 border border-emerald-100">
-        <p className="text-xs text-emerald-600 mb-1">Total</p>
-        <p className="text-2xl font-bold text-emerald-800">{formattedAmount}</p>
+      <div className="text-center bg-utu-bg-subtle rounded-2xl py-4 px-6 border border-utu-border-default">
+        <p className="text-xs text-utu-blue mb-1">Total</p>
+        <p className="text-2xl font-bold text-utu-navy">{formattedAmount}</p>
         <p className="text-xs text-utu-text-muted mt-1">{methodHint}</p>
       </div>
 
@@ -296,7 +296,7 @@ export default function EuropePaymentSelector({
       {/* Loading */}
       {phase === 'loading' && (
         <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
-          <span className="w-5 h-5 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+          <span className="w-5 h-5 border-2 border-utu-blue/30 border-t-utu-blue rounded-full animate-spin" />
           <span className="text-sm">Loading secure payment form…</span>
         </div>
       )}
@@ -335,9 +335,9 @@ export default function EuropePaymentSelector({
 
       {/* Success */}
       {phase === 'done' && (
-        <div className="text-center bg-emerald-50 rounded-2xl py-6 border border-emerald-100">
+        <div className="text-center bg-utu-bg-subtle rounded-2xl py-6 border border-utu-border-default">
           <p className="text-2xl mb-1">✓</p>
-          <p className="text-base font-semibold text-emerald-800">Payment confirmed</p>
+          <p className="text-base font-semibold text-utu-navy">Payment confirmed</p>
         </div>
       )}
 

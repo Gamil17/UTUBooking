@@ -97,13 +97,13 @@ export default async function ContactPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="min-h-screen bg-utu-bg-page font-sans">
 
       {/* Hero */}
-      <section className="bg-gradient-to-b from-emerald-900 to-emerald-800 py-14 px-4 text-center">
+      <section className="bg-gradient-to-b from-utu-navy to-utu-blue py-14 px-4 text-center">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-white mb-3">{t('heroHeading')}</h1>
-          <p className="text-emerald-100 text-base">{t('heroDesc')}</p>
+          <p className="text-white/80 text-base">{t('heroDesc')}</p>
           <div className="mt-6 max-w-lg mx-auto">
             <ContactSearch placeholder={t('searchPlaceholder')} btnLabel={t('searchBtn')} />
           </div>
@@ -118,7 +118,7 @@ export default async function ContactPage() {
               <a
                 key={s.label}
                 href={s.href}
-                className="flex items-center gap-2 bg-slate-50 hover:bg-emerald-50 border border-utu-border-default hover:border-emerald-200 rounded-xl px-4 py-3 text-sm font-medium text-utu-text-secondary hover:text-emerald-700 transition-colors"
+                className="flex items-center gap-2 bg-utu-bg-page hover:bg-utu-bg-subtle border border-utu-border-default hover:border-utu-border-default rounded-xl px-4 py-3 text-sm font-medium text-utu-text-secondary hover:text-utu-blue transition-colors"
               >
                 <span className="text-lg" aria-hidden="true">{s.icon}</span>
                 {s.label}
@@ -142,7 +142,7 @@ export default async function ContactPage() {
                 </div>
                 <a
                   href={m.href}
-                  className="mt-auto w-full bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors text-center"
+                  className="mt-auto w-full bg-utu-navy hover:bg-utu-blue text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors text-center"
                 >
                   {m.label}
                 </a>
@@ -160,7 +160,7 @@ export default async function ContactPage() {
           <p className="text-center text-utu-text-muted text-sm mb-8">{t('faqDesc')}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {faqCategories.map((cat) => (
-              <div key={cat.title} className="bg-slate-50 rounded-2xl border border-utu-border-default p-5 hover:shadow-sm transition-shadow">
+              <div key={cat.title} className="bg-utu-bg-page rounded-2xl border border-utu-border-default p-5 hover:shadow-sm transition-shadow">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-2xl" aria-hidden="true">{cat.icon}</span>
                   <h3 className="font-semibold text-utu-text-primary text-sm">{cat.title}</h3>
@@ -168,7 +168,7 @@ export default async function ContactPage() {
                 <ul className="space-y-1.5">
                   {cat.topics.map((topic) => (
                     <li key={topic}>
-                      <a href="/faq" className="text-xs text-utu-text-muted hover:text-emerald-700 hover:underline transition-colors leading-snug block">
+                      <a href="/faq" className="text-xs text-utu-text-muted hover:text-utu-blue hover:underline transition-colors leading-snug block">
                         {topic}
                       </a>
                     </li>

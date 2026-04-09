@@ -28,12 +28,12 @@ export default async function CareersPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-utu-bg-page">
 
-      <section className="bg-emerald-900 py-16 px-4 text-center">
+      <section className="bg-utu-navy py-16 px-4 text-center">
         <p className="text-amber-300 text-xs font-semibold uppercase tracking-widest mb-3">{t('tagline')}</p>
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">{t('heroHeading')}</h1>
-        <p className="text-emerald-100 max-w-xl mx-auto">{t('heroDesc')}</p>
+        <p className="text-white/80 max-w-xl mx-auto">{t('heroDesc')}</p>
       </section>
 
       {/* Perks */}
@@ -42,7 +42,7 @@ export default async function CareersPage() {
           <h2 className="text-xl font-bold text-utu-text-primary text-center mb-8">{t('perksHeading')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
             {perks.map((p) => (
-              <div key={p.title} className="bg-slate-50 rounded-xl p-5 border border-utu-border-default">
+              <div key={p.title} className="bg-utu-bg-page rounded-xl p-5 border border-utu-border-default">
                 <span className="text-2xl" aria-hidden="true">{p.icon}</span>
                 <h3 className="font-semibold text-utu-text-primary mt-2 mb-1">{p.title}</h3>
                 <p className="text-sm text-utu-text-muted">{p.desc}</p>
@@ -65,14 +65,14 @@ export default async function CareersPage() {
                 <div>
                   <h3 className="font-semibold text-utu-text-primary">{role.title}</h3>
                   <div className="flex flex-wrap gap-2 mt-1.5">
-                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full">{role.team}</span>
+                    <span className="text-xs bg-utu-bg-subtle text-utu-blue px-2.5 py-0.5 rounded-full">{role.team}</span>
                     <span className="text-xs text-utu-text-muted">{role.location}</span>
                     <span className="text-xs text-utu-text-muted">{role.type}</span>
                   </div>
                 </div>
                 <Link
                   href="/contact"
-                  className="shrink-0 bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                  className="shrink-0 bg-utu-navy hover:bg-utu-blue text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
                 >
                   {t('applyBtn')}
                 </Link>
@@ -82,7 +82,7 @@ export default async function CareersPage() {
 
           <p className="text-sm text-utu-text-muted mt-6 text-center">
             {t('noFitText')}{' '}
-            <a href={`mailto:${SITE_CONFIG.careersEmail}`} className="text-emerald-700 underline">
+            <a href={`mailto:${SITE_CONFIG.careersEmail}`} className="text-utu-blue underline">
               {SITE_CONFIG.careersEmail}
             </a>
           </p>

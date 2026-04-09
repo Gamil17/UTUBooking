@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <header className="border-b border-utu-border-default bg-utu-bg-card px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-xl font-bold text-emerald-600">UTUBooking</span>
+            <span className="text-xl font-bold text-utu-blue">UTUBooking</span>
             <span className="text-sm text-utu-text-muted">/</span>
             <span className="text-sm font-medium text-utu-text-primary">{t('revenueAdmin')}</span>
           </div>

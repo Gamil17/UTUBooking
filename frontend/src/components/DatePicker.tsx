@@ -148,7 +148,7 @@ export default function LocaleDatePicker({
         onClick={() => setOpen(o => !o)}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="w-full border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-primary focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-utu-bg-card flex items-center justify-between gap-2 min-h-[44px]"
+        className="w-full border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-primary focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent bg-utu-bg-card flex items-center justify-between gap-2 min-h-[44px]"
         style={isUrdu ? { fontFamily: "'Noto Nastaliq Urdu', serif", fontSize: '1rem', lineHeight: 1.8 } : undefined}
       >
         <span className={selected ? 'text-utu-text-primary' : 'text-utu-text-muted'}>

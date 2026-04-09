@@ -46,7 +46,7 @@ export default function UmrahPackagesPage() {
           {['DTW', 'JFK', 'ORD', 'LAX', 'IAD', 'IAH'].map((iata) => (
             <span
               key={iata}
-              className="bg-emerald-50 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full border border-emerald-100"
+              className="bg-utu-bg-subtle text-utu-navy text-xs font-semibold px-3 py-1 rounded-full border border-utu-border-default"
             >
               {iata}
             </span>
@@ -105,13 +105,13 @@ export default function UmrahPackagesPage() {
 
       {/* ── Footer links ──────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-4 text-sm">
-        <Link href="/us/muslim-guide/dearborn" className="text-emerald-600 hover:underline">
+        <Link href="/us/muslim-guide/dearborn" className="text-utu-blue hover:underline">
           Muslim Guide — Dearborn
         </Link>
-        <Link href="/hotels/search?location=Makkah&halal_friendly=true" className="text-emerald-600 hover:underline">
+        <Link href="/hotels/search?location=Makkah&halal_friendly=true" className="text-utu-blue hover:underline">
           Browse Makkah Hotels
         </Link>
-        <Link href="/flights/search?destination=JED&tripType=umrah" className="text-emerald-600 hover:underline">
+        <Link href="/flights/search?destination=JED&tripType=umrah" className="text-utu-blue hover:underline">
           Flights to Jeddah
         </Link>
       </div>

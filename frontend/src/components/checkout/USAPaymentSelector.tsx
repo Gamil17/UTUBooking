@@ -287,15 +287,15 @@ export default function USAPaymentSelector({
 
           {phase === 'capturing' && (
             <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
-              <span className="w-5 h-5 border-2 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />
+              <span className="w-5 h-5 border-2 border-utu-border-default border-t-utu-blue rounded-full animate-spin" />
               <span className="text-sm">Confirming payment…</span>
             </div>
           )}
 
           {phase === 'done' && (
-            <div className="text-center bg-emerald-50 rounded-2xl py-6 border border-emerald-100">
+            <div className="text-center bg-utu-bg-subtle rounded-2xl py-6 border border-utu-border-default">
               <p className="text-2xl mb-1">✓</p>
-              <p className="text-base font-semibold text-emerald-800">PayPal payment successful</p>
+              <p className="text-base font-semibold text-utu-navy">PayPal payment successful</p>
             </div>
           )}
         </div>
@@ -355,16 +355,16 @@ export default function USAPaymentSelector({
 
           {phase === 'capturing' && (
             <div className="flex items-center justify-center py-8 gap-3 text-utu-text-muted">
-              <span className="w-5 h-5 border-2 border-emerald-200 border-t-emerald-500 rounded-full animate-spin" />
+              <span className="w-5 h-5 border-2 border-utu-border-default border-t-utu-blue rounded-full animate-spin" />
               <span className="text-sm">Confirming your Affirm plan…</span>
             </div>
           )}
 
           {phase === 'done' && (
-            <div className="text-center bg-emerald-50 rounded-2xl py-6 border border-emerald-100">
+            <div className="text-center bg-utu-bg-subtle rounded-2xl py-6 border border-utu-border-default">
               <p className="text-2xl mb-1">✓</p>
-              <p className="text-base font-semibold text-emerald-800">Affirm plan confirmed</p>
-              <p className="text-xs text-emerald-600 mt-1">
+              <p className="text-base font-semibold text-utu-navy">Affirm plan confirmed</p>
+              <p className="text-xs text-utu-blue mt-1">
                 You&apos;ll receive a payment schedule from Affirm by email.
               </p>
             </div>

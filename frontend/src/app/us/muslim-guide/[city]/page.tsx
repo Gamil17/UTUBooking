@@ -60,25 +60,25 @@ export default function CityGuidePage({ params }: { params: { city: string } }) 
             <p className="text-sm text-utu-text-muted">{guide.state}</p>
           </div>
         </div>
-        <p className="text-lg font-medium text-emerald-700 italic">{guide.tagline}</p>
+        <p className="text-lg font-medium text-utu-blue italic">{guide.tagline}</p>
         <p className="text-sm text-utu-text-secondary leading-relaxed">{guide.heroDescription}</p>
-        <div className="inline-flex items-center gap-2 bg-emerald-50 rounded-xl px-4 py-2 text-sm text-emerald-800">
+        <div className="inline-flex items-center gap-2 bg-utu-bg-subtle rounded-xl px-4 py-2 text-sm text-utu-navy">
           <span>🕌</span>
           <span>Muslim Population: {guide.muslimPopEstimate}</span>
         </div>
       </header>
 
       {/* ── Umrah Departure ────────────────────────────────────────── */}
-      <section aria-labelledby="departure-heading" className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 space-y-3">
-        <h2 id="departure-heading" className="text-base font-semibold text-emerald-900 flex items-center gap-2">
+      <section aria-labelledby="departure-heading" className="rounded-2xl border border-utu-border-default bg-utu-bg-subtle p-5 space-y-3">
+        <h2 id="departure-heading" className="text-base font-semibold text-utu-navy flex items-center gap-2">
           <span aria-hidden="true">✈️</span> Nearest Umrah Departure Airport
         </h2>
-        <p className="text-sm text-emerald-800">
+        <p className="text-sm text-utu-navy">
           <strong>{guide.departureAirport}</strong> — {guide.airportName}
         </p>
         <Link
           href={flightSearchUrl}
-          className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2.5 text-sm font-semibold min-h-[44px] transition-colors"
+          className="inline-flex items-center gap-2 bg-utu-blue hover:bg-utu-navy text-white rounded-xl px-4 py-2.5 text-sm font-semibold min-h-[44px] transition-colors"
         >
           ✈️ Search Umrah Flights from {guide.departureAirport}
         </Link>
@@ -111,7 +111,7 @@ export default function CityGuidePage({ params }: { params: { city: string } }) 
                 href={mosque.mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-emerald-600 hover:underline mt-1 inline-block"
+                className="text-xs text-utu-blue hover:underline mt-1 inline-block"
                 aria-label={`Open ${mosque.name} in Google Maps`}
               >
                 View on Google Maps →
@@ -132,7 +132,7 @@ export default function CityGuidePage({ params }: { params: { city: string } }) 
             <ul className="space-y-1" role="list">
               {group.items.map((item) => (
                 <li key={item} className="text-sm text-utu-text-secondary flex items-start gap-2">
-                  <span className="text-emerald-500 mt-0.5" aria-hidden="true">•</span>
+                  <span className="text-utu-blue mt-0.5" aria-hidden="true">•</span>
                   {item}
                 </li>
               ))}
@@ -149,7 +149,7 @@ export default function CityGuidePage({ params }: { params: { city: string } }) 
         </p>
         <Link
           href={`/hotels/search?location=${guide.name}&halal_friendly=true`}
-          className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl px-5 py-3 text-sm font-semibold min-h-[44px] transition-colors"
+          className="inline-flex items-center gap-2 bg-utu-bg-subtle0 hover:bg-utu-blue text-white rounded-xl px-5 py-3 text-sm font-semibold min-h-[44px] transition-colors"
         >
           🕌 Search Halal Hotels in {guide.name}
         </Link>

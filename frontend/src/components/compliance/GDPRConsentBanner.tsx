@@ -344,7 +344,7 @@ const S = {
     right:           0,
     zIndex:          50,
     backgroundColor: '#111827',
-    borderTop:       '3px solid #10B981',
+    borderTop:       '3px solid #1E3A5F',
     boxShadow:       '0 -4px 24px rgba(0,0,0,0.45)',
     padding:         '20px 24px',
     maxHeight:       '80vh',
@@ -384,7 +384,7 @@ const S = {
     lineHeight: 1.5,
   },
   alwaysOn: {
-    color:    '#10B981',
+    color:    '#1E3A5F',
     fontSize: 12,
     fontWeight: 600,
     whiteSpace: 'nowrap' as const,
@@ -409,7 +409,7 @@ const S = {
     marginTop:  16,
   },
   btnPrimary: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#1E3A5F',
     color:           '#fff',
     border:          'none',
     borderRadius:    8,
@@ -437,7 +437,7 @@ const S = {
     marginTop: 10,
   },
   link: {
-    color:          '#10B981',
+    color:          '#1E3A5F',
     textDecoration: 'underline' as const,
   },
 } as const;
@@ -466,7 +466,7 @@ function Toggle({
       onClick={() => onChange(!checked)}
       style={{
         ...S.toggle,
-        backgroundColor: checked ? '#10B981' : '#374151',
+        backgroundColor: checked ? '#1E3A5F' : '#374151',
       }}
     >
       <span

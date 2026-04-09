@@ -116,18 +116,18 @@ function AppDownload() {
   const t = useTranslations('hero');
   return (
     <section id="app-download" className="py-14 px-4">
-      <div className="max-w-5xl mx-auto bg-emerald-900 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
+      <div className="max-w-5xl mx-auto bg-utu-navy rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
         {/* Phone mockup */}
         <div className="shrink-0 w-36 md:w-44">
-          <div className="bg-emerald-800 rounded-3xl border-4 border-emerald-700 p-3 aspect-[9/16] flex flex-col items-center justify-start gap-2 shadow-2xl">
-            <div className="w-full bg-emerald-700 rounded-xl p-2 text-center">
+          <div className="bg-utu-navy rounded-3xl border-4 border-utu-navy p-3 aspect-[9/16] flex flex-col items-center justify-start gap-2 shadow-2xl">
+            <div className="w-full bg-utu-navy rounded-xl p-2 text-center">
               <div className="w-6 h-6 bg-amber-400 rounded-lg mx-auto flex items-center justify-center mb-1">
-                <span className="text-emerald-900 font-black text-xs">U</span>
+                <span className="text-utu-navy font-black text-xs">U</span>
               </div>
               <p className="text-white text-xs font-bold">UTUBooking</p>
             </div>
             <div className="flex gap-1 w-full">
-              <div className="flex-1 bg-emerald-700/60 rounded-lg p-1.5 text-center">
+              <div className="flex-1 bg-utu-navy/60 rounded-lg p-1.5 text-center">
                 <div className="text-base">✈️</div>
                 <p className="text-white text-[8px]">Flights</p>
               </div>
@@ -136,12 +136,12 @@ function AppDownload() {
                 <p className="text-white text-[8px]">Hotels</p>
               </div>
             </div>
-            <div className="w-full bg-emerald-700/40 rounded-lg p-2">
+            <div className="w-full bg-utu-navy/40 rounded-lg p-2">
               <p className="text-white text-[8px] mb-1 font-semibold">Makkah Hotels</p>
               <div className="space-y-1">
                 {['Swissotel Makkah', 'Hilton Suites'].map(n => (
-                  <div key={n} className="bg-emerald-700/60 rounded p-1 flex justify-between">
-                    <span className="text-[7px] text-emerald-100">{n}</span>
+                  <div key={n} className="bg-utu-navy/60 rounded p-1 flex justify-between">
+                    <span className="text-[7px] text-white/80">{n}</span>
                     <span className="text-[7px] text-amber-300 font-bold">SAR 850</span>
                   </div>
                 ))}
@@ -155,7 +155,7 @@ function AppDownload() {
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 leading-snug">
             {t('appTitle')}
           </h2>
-          <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-emerald-100 mb-6">
+          <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-white/80 mb-6">
             <span className="flex items-center gap-1"><span className="text-amber-300">✓</span> {t('appDeal1')}</span>
             <span className="flex items-center gap-1"><span className="text-amber-300">✓</span> {t('appDeal2')}</span>
             <span className="flex items-center gap-1"><span className="text-amber-300">✓</span> {t('appDeal3')}</span>
@@ -228,7 +228,7 @@ const HOTEL_PARTNERS = [
 ];
 
 const POPULAR_HOTELS = [
-  { name: 'Swissotel Makkah', city: 'Makkah', stars: 5, score: '9.2', reviews: 2841, price: 'SAR 1,250', gradient: 'from-emerald-800 to-teal-600' },
+  { name: 'Swissotel Makkah', city: 'Makkah', stars: 5, score: '9.2', reviews: 2841, price: 'SAR 1,250', gradient: 'from-utu-navy to-teal-600' },
   { name: 'Dar Al Hijra InterContinental', city: 'Madinah', stars: 5, score: '9.0', reviews: 1923, price: 'SAR 980', gradient: 'from-blue-800 to-indigo-600' },
   { name: 'Mövenpick Hotel & Residences', city: 'Makkah', stars: 5, score: '8.8', reviews: 3120, price: 'SAR 1,100', gradient: 'from-amber-800 to-orange-600' },
   { name: 'Anwar Al Madinah Mövenpick', city: 'Madinah', stars: 5, score: '9.1', reviews: 1654, price: 'SAR 850', gradient: 'from-purple-800 to-violet-600' },
@@ -277,7 +277,7 @@ function HotelSections() {
       <Features />
 
       {/* Popular hotels */}
-      <section className="py-14 px-4 bg-slate-50">
+      <section className="py-14 px-4 bg-utu-bg-page">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-xl font-bold text-utu-text-primary text-center mb-1">{t('popularHotelsTitle')}</h2>
           <p className="text-xs text-utu-text-muted text-center mb-8">{t('hotelRatesNote')}</p>
@@ -300,7 +300,7 @@ function HotelSections() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      <span className="bg-emerald-700 text-white text-xs font-bold px-1.5 py-0.5 rounded">{h.score}</span>
+                      <span className="bg-utu-navy text-white text-xs font-bold px-1.5 py-0.5 rounded">{h.score}</span>
                       <span className="text-xs text-utu-text-muted">{h.reviews.toLocaleString()} {t('reviewsLabel')}</span>
                     </div>
                   </div>
@@ -335,7 +335,7 @@ function HotelSections() {
                 <div className="px-6 pb-5 border-t border-utu-border-default">
                   <div className="flex flex-wrap gap-2 pt-4">
                     {HOTEL_CITIES.map((c) => (
-                      <span key={c} className="text-sm text-emerald-700 hover:underline cursor-pointer">{c}</span>
+                      <span key={c} className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</span>
                     ))}
                   </div>
                 </div>
@@ -356,7 +356,7 @@ function HotelSections() {
                 <div className="px-6 pb-5 border-t border-utu-border-default">
                   <div className="flex flex-wrap gap-2 pt-4">
                     {HOTEL_COUNTRIES.map((c) => (
-                      <span key={c} className="text-sm text-emerald-700 hover:underline cursor-pointer">{c}</span>
+                      <span key={c} className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</span>
                     ))}
                   </div>
                 </div>
@@ -398,7 +398,7 @@ const TOP_DESTINATIONS = [
   { city: 'Cairo', code: 'CAI', price: 'SAR 420', gradient: 'from-yellow-700 to-amber-500' },
   { city: 'Istanbul', code: 'IST', price: 'SAR 780', gradient: 'from-red-800 to-red-500' },
   { city: 'Kuala Lumpur', code: 'KUL', price: 'SAR 1,100', gradient: 'from-blue-800 to-cyan-500' },
-  { city: 'Jakarta', code: 'CGK', price: 'SAR 1,350', gradient: 'from-green-800 to-emerald-500' },
+  { city: 'Jakarta', code: 'CGK', price: 'SAR 1,350', gradient: 'from-green-800 to-utu-blue' },
   { city: 'Amman', code: 'AMM', price: 'SAR 290', gradient: 'from-slate-700 to-slate-500' },
 ];
 
@@ -445,7 +445,7 @@ function FlightSections() {
       <Features />
 
       {/* Top destinations */}
-      <section className="py-14 px-4 bg-slate-50">
+      <section className="py-14 px-4 bg-utu-bg-page">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-xl font-bold text-utu-text-primary text-center mb-8">
             {t('topDestTitle')}
@@ -486,7 +486,7 @@ function FlightSections() {
                 <div className="px-6 pb-5 border-t border-utu-border-default">
                   <div className="flex flex-wrap gap-2 pt-4">
                     {FLIGHT_CITIES.map((c) => (
-                      <span key={c} className="text-sm text-emerald-700 hover:underline cursor-pointer">{c}</span>
+                      <span key={c} className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</span>
                     ))}
                   </div>
                 </div>
@@ -506,7 +506,7 @@ function FlightSections() {
                 <div className="px-6 pb-5 border-t border-utu-border-default">
                   <div className="flex flex-wrap gap-2 pt-4">
                     {FLIGHT_COUNTRIES.map((c) => (
-                      <span key={c} className="text-sm text-emerald-700 hover:underline cursor-pointer">{c}</span>
+                      <span key={c} className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</span>
                     ))}
                   </div>
                 </div>
@@ -591,16 +591,16 @@ function CarSections() {
       <Features />
 
       {/* 3-step process */}
-      <section className="py-14 px-4 bg-slate-50">
+      <section className="py-14 px-4 bg-utu-bg-page">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl font-bold text-utu-text-primary text-center mb-12">{t('carStepsTitle')}</h2>
           <div className="relative">
             {/* Progress line */}
-            <div className="hidden md:block absolute top-8 left-[16.5%] right-[16.5%] h-0.5 bg-emerald-200" />
+            <div className="hidden md:block absolute top-8 left-[16.5%] right-[16.5%] h-0.5 bg-utu-bg-subtle" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
               {CAR_STEPS.map((s) => (
                 <div key={s.n} className="relative flex flex-col items-center">
-                  <div className="w-16 h-16 bg-emerald-700 text-white rounded-full flex items-center justify-center text-xl font-black mb-4 shadow-lg z-10 relative">
+                  <div className="w-16 h-16 bg-utu-navy text-white rounded-full flex items-center justify-center text-xl font-black mb-4 shadow-lg z-10 relative">
                     {s.n}
                   </div>
                   <div className="text-3xl mb-2">{s.icon}</div>
@@ -632,7 +632,7 @@ function CarSections() {
                 <div className="px-6 pb-5 border-t border-utu-border-default">
                   <div className="flex flex-wrap gap-2 pt-4">
                     {CAR_LOCATIONS.map((c) => (
-                      <span key={c} className="text-sm text-emerald-700 hover:underline cursor-pointer">{c}</span>
+                      <span key={c} className="text-sm text-utu-blue hover:underline cursor-pointer">{c}</span>
                     ))}
                   </div>
                 </div>

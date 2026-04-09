@@ -174,14 +174,14 @@ export default function TurkeyPaymentSelector({
   // Completed
   if (step === 'completed') {
     return (
-      <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-8 text-center space-y-4">
-        <div className="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center mx-auto">
+      <div className="rounded-2xl bg-utu-bg-subtle border border-utu-border-default p-8 text-center space-y-4">
+        <div className="w-14 h-14 bg-utu-bg-subtle0 rounded-full flex items-center justify-center mx-auto">
           <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-lg font-bold text-emerald-800">Ödeme Başarılı!</h3>
-        <p className="text-sm text-emerald-600">Rezervasyonunuz onaylandı. Teşekkür ederiz.</p>
+        <h3 className="text-lg font-bold text-utu-navy">Ödeme Başarılı!</h3>
+        <p className="text-sm text-utu-blue">Rezervasyonunuz onaylandı. Teşekkür ederiz.</p>
       </div>
     );
   }

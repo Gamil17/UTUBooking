@@ -39,15 +39,15 @@ export default async function AffiliatesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-utu-bg-page">
 
-      <section className="bg-emerald-900 py-16 px-4 text-center">
+      <section className="bg-utu-navy py-16 px-4 text-center">
         <p className="text-amber-300 text-xs font-semibold uppercase tracking-widest mb-3">{t('tagline')}</p>
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">{t('heroHeading')}</h1>
-        <p className="text-emerald-100 max-w-xl mx-auto">{t('heroDesc')}</p>
+        <p className="text-white/80 max-w-xl mx-auto">{t('heroDesc')}</p>
         <a
           href="#apply"
-          className="inline-block mt-6 bg-amber-400 hover:bg-amber-300 text-emerald-900 font-bold px-8 py-3 rounded-xl transition-colors text-sm"
+          className="inline-block mt-6 bg-amber-400 hover:bg-amber-300 text-utu-navy font-bold px-8 py-3 rounded-xl transition-colors text-sm"
         >
           {t('applyNowBtn')}
         </a>
@@ -60,7 +60,7 @@ export default async function AffiliatesPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
             {steps.map((s) => (
               <div key={s.n} className="text-center">
-                <div className="w-10 h-10 bg-emerald-100 text-emerald-700 font-black text-sm rounded-full flex items-center justify-center mx-auto mb-3">
+                <div className="w-10 h-10 bg-utu-bg-subtle text-utu-blue font-black text-sm rounded-full flex items-center justify-center mx-auto mb-3">
                   {s.n}
                 </div>
                 <h3 className="font-semibold text-utu-text-primary mb-1">{s.title}</h3>
@@ -81,22 +81,22 @@ export default async function AffiliatesPage() {
                 key={tier.name}
                 className={`rounded-2xl border p-6 ${
                   tier.featured
-                    ? 'border-emerald-500 bg-emerald-50 shadow-md'
+                    ? 'border-utu-blue bg-utu-bg-subtle shadow-md'
                     : 'border-utu-border-default bg-utu-bg-card shadow-sm'
                 }`}
               >
                 {tier.featured && (
-                  <span className="inline-block bg-emerald-700 text-white text-xs font-bold px-2.5 py-1 rounded-full mb-3">
+                  <span className="inline-block bg-utu-navy text-white text-xs font-bold px-2.5 py-1 rounded-full mb-3">
                     {t('mostPopular')}
                   </span>
                 )}
                 <h3 className="font-bold text-utu-text-primary text-lg">{tier.name}</h3>
-                <div className="text-3xl font-black text-emerald-700 my-2">{tier.commission}</div>
+                <div className="text-3xl font-black text-utu-blue my-2">{tier.commission}</div>
                 <p className="text-xs text-utu-text-muted mb-4">{t('from')} {tier.threshold} {t('referrals')}</p>
                 <ul className="space-y-2">
                   {tier.perks.map((p) => (
                     <li key={p} className="text-sm text-utu-text-secondary flex items-start gap-2">
-                      <span className="text-emerald-600 mt-0.5" aria-hidden="true">&#10003;</span>
+                      <span className="text-utu-blue mt-0.5" aria-hidden="true">&#10003;</span>
                       {p}
                     </li>
                   ))}

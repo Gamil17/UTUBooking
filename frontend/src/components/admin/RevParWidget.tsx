@@ -36,7 +36,7 @@ export function RevParWidget() {
           <select
             value={market}
             onChange={(e) => setMarket(e.target.value)}
-            className="rounded-lg border border-utu-border-default px-3 py-1.5 text-sm text-utu-text-primary focus:outline-none focus:ring-2 focus:ring-emerald-600"
+            className="rounded-lg border border-utu-border-default px-3 py-1.5 text-sm text-utu-text-primary focus:outline-none focus:ring-2 focus:ring-utu-blue"
             aria-label="Select market"
           >
             {MARKETS.map((m) => (
@@ -52,7 +52,7 @@ export function RevParWidget() {
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 text-sm font-medium transition-colors
                   ${period === p
-                    ? 'bg-emerald-600 text-white'
+                    ? 'bg-utu-blue text-white'
                     : 'bg-utu-bg-card text-utu-text-muted hover:bg-utu-bg-muted'}`}
                 style={{ minHeight: 44 }}
                 aria-pressed={period === p}
@@ -97,7 +97,7 @@ export function RevParWidget() {
                   <td className="py-3 text-end font-medium text-utu-text-primary">
                     {Number(row.avg_effective_price).toLocaleString(undefined, { minimumFractionDigits: 0 })}
                   </td>
-                  <td className="py-3 text-end font-semibold text-emerald-600">
+                  <td className="py-3 text-end font-semibold text-utu-blue">
                     {Number(row.avg_revenue).toLocaleString(undefined, { minimumFractionDigits: 0 })}
                   </td>
                 </tr>

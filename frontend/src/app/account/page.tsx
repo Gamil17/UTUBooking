@@ -36,7 +36,7 @@ function fmtPrice(amount: number, currency: string): string {
 // ─── Status badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status, t }: { status: BookingStatus; t: ReturnType<typeof useTranslations> }) {
   const cfg: Record<BookingStatus, { labelKey: string; cls: string }> = {
-    confirmed: { labelKey: 'statusConfirmed', cls: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+    confirmed: { labelKey: 'statusConfirmed', cls: 'bg-utu-bg-subtle text-utu-blue border-utu-border-default' },
     pending:   { labelKey: 'statusPending',   cls: 'bg-amber-50  text-amber-700  border-amber-100'  },
     cancelled: { labelKey: 'statusCancelled', cls: 'bg-red-50    text-red-600    border-red-100'    },
   };
@@ -110,7 +110,7 @@ function BookingCard({
       <div className="flex items-start gap-4">
 
         {/* Icon */}
-        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-utu-bg-subtle text-utu-blue flex items-center justify-center shrink-0">
           <ProductIcon type={booking.productType} />
         </div>
 
@@ -129,7 +129,7 @@ function BookingCard({
 
         {/* Price + actions */}
         <div className="text-right shrink-0 space-y-2">
-          <p className="font-bold text-emerald-700">
+          <p className="font-bold text-utu-blue">
             {fmtPrice(booking.totalPrice, booking.currency)}
           </p>
 
@@ -138,7 +138,7 @@ function BookingCard({
               <a
                 href={`/api/bookings/confirmation-pdf?ref=${booking.referenceNo}&locale=${locale}`}
                 download
-                className="text-xs text-slate-500 hover:text-slate-700 underline"
+                className="text-xs text-utu-text-muted hover:text-utu-text-secondary underline"
               >
                 PDF
               </a>
@@ -233,10 +233,10 @@ export default function AccountPage() {
   // ── Not logged in ───────────────────────────────────────────────────────────
   if (authed === false) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-utu-bg-page flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-8">
-          <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+          <div className="w-14 h-14 bg-utu-bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-utu-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
@@ -245,13 +245,13 @@ export default function AccountPage() {
           <p className="text-sm text-utu-text-muted mb-6">{t('signInDesc')}</p>
           <Link
             href="/login"
-            className="w-full inline-block bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
+            className="w-full inline-block bg-utu-navy hover:bg-utu-blue text-white font-semibold py-3 rounded-xl text-sm transition-colors"
           >
             {t('signIn')}
           </Link>
           <p className="mt-4 text-xs text-utu-text-muted">
             {t('noAccount')}{' '}
-            <Link href="/contact" className="text-emerald-700 hover:underline">{t('contactUs')}</Link>
+            <Link href="/contact" className="text-utu-blue hover:underline">{t('contactUs')}</Link>
           </p>
         </div>
       </div>
@@ -261,7 +261,7 @@ export default function AccountPage() {
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-utu-bg-page">
         <div className="max-w-3xl mx-auto px-4 py-8">
           <div className="h-8 w-40 bg-utu-border-default rounded animate-pulse mb-6" />
           {[1, 2, 3].map((i) => (
@@ -291,7 +291,7 @@ export default function AccountPage() {
   // MAIN TRIPS VIEW
   // ═══════════════════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-utu-bg-page">
       <div className="max-w-3xl mx-auto px-4 py-8">
 
         {/* Header */}
@@ -303,7 +303,7 @@ export default function AccountPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/hotels/search" className="text-sm text-emerald-700 font-medium hover:underline">
+            <Link href="/hotels/search" className="text-sm text-utu-blue font-medium hover:underline">
               {t('bookATrip')}
             </Link>
             <button
@@ -332,7 +332,7 @@ export default function AccountPage() {
             <p className="text-sm text-utu-text-muted mb-6">{t('noTripsDesc')}</p>
             <Link
               href="/hotels/search"
-              className="inline-block bg-emerald-700 hover:bg-emerald-600 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
+              className="inline-block bg-utu-navy hover:bg-utu-blue text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
             >
               {t('planNextTrip')}
             </Link>

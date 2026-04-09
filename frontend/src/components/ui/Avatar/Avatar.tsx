@@ -27,7 +27,7 @@ export interface AvatarProps {
 
 const colorSchemeClasses: Record<AvatarColorScheme, string> = {
   navy:  'bg-utu-navy text-white',
-  green: 'bg-emerald-600 text-white',
+  green: 'bg-utu-blue text-white',
   amber: 'bg-amber-400 text-amber-900',
   red:   'bg-red-500 text-white',
   sky:   'bg-sky-500 text-white',

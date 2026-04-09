@@ -89,17 +89,17 @@ export default function ChatPanel({
         ].join(' ')}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-emerald-500 text-white flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 bg-utu-bg-subtle0 text-white flex-shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-xl">🕌</span>
             <div>
               <div className="font-bold text-sm leading-tight">{t('assistantName')}</div>
-              <div className="text-emerald-100 text-xs">{t('assistantSubtitle')}</div>
+              <div className="text-white/80 text-xs">{t('assistantSubtitle')}</div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-emerald-600 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-utu-blue transition-colors"
             aria-label={t('closeChat')}
           >
             ✕
@@ -124,7 +124,7 @@ export default function ChatPanel({
                   <button
                     key={qs}
                     onClick={() => onSend(qs)}
-                    className="text-start px-3 py-2.5 rounded-xl bg-utu-bg-card border border-utu-border-default text-sm text-utu-text-secondary hover:border-emerald-400 hover:bg-emerald-50 transition-colors min-h-[44px]"
+                    className="text-start px-3 py-2.5 rounded-xl bg-utu-bg-card border border-utu-border-default text-sm text-utu-text-secondary hover:border-utu-blue hover:bg-utu-bg-subtle transition-colors min-h-[44px]"
                   >
                     {qs}
                   </button>
@@ -170,7 +170,7 @@ export default function ChatPanel({
               className={[
                 'flex-1 resize-none rounded-xl border border-utu-border-strong px-3 py-2',
                 'text-sm text-utu-text-primary placeholder-gray-400',
-                'focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent',
+                'focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent',
                 'disabled:bg-utu-bg-muted disabled:cursor-not-allowed',
                 'min-h-[44px]',
               ].join(' ')}
@@ -183,7 +183,7 @@ export default function ChatPanel({
                 'w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0',
                 'transition-colors font-bold text-lg',
                 input.trim() && !isLoading
-                  ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                  ? 'bg-utu-bg-subtle0 text-white hover:bg-utu-blue'
                   : 'bg-utu-border-default text-utu-text-muted cursor-not-allowed',
               ].join(' ')}
             >

@@ -219,7 +219,7 @@ export default function HajjPackageBuilder() {
           style={{
             marginTop:       20,
             width:           '100%',
-            background:      '#10B981',
+            background:      '#1E3A5F',
             color:           '#fff',
             border:          'none',
             borderRadius:    10,
@@ -277,7 +277,7 @@ export default function HajjPackageBuilder() {
 // ── Package Card ───────────────────────────────────────────────────────────────
 
 function PackageCard({ pkg, adults, nights }: { pkg: UmrahPackage; adults: number; nights: number }) {
-  const tierColor = TIERS.find((t) => t.value === pkg.tier)?.color ?? '#10B981';
+  const tierColor = TIERS.find((t) => t.value === pkg.tier)?.color ?? '#1E3A5F';
   const bookUrl   = `/booking?packageId=${pkg.id}&origin=${pkg.origin}&checkIn=${pkg.checkIn}&checkOut=${pkg.checkOut}&adults=${adults}&tier=${pkg.tier}`;
 
   return (
@@ -351,7 +351,7 @@ function PackageCard({ pkg, adults, nights }: { pkg: UmrahPackage; adults: numbe
               display:      'inline-flex',
               alignItems:   'center',
               justifyContent: 'center',
-              background:   '#10B981',
+              background:   '#1E3A5F',
               color:        '#fff',
               textDecoration: 'none',
               borderRadius: 8,
