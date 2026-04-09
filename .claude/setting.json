@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "filesystem": { "command": "mcp-server-filesystem", "args": ["."] },
+    "github":     { "command": "mcp-server-github" },
+    "notion":     { "command": "notion-mcp-server" },
+    "slack":      { "command": "mcp-server-slack" },
+    "hubspot":    { "command": "hubspot-mcp-server" }
+  }
+}
