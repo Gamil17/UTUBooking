@@ -3,6 +3,7 @@
 const repo    = require('../../db/notification.repo');
 const { send }   = require('../../lib/sendgrid');
 const { render } = require('../../lib/templateRenderer');
+const { getNotificationSettings } = require('../../lib/settings');
 const axios   = require('axios');
 
 const HOTEL_SERVICE  = process.env.INTERNAL_HOTEL_SERVICE_URL  ?? 'http://hotel-service:3003';
@@ -39,6 +40,9 @@ function getProductName(booking) {
 }
 
 async function processScanPriceChangeAlerts() {
+  const cfg     = await getNotificationSettings();
+  const alertPct = cfg.price_alert_threshold / 100; // convert percent → fraction
+
   const bookings = await repo.getUpcomingConfirmedBookings();
   let sent = 0, skipped = 0;
   const baseUrl = process.env.APP_URL || 'https://utubooking.com';
@@ -60,7 +64,7 @@ async function processScanPriceChangeAlerts() {
 
     const bookedPrice = parseFloat(booking.booked_price);
     const priceDiff   = Math.abs(currentPrice - bookedPrice);
-    const threshold   = bookedPrice * 0.02; // only notify if > 2% change
+    const threshold   = bookedPrice * alertPct; // configurable via admin settings
 
     if (priceDiff < threshold) { skipped++; continue; }
 

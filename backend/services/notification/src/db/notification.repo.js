@@ -248,15 +248,54 @@ async function liftSuppression(suppressionId) {
   return rowCount > 0;
 }
 
+async function listSuppressions({ page = 1, limit = 50, active, email, suppressionType } = {}) {
+  const offset     = (page - 1) * limit;
+  const conditions = [];
+  const params     = [];
+
+  if (active === true)  { conditions.push('es.lifted_at IS NULL'); }
+  if (active === false) { conditions.push('es.lifted_at IS NOT NULL'); }
+  if (suppressionType)  { params.push(suppressionType); conditions.push(`es.suppression_type = $${params.length}`); }
+  if (email) {
+    params.push(`%${email}%`);
+    conditions.push(`u.email ILIKE $${params.length}`);
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  params.push(limit, offset);
+
+  const [rows, countRes] = await Promise.all([
+    readPool.query(
+      `SELECT
+         es.id, es.user_id, es.booking_id, es.suppression_type,
+         es.suppressed_by, es.reason, es.lifted_at, es.created_at,
+         u.email AS user_email, u.name AS user_name
+       FROM email_suppressions es
+       LEFT JOIN users u ON u.id = es.user_id
+       ${where}
+       ORDER BY es.created_at DESC
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params,
+    ),
+    readPool.query(
+      `SELECT COUNT(*) FROM email_suppressions es LEFT JOIN users u ON u.id = es.user_id ${where}`,
+      params.slice(0, -2),
+    ),
+  ]);
+
+  return { rows: rows.rows, total: parseInt(countRes.rows[0].count) };
+}
+
 // ── Campaign management ───────────────────────────────────────────────────────
 
-async function createCampaign({ name, subjectEn, subjectAr, dealItems, scheduledFor, createdBy }) {
+async function createCampaign({ name, subjectEn, subjectAr, dealItems, scheduledFor, targetSegment, createdBy }) {
   const { rows } = await pool.query(`
     INSERT INTO email_campaigns
-      (name, subject_en, subject_ar, deal_items, scheduled_for, created_by)
-    VALUES ($1,$2,$3,$4,$5,$6)
+      (name, subject_en, subject_ar, deal_items, scheduled_for, target_segment, created_by)
+    VALUES ($1,$2,$3,$4,$5,$6,$7)
     RETURNING *
-  `, [name, subjectEn, subjectAr ?? null, JSON.stringify(dealItems ?? []), scheduledFor ?? null, createdBy]);
+  `, [name, subjectEn, subjectAr ?? null, JSON.stringify(dealItems ?? []), scheduledFor ?? null,
+      targetSegment ? JSON.stringify(targetSegment) : null, createdBy]);
   return rows[0];
 }
 
@@ -415,11 +454,93 @@ async function cancelCampaign(campaignId) {
   return rowCount > 0;
 }
 
+async function duplicateCampaign(campaignId) {
+  const { rows } = await pool.query(`
+    INSERT INTO email_campaigns
+      (name, subject_en, subject_ar, deal_items, target_segment, created_by)
+    SELECT
+      name || ' (copy)', subject_en, subject_ar, deal_items, target_segment, created_by
+    FROM email_campaigns WHERE id = $1
+    RETURNING *
+  `, [campaignId]);
+  return rows[0] ?? null;
+}
+
 async function incrementOpenedCount(campaignId) {
   await pool.query(`
     UPDATE email_campaigns SET opened_count = opened_count + 1, updated_at = NOW()
     WHERE id = $1
   `, [campaignId]);
+}
+
+async function recordClick(emailLogId) {
+  const { rows } = await pool.query(`
+    UPDATE email_log SET clicked_at = NOW()
+    WHERE id = $1 AND clicked_at IS NULL
+    RETURNING campaign_id
+  `, [emailLogId]);
+  if (!rows.length) return null;
+  const campaignId = rows[0].campaign_id;
+  if (campaignId) await incrementClickCount(campaignId);
+  return { campaignId };
+}
+
+async function incrementClickCount(campaignId) {
+  await pool.query(`
+    UPDATE email_campaigns SET click_count = click_count + 1, updated_at = NOW()
+    WHERE id = $1
+  `, [campaignId]);
+}
+
+// ── Email template CRUD ───────────────────────────────────────────────────────
+
+async function listTemplates() {
+  const { rows } = await readPool.query(
+    `SELECT id, name, description, subject_en, subject_ar, variables, created_at, updated_at
+     FROM email_templates ORDER BY created_at ASC`,
+  );
+  return rows;
+}
+
+async function createTemplate({ name, description, subjectEn, subjectAr, htmlEn, htmlAr, variables }) {
+  const { rows } = await pool.query(`
+    INSERT INTO email_templates (name, description, subject_en, subject_ar, html_en, html_ar, variables)
+    VALUES ($1,$2,$3,$4,$5,$6,$7)
+    RETURNING *
+  `, [name, description ?? null, subjectEn, subjectAr ?? null, htmlEn, htmlAr ?? null,
+      JSON.stringify(variables ?? [])]);
+  return rows[0];
+}
+
+async function getTemplateById(templateId) {
+  const { rows } = await readPool.query('SELECT * FROM email_templates WHERE id = $1', [templateId]);
+  return rows[0] ?? null;
+}
+
+async function updateTemplate(templateId, updates) {
+  const allowed = ['name', 'description', 'subject_en', 'subject_ar', 'html_en', 'html_ar', 'variables'];
+  const fields  = {};
+  for (const key of allowed) { if (key in updates) fields[key] = updates[key]; }
+  if (!Object.keys(fields).length) return null;
+
+  const setClauses = Object.keys(fields).map((k, i) => `${k} = $${i + 2}`);
+  setClauses.push('updated_at = NOW()');
+  const { rows } = await pool.query(
+    `UPDATE email_templates SET ${setClauses.join(', ')} WHERE id = $1 RETURNING *`,
+    [templateId, ...Object.values(fields)],
+  );
+  return rows[0] ?? null;
+}
+
+async function deleteTemplate(templateId) {
+  // Guard: don't delete if a sent campaign references this template
+  const { rows: refs } = await readPool.query(
+    `SELECT id FROM email_campaigns WHERE template_id = $1 AND status = 'sent' LIMIT 1`,
+    [templateId],
+  );
+  if (refs.length) throw new Error('TEMPLATE_IN_USE');
+  const { rowCount } = await pool.query('DELETE FROM email_templates WHERE id = $1', [templateId]);
+  return rowCount > 0;
 }
 
 async function getIncompleteBookingStats() {
@@ -464,6 +585,7 @@ module.exports = {
   isBookingSuppressed,
   createSuppression,
   liftSuppression,
+  listSuppressions,
   // Email log
   getRecoveryEmailCount,
   getLastRecoveryEmailTime,
@@ -480,6 +602,15 @@ module.exports = {
   getCampaignsToDispatch,
   getCampaignById,
   cancelCampaign,
+  duplicateCampaign,
+  recordClick,
+  incrementClickCount,
+  // Templates
+  listTemplates,
+  createTemplate,
+  getTemplateById,
+  updateTemplate,
+  deleteTemplate,
   // Admin lists
   listIncompleteBookings,
   listEmailLog,

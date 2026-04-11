@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { JobDescription } from '@/lib/careers/jobDescriptions';
 import CareerApplicationForm from './CareerApplicationForm';
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function CareerApplyView({ job }: Props) {
+  const t = useTranslations('careers');
   const [showForm, setShowForm] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +43,7 @@ export default function CareerApplyView({ job }: Props) {
           {/* About the role */}
           <div>
             <h3 className="text-sm font-semibold text-utu-text-primary uppercase tracking-wide mb-2">
-              About the Role
+              {t('jobAbout')}
             </h3>
             <p className="text-sm text-utu-text-secondary leading-relaxed">{job.about}</p>
           </div>
@@ -49,7 +51,7 @@ export default function CareerApplyView({ job }: Props) {
           {/* Responsibilities */}
           <div>
             <h3 className="text-sm font-semibold text-utu-text-primary uppercase tracking-wide mb-3">
-              What You Will Do
+              {t('jobResponsibilities')}
             </h3>
             <ul className="space-y-2">
               {job.responsibilities.map((item) => (
@@ -68,7 +70,7 @@ export default function CareerApplyView({ job }: Props) {
           {/* Requirements */}
           <div>
             <h3 className="text-sm font-semibold text-utu-text-primary uppercase tracking-wide mb-3">
-              What We Are Looking For
+              {t('jobRequirements')}
             </h3>
             <ul className="space-y-2">
               {job.requirements.map((item) => (
@@ -84,7 +86,7 @@ export default function CareerApplyView({ job }: Props) {
           {job.niceToHave.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-utu-text-primary uppercase tracking-wide mb-3">
-                Nice to Have
+                {t('jobNiceToHave')}
               </h3>
               <ul className="space-y-2">
                 {job.niceToHave.map((item) => (
@@ -107,7 +109,7 @@ export default function CareerApplyView({ job }: Props) {
               onClick={handleApplyClick}
               className="w-full bg-utu-navy hover:bg-utu-blue text-white text-sm font-semibold py-3 rounded-xl transition-colors min-h-[44px]"
             >
-              Apply for this Position
+              {t('applyBtn2')}
             </button>
           </div>
         )}
@@ -116,7 +118,7 @@ export default function CareerApplyView({ job }: Props) {
       {/* Application Form — revealed on Apply click */}
       {showForm && (
         <div ref={formRef}>
-          <h2 className="text-lg font-bold text-utu-text-primary mb-4">Your Application</h2>
+          <h2 className="text-lg font-bold text-utu-text-primary mb-4">{t('yourApplication')}</h2>
           <CareerApplicationForm role={job.title} />
         </div>
       )}

@@ -74,6 +74,41 @@ export const TOOL_DEFINITIONS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'escalate_to_human',
+    description:
+      'Create a support ticket and hand off the conversation to a human agent. ' +
+      'Call this when: (1) the user explicitly asks to speak to a person or agent, (2) the issue is a complaint or urgent problem you cannot resolve, ' +
+      '(3) the user is frustrated after 2+ failed attempts. ' +
+      'Collect name, email, and a summary of the issue before calling this tool.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Full name of the customer',
+        },
+        email: {
+          type: 'string',
+          description: 'Email address of the customer',
+        },
+        topic: {
+          type: 'string',
+          description: 'Category of the issue: flights, hotels, hajj, cars, payments, tech, visa, privacy, or other',
+          enum: ['flights', 'hotels', 'hajj', 'cars', 'payments', 'tech', 'visa', 'privacy', 'other'],
+        },
+        message: {
+          type: 'string',
+          description: 'Detailed description of the issue the customer needs help with',
+        },
+        bookingRef: {
+          type: 'string',
+          description: 'Booking reference number if the user has one (optional)',
+        },
+      },
+      required: ['name', 'email', 'topic', 'message'],
+    },
+  },
+  {
     name: 'plan_trip',
     description:
       'Plan a complete Umrah or Hajj trip package including hotel and flight options. ' +
@@ -109,6 +144,10 @@ export const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   },
 ];
 
+// ─── Service URLs ─────────────────────────────────────────────────────────────
+
+const AUTH_SERVICE = process.env.AUTH_SERVICE_URL ?? 'http://localhost:3001';
+
 // ─── Tool Executor Types ───────────────────────────────────────────────────────
 
 interface HotelResult {
@@ -131,6 +170,47 @@ interface FlightResult {
 
 const HOTEL_SERVICE  = process.env.INTERNAL_HOTEL_SERVICE_URL  ?? 'http://hotel-service:3003';
 const FLIGHT_SERVICE = process.env.INTERNAL_FLIGHT_SERVICE_URL ?? 'http://flight-service:3004';
+
+async function escalateToHuman(input: {
+  name: string;
+  email: string;
+  topic: string;
+  message: string;
+  bookingRef?: string;
+}): Promise<string> {
+  try {
+    const res = await fetch(`${AUTH_SERVICE}/api/contact`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        name:        input.name,
+        email:       input.email,
+        topic:       input.topic,
+        message:     `[Escalated from AI chat]\n\n${input.message}`,
+        booking_ref: input.bookingRef ?? null,
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (res.ok) {
+      const data = await res.json().catch(() => ({})) as { id?: string };
+      const ref = data.id ? `Your reference number is **${data.id}**.` : '';
+      return (
+        `Ticket created successfully. ${ref}\n\n` +
+        `A support agent will contact you at **${input.email}** within 24 hours (urgent cases within 2 hours). ` +
+        `Is there anything else I can help you with in the meantime?`
+      );
+    }
+  } catch {
+    // fall through to fallback
+  }
+
+  // Fallback if the contact service is unreachable
+  return (
+    `I've noted your request and a support agent will follow up at **${input.email}** shortly. ` +
+    `If you need immediate assistance, please email support@utubooking.com or call +966-11-XXX-XXXX.`
+  );
+}
 
 async function searchHotels(input: {
   destination: string;
@@ -329,6 +409,8 @@ export async function executeTool(name: string, input: Record<string, unknown>):
       return searchFlights(input as Parameters<typeof searchFlights>[0]);
     case 'plan_trip':
       return planTrip(input as Parameters<typeof planTrip>[0]);
+    case 'escalate_to_human':
+      return escalateToHuman(input as Parameters<typeof escalateToHuman>[0]);
     default:
       return `Unknown tool: ${name}`;
   }

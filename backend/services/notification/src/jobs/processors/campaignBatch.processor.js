@@ -20,12 +20,13 @@ function getRedis() {
   return redisClient;
 }
 
-const BATCH_SIZE  = 100;
-const BASE_URL    = process.env.APP_URL || 'https://utubooking.com';
+const BATCH_SIZE   = 100;
+const BASE_URL     = process.env.APP_URL || 'https://utubooking.com';
+const NOTIFY_URL   = process.env.NOTIFICATION_PUBLIC_URL || 'http://localhost:3002';
 
 /**
  * Fetch all opted-in active users for campaign sending.
- * Filters out hard-suppressed users.
+ * Includes loyalty tier and last booking date for segment filtering.
  */
 async function getAllOptedInUsers() {
   const { rows } = await pool.query(`
@@ -36,8 +37,12 @@ async function getAllOptedInUsers() {
       u.name_ar,
       u.preferred_lang,
       u.preferred_currency,
-      COALESCE(u.country_code, '') AS country_code
+      COALESCE(u.country_code, '') AS country_code,
+      la.tier                       AS loyalty_tier,
+      MAX(b.created_at)             AS last_booking_date
     FROM users u
+    LEFT JOIN loyalty_accounts la ON la.user_id = u.id
+    LEFT JOIN bookings b ON b.user_id = u.id
     WHERE u.is_active = TRUE
       AND NOT EXISTS (
         SELECT 1 FROM email_suppressions es
@@ -45,9 +50,41 @@ async function getAllOptedInUsers() {
           AND es.booking_id IS NULL
           AND es.lifted_at IS NULL
       )
+    GROUP BY u.id, u.email, u.name_en, u.name_ar,
+             u.preferred_lang, u.preferred_currency, u.country_code, la.tier
     ORDER BY u.created_at ASC
   `);
   return rows;
+}
+
+/**
+ * Filter users to a target segment. Returns original array if segment is null.
+ */
+function applySegmentFilter(users, segment) {
+  if (!segment) return users;
+  let filtered = users;
+  if (segment.countries?.length)
+    filtered = filtered.filter(u => segment.countries.includes(u.country_code));
+  if (segment.loyalty_tiers?.length)
+    filtered = filtered.filter(u => segment.loyalty_tiers.includes(u.loyalty_tier));
+  if (segment.min_days_since_booking != null || segment.max_days_since_booking != null) {
+    filtered = filtered.filter(u => {
+      const days = u.last_booking_date
+        ? Math.floor((Date.now() - new Date(u.last_booking_date)) / 86400000)
+        : Infinity;
+      const min = segment.min_days_since_booking ?? 0;
+      const max = segment.max_days_since_booking ?? Infinity;
+      return days >= min && days <= max;
+    });
+  }
+  return filtered;
+}
+
+/**
+ * Wrap a deal CTA URL with the click-tracking redirect.
+ */
+function trackedUrl(emailLogId, rawUrl) {
+  return `${NOTIFY_URL}/track/click?lid=${emailLogId}&url=${encodeURIComponent(rawUrl)}`;
 }
 
 /**
@@ -65,6 +102,9 @@ async function processCampaignDispatch() {
 
     try {
       let users = await getAllOptedInUsers();
+
+      // Audience segment filter (country, loyalty tier, recency)
+      users = applySegmentFilter(users, campaign.target_segment ?? null);
 
       // Compliance filter — CCPA + GDPR per shard
       users = await bulkFilterForCampaign(users, redis);
@@ -86,12 +126,32 @@ async function processCampaignDispatch() {
               ? (campaign.subject_ar || campaign.subject_en)
               : campaign.subject_en;
 
+            // Log first to get emailLogId for click-tracked URLs
+            const emailLogId = await repo.logEmail({
+              userId:            user.id,
+              recipientEmail:    user.email,
+              emailType:         'monthly_deal_digest',
+              emailCategory:     'marketing',
+              campaignId:        campaign.id,
+              sendgridMessageId: null,
+              locale,
+              subject,
+              deliveryStatus:    'queued',
+              errorMessage:      null,
+            });
+
+            // Build deals with click-tracked CTA URLs
+            const dealsTracked = (campaign.deal_items ?? []).map(d => ({
+              ...d,
+              cta_url: emailLogId ? trackedUrl(emailLogId, d.cta_url) : d.cta_url,
+            }));
+
             let html;
             try {
               html = render('monthly_deal_digest', locale, {
                 user:     { name: userName },
                 campaign: { name: campaign.name, subject },
-                deals:    campaign.deal_items ?? [],
+                deals:    dealsTracked,
                 unsubscribe_url: `${BASE_URL}/unsubscribe?userId=${user.id}`,
               });
             } catch (renderErr) {
@@ -119,18 +179,13 @@ async function processCampaignDispatch() {
               batchFailed++;
             }
 
-            await repo.logEmail({
-              userId:            user.id,
-              recipientEmail:    user.email,
-              emailType:         'monthly_deal_digest',
-              emailCategory:     'marketing',
-              campaignId:        campaign.id,
-              sendgridMessageId: messageId,
-              locale,
-              subject,
-              deliveryStatus:    status,
-              errorMessage:      errorMsg,
-            });
+            // Update the pre-logged row with actual messageId + final status
+            if (emailLogId) {
+              await pool.query(
+                `UPDATE email_log SET sendgrid_message_id = $1, delivery_status = $2, error_message = $3 WHERE id = $4`,
+                [messageId, status, errorMsg, emailLogId],
+              );
+            }
           }),
         );
 

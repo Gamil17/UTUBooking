@@ -7,15 +7,43 @@ export const metadata: Metadata = {
   description: 'Hajj and Umrah travel guides, tips for Muslim travelers, hotel reviews, and destination guides for Saudi Arabia and beyond.',
 };
 
+interface ApiPost {
+  id:       string;
+  slug:     string;
+  category: string;
+  title:    string;
+  excerpt:  string;
+  published_date: string;
+}
+
+async function fetchPosts(): Promise<ApiPost[]> {
+  try {
+    const res = await fetch(
+      `${process.env.AUTH_SERVICE_URL ?? 'http://localhost:3001'}/api/blog`,
+      { cache: 'no-store', signal: AbortSignal.timeout(5_000) },
+    );
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function BlogPage() {
   const t = await getTranslations('blog');
 
-  const posts = [
+  const i18nPosts = [
     { slug: 'hajj-2026-guide',             category: t('post1Category'), title: t('post1Title'), excerpt: t('post1Excerpt'), date: t('post1Date') },
     { slug: 'umrah-hotels-makkah',          category: t('post2Category'), title: t('post2Title'), excerpt: t('post2Excerpt'), date: t('post2Date') },
     { slug: 'madinah-travel-tips',          category: t('post3Category'), title: t('post3Title'), excerpt: t('post3Excerpt'), date: t('post3Date') },
     { slug: 'muslim-travel-southeast-asia', category: t('post4Category'), title: t('post4Title'), excerpt: t('post4Excerpt'), date: t('post4Date') },
   ];
+
+  const apiPosts = await fetchPosts();
+  const posts = apiPosts.length > 0
+    ? apiPosts.map((p) => ({ slug: p.slug, category: p.category, title: p.title, excerpt: p.excerpt, date: p.published_date }))
+    : i18nPosts;
 
   const categories = [
     { key: 'catAll',          label: t('catAll') },

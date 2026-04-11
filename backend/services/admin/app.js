@@ -18,7 +18,30 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
 // ── Auth middleware ───────────────────────────────────────────────────────────
 const ADMIN_ROLES = new Set(['admin', 'country_admin', 'super_admin']);
 
+// Service-to-service secret check (constant-time to prevent timing attacks)
+const { timingSafeEqual } = require('crypto');
+function checkAdminSecret(req) {
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) return false;
+  const provided = req.headers['x-admin-secret'] ?? '';
+  if (!provided) return false;
+  try {
+    const a = Buffer.from(secret);
+    const b = Buffer.alloc(a.length);
+    Buffer.from(provided).copy(b);
+    return timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+
+// Internal service account injected when called via x-admin-secret
+const SERVICE_ACCOUNT = { sub: 'system', email: 'system@internal', role: 'super_admin', name: 'System', admin_country: null };
+
 function requireAdmin(req, res, next) {
+  // Allow server-side BFF calls using shared admin secret
+  if (checkAdminSecret(req)) { req.user = SERVICE_ACCOUNT; return next(); }
+
   const auth = req.headers.authorization;
   if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'UNAUTHORIZED' });
   try {
@@ -34,6 +57,9 @@ function requireAdmin(req, res, next) {
 }
 
 function requireSuperAdmin(req, res, next) {
+  // Allow server-side BFF calls using shared admin secret
+  if (checkAdminSecret(req)) { req.user = SERVICE_ACCOUNT; return next(); }
+
   const auth = req.headers.authorization;
   if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'UNAUTHORIZED' });
   try {
@@ -431,6 +457,172 @@ app.get('/admin/api/audit-log', requireSuperAdmin, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ── Admin notes on customer profile ──────────────────────────────────────────
+
+app.patch('/admin/api/users/:id/notes', requireAdmin, async (req, res) => {
+  const { notes } = req.body ?? {};
+  if (typeof notes !== 'string') {
+    return res.status(400).json({ error: 'INVALID_BODY', message: 'notes must be a string' });
+  }
+  try {
+    const { rows } = await pool.query(
+      `UPDATE users
+          SET admin_notes            = $2,
+              admin_notes_updated_at = NOW(),
+              updated_at             = NOW()
+        WHERE id = $1
+        RETURNING id, admin_notes, admin_notes_updated_at`,
+      [req.params.id, notes.trim() || null],
+    );
+    if (!rows.length) return res.status(404).json({ error: 'USER_NOT_FOUND' });
+    await auditLog(req.user.sub, 'update_admin_notes', req.params.id);
+    return res.json({ data: rows[0] });
+  } catch (err) {
+    console.error('[admin/users/:id/notes]', err.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ── Customer 360 profile ──────────────────────────────────────────────────────
+// Aggregates user, bookings, payments, loyalty, and support enquiries for one customer.
+
+app.get('/admin/api/users/:id/profile', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [userRes, bookingsRes, loyaltyRes, enquiriesRes] = await Promise.all([
+      // User profile
+      pool.query(
+        `SELECT id, email, name, country, preferred_currency, preferred_lang,
+                role, is_active, COALESCE(status, 'active') AS status,
+                admin_notes, admin_notes_updated_at,
+                created_at, last_seen_at
+           FROM users
+          WHERE id = $1
+          LIMIT 1`,
+        [id],
+      ),
+      // Last 20 bookings with payment info
+      pool.query(
+        `SELECT b.id, b.reference_no, b.product_type, b.status,
+                b.total_price, b.currency, b.created_at, b.confirmed_at, b.meta,
+                p.id       AS payment_id,
+                p.method   AS payment_method,
+                p.status   AS payment_status,
+                p.amount   AS payment_amount,
+                p.currency AS payment_currency,
+                p.paid_at,
+                p.refunded_at,
+                p.refund_amount
+           FROM bookings b
+           LEFT JOIN payments p ON p.booking_id = b.id
+          WHERE b.user_id = $1
+          ORDER BY b.created_at DESC
+          LIMIT 20`,
+        [id],
+      ),
+      // Loyalty account
+      pool.query(
+        `SELECT tier, points, lifetime_points, created_at
+           FROM loyalty_accounts
+          WHERE user_id = $1
+          LIMIT 1`,
+        [id],
+      ),
+      // Support enquiries matched by email
+      pool.query(
+        `SELECT ce.id, ce.topic, ce.message, ce.booking_ref, ce.status, ce.admin_notes, ce.created_at
+           FROM contact_enquiries ce
+          WHERE ce.email = (SELECT email FROM users WHERE id = $1 LIMIT 1)
+          ORDER BY ce.created_at DESC
+          LIMIT 10`,
+        [id],
+      ),
+    ]);
+
+    if (!userRes.rows[0]) {
+      return res.status(404).json({ error: 'USER_NOT_FOUND' });
+    }
+
+    return res.json({
+      data: {
+        user:      userRes.rows[0],
+        bookings:  bookingsRes.rows,
+        loyalty:   loyaltyRes.rows[0] ?? null,
+        enquiries: enquiriesRes.rows,
+      },
+    });
+  } catch (err) {
+    console.error('[admin/users/:id/profile]', err.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ── Infrastructure routes ─────────────────────────────────────────────────────
+const infraHealthRouter   = require('./src/routes/infrastructure.health');
+const iranIsolationRouter = require('./src/routes/iran.isolation');
+app.use('/api/admin/infrastructure', infraHealthRouter);
+app.use('/api/admin/infrastructure', iranIsolationRouter);
+
+// ── Marketing routes ──────────────────────────────────────────────────────────
+const marketingRouter = require('./src/routes/marketing.router');
+app.use('/api/admin/marketing', marketingRouter);
+
+// CRM routes removed — now served by sales-service on port 3013
+// See backend/services/sales/ for all /api/sales/* endpoints
+
+// ── Finance routes ────────────────────────────────────────────────────────────
+const financeRouter = require('./src/routes/finance.router');
+app.use('/api/admin/finance', financeRouter);
+
+// ── HR routes ─────────────────────────────────────────────────────────────────
+const hrRouter = require('./src/routes/hr.router');
+app.use('/api/admin/hr', hrRouter);
+
+// ── Compliance routes ──────────────────────────────────────────────────────────
+const complianceRouter = require('./src/routes/compliance.router');
+app.use('/api/admin/compliance', complianceRouter);
+
+// ── Legal routes ───────────────────────────────────────────────────────────────
+const legalRouter = require('./src/routes/legal.router');
+app.use('/api/admin/legal', legalRouter);
+
+// ── Ops routes ────────────────────────────────────────────────────────────────
+const opsRouter = require('./src/routes/ops.router');
+app.use('/api/admin/ops', opsRouter);
+
+// ── Dev routes ────────────────────────────────────────────────────────────────
+const devRouter = require('./src/routes/dev.router');
+app.use('/api/admin/dev', devRouter);
+
+// ── Products routes ───────────────────────────────────────────────────────────
+const productsRouter = require('./src/routes/products.router');
+app.use('/api/admin/products', productsRouter);
+
+// ── Business Development routes ───────────────────────────────────────────────
+const bizdevRouter = require('./src/routes/bizdev.router');
+app.use('/api/admin/bizdev', bizdevRouter);
+
+// ── Revenue Management routes ─────────────────────────────────────────────────
+const revenueRouter = require('./src/routes/revenue.router');
+app.use('/api/admin/revenue', revenueRouter);
+
+// ── Customer Success routes ───────────────────────────────────────────────────
+const customerSuccessRouter = require('./src/routes/customer-success.router');
+app.use('/api/admin/customer-success', customerSuccessRouter);
+
+// ── Procurement routes ────────────────────────────────────────────────────────
+const procurementRouter = require('./src/routes/procurement.router');
+app.use('/api/admin/procurement', procurementRouter);
+
+// ── Fraud & Risk routes ───────────────────────────────────────────────────────
+const fraudRouter = require('./src/routes/fraud.router');
+app.use('/api/admin/fraud', fraudRouter);
+
+// ── Analytics / BI routes ─────────────────────────────────────────────────────
+const analyticsRouter = require('./src/routes/analytics.router');
+app.use('/api/admin/analytics', analyticsRouter);
 
 // ── 404 / Error ───────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ error: 'NOT_FOUND' }));

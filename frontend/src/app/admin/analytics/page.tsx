@@ -1,241 +1,557 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { useQuery } from '@tanstack/react-query';
-import { getRevParMetrics, getFunnelMetrics } from '@/lib/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  getBiStats, getBiKpiSummary, getBiKpiTargets, createBiKpiTarget, updateBiKpiTarget, deleteBiKpiTarget,
+  getBiDashboards, createBiDashboard, updateBiDashboard, deleteBiDashboard,
+  getBiReports, createBiReport, updateBiReport, deleteBiReport,
+  getBiAlerts, createBiAlert, updateBiAlert, deleteBiAlert,
+  type BiStats, type BiKpiTarget, type BiDashboard, type BiReport, type BiAlert,
+} from '@/lib/api';
 
-const PERIODS = ['today', 'week', 'month', 'year'] as const;
-type Period = typeof PERIODS[number];
+const TABS = ['Overview', 'KPI Targets', 'Dashboards', 'Reports', 'Alerts'] as const;
+type Tab = typeof TABS[number];
 
-const PERIOD_API_MAP: Record<Period, string> = {
-  today: '7d',
-  week:  '7d',
-  month: '30d',
-  year:  '90d',
-};
+const KPI_CATEGORIES = ['revenue','bookings','users','conversion','retention','operations'];
+const KPI_UNITS = ['SAR','%','count','ms','days'];
+const KPI_PERIODS = ['daily','weekly','monthly','quarterly','annual'];
+const QUERY_TYPES = ['bookings','revenue','users','flights','hotels','cars','loyalty','funnel'];
+const ALERT_CONDITIONS = ['below_target','above_target','below_threshold','above_threshold'];
 
-function StatCard({
-  label,
-  value,
-  sub,
-  trend,
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  trend?: 'up' | 'down' | 'neutral';
-}) {
-  const trendColor =
-    trend === 'up' ? 'text-utu-blue' :
-    trend === 'down' ? 'text-red-500' :
-    'text-utu-text-muted';
+function HitBadge({ pct }: { pct: number | null }) {
+  if (pct === null) return <span className="text-gray-400 text-xs">—</span>;
+  const cls = pct >= 90 ? 'bg-green-100 text-green-700' : pct >= 70 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
+  return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cls}`}>{pct.toFixed(0)}%</span>;
+}
+
+function HitBar({ pct }: { pct: number | null }) {
+  if (pct === null) return <div className="h-2 bg-gray-100 rounded-full" />;
+  const capped = Math.min(pct, 100);
+  const color = pct >= 90 ? 'bg-green-500' : pct >= 70 ? 'bg-amber-500' : 'bg-red-500';
   return (
-    <div className="rounded-xl border border-utu-border-default bg-utu-bg-card p-5 shadow-sm">
-      <p className="text-sm font-medium text-utu-text-muted">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-utu-text-primary">{value}</p>
-      {sub && (
-        <p className={`mt-1 text-xs ${trendColor}`}>
-          {trend === 'up' ? '↑ ' : trend === 'down' ? '↓ ' : ''}{sub}
-        </p>
-      )}
+    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${capped}%` }} />
     </div>
   );
 }
 
-function BarRow({ label, value, max, color = 'bg-utu-blue' }: { label: string; value: number; max: number; color?: string }) {
-  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
-  return (
-    <div>
-      <div className="mb-1 flex justify-between text-xs">
-        <span className="font-medium text-utu-text-primary">{label}</span>
-        <span className="text-utu-text-muted">{value.toLocaleString()}</span>
-      </div>
-      <div className="h-3 w-full rounded-full bg-utu-bg-muted">
-        <div
-          className={`h-3 rounded-full transition-all duration-500 ${color}`}
-          style={{ width: `${pct}%` }}
-          role="progressbar"
-          aria-valuenow={pct}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        />
-      </div>
-    </div>
-  );
-}
-
-export default function AdminAnalyticsPage() {
-  const t = useTranslations('admin');
-  const tCommon = useTranslations('common');
-  const [period, setPeriod] = useState<Period>('month');
-
-  const apiPeriod = PERIOD_API_MAP[period];
-
-  const { data: revpar, isLoading: revLoading } = useQuery({
-    queryKey: ['revpar-analytics', apiPeriod],
-    queryFn:  () => getRevParMetrics('all', apiPeriod),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: funnel, isLoading: funnelLoading } = useQuery({
-    queryKey: ['funnel-analytics', apiPeriod],
-    queryFn:  () => getFunnelMetrics(apiPeriod as '7d' | '30d'),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const isLoading = revLoading || funnelLoading;
-
-  // Aggregate totals from revpar data
-  type RevparRow = { bookings?: number; avg_revenue?: number; market?: string };
-  type FunnelRow = { event_type?: string; count?: number; country?: string };
-
-  const totalBookings = revpar?.data?.reduce((s: number, r: RevparRow) => s + (r.bookings ?? 0), 0) ?? 0;
-  const totalRevenue  = revpar?.data?.reduce((s: number, r: RevparRow) => s + Number(r.avg_revenue ?? 0), 0) ?? 0;
-  const avgValue      = totalBookings > 0 ? Math.round(totalRevenue / totalBookings) : 0;
-
-  // Funnel search count = proxy for active users
-  const searchCount   = funnel?.data?.filter((r: FunnelRow) => r.event_type === 'search')
-    .reduce((s: number, r: FunnelRow) => s + (r.count ?? 0), 0) ?? 0;
-  const completedCount = funnel?.data?.filter((r: FunnelRow) => r.event_type === 'booking_completed')
-    .reduce((s: number, r: FunnelRow) => s + (r.count ?? 0), 0) ?? 0;
-  const convRate = searchCount > 0 ? ((completedCount / searchCount) * 100).toFixed(1) : '0.0';
-
-  // Market breakdown from revpar
-  const makkahRow = revpar?.data?.find((r: RevparRow) => r.market === 'MCM');
-  const madinahRow = revpar?.data?.find((r: RevparRow) => r.market === 'MED');
-  const makkahBookings = makkahRow?.bookings ?? 0;
-  const madinahBookings = madinahRow?.bookings ?? 0;
-  const maxDest = Math.max(makkahBookings, madinahBookings, 1);
-
-  // Country breakdown from funnel
-  const countryMap: Record<string, number> = {};
-  funnel?.data?.forEach((r: FunnelRow) => {
-    if (r.event_type === 'search' && r.country) {
-      countryMap[r.country] = (countryMap[r.country] ?? 0) + (r.count ?? 0);
-    }
-  });
-  const topCountries = Object.entries(countryMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const maxCountry = topCountries[0]?.[1] ?? 1;
-
-  const PERIOD_LABELS: Record<Period, string> = {
-    today: t('periodToday'),
-    week:  t('periodWeek'),
-    month: t('periodMonth'),
-    year:  t('periodYear'),
+function CategoryBadge({ cat }: { cat: string }) {
+  const map: Record<string, string> = {
+    revenue: 'bg-green-100 text-green-700',
+    bookings: 'bg-blue-100 text-blue-700',
+    users: 'bg-purple-100 text-purple-700',
+    conversion: 'bg-orange-100 text-orange-700',
+    retention: 'bg-teal-100 text-teal-700',
+    operations: 'bg-gray-100 text-gray-600',
   };
+  return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${map[cat] ?? 'bg-gray-100 text-gray-500'}`}>{cat}</span>;
+}
+
+// ─── Overview ─────────────────────────────────────────────────────────────────
+
+function OverviewTab({ stats }: { stats: BiStats | undefined }) {
+  const { data: summaryData } = useQuery({
+    queryKey: ['analytics', 'kpi-summary'],
+    queryFn: () => getBiKpiSummary(),
+  });
+  const kpis: (BiKpiTarget & { hit_pct: number | null })[] = (summaryData as any)?.data ?? [];
+
+  const grouped = kpis.reduce<Record<string, typeof kpis>>((acc, k) => {
+    (acc[k.category] = acc[k.category] ?? []).push(k);
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-utu-text-primary">{t('analytics')}</h1>
-          <p className="mt-1 text-sm text-utu-text-muted">{t('analyticsSubtitle')}</p>
-        </div>
-        {/* Period selector */}
-        <div className="flex rounded-lg border border-utu-border-default overflow-hidden">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-4 py-2 text-sm font-medium transition-colors
-                ${period === p ? 'bg-utu-blue text-white' : 'bg-utu-bg-card text-utu-text-muted hover:bg-utu-bg-muted'}`}
-              style={{ minHeight: 40 }}
-              aria-pressed={period === p}
-            >
-              {PERIOD_LABELS[p]}
-            </button>
-          ))}
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'KPIs On Target', value: stats?.kpis_on_target ?? '—', good: true },
+          { label: 'KPIs Off Target', value: stats?.kpis_off_target ?? '—', warn: (stats?.kpis_off_target ?? 0) > 0 },
+          { label: 'Active Alerts', value: stats?.active_alerts ?? '—' },
+          { label: 'Reports', value: stats?.reports_count ?? '—' },
+        ].map(c => (
+          <div key={c.label} className="bg-white rounded-xl border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 mb-1">{c.label}</p>
+            <p className={`text-2xl font-bold ${c.warn ? 'text-red-600' : c.good ? 'text-green-600' : 'text-gray-900'}`}>{c.value}</p>
+          </div>
+        ))}
       </div>
 
-      {isLoading && (
-        <div className="rounded-xl border border-utu-border-default bg-utu-bg-card p-12 text-center text-sm text-utu-text-muted">
-          {tCommon('loading')}
+      {Object.entries(grouped).map(([cat, items]) => (
+        <div key={cat} className="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 className="font-semibold text-gray-800 mb-4 capitalize">{cat}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {items.map(k => (
+              <div key={k.id} className={`p-4 rounded-lg border ${k.hit_pct !== null && k.hit_pct < 70 ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-gray-50'}`}>
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{k.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{k.period}</p>
+                  </div>
+                  <HitBadge pct={k.hit_pct} />
+                </div>
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-lg font-bold text-gray-900">{k.current_value ?? '—'}</span>
+                  <span className="text-xs text-gray-400">/ {k.target_value} {k.unit}</span>
+                </div>
+                <HitBar pct={k.hit_pct} />
+                {k.owner && <p className="text-xs text-gray-400 mt-1">Owner: {k.owner}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {kpis.length === 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">No KPI targets configured yet</div>
+      )}
+    </div>
+  );
+}
+
+// ─── KPI Targets ──────────────────────────────────────────────────────────────
+
+function KpiTargetsTab() {
+  const qc = useQueryClient();
+  const [catFilter, setCatFilter] = useState('');
+  const [panel, setPanel] = useState<Partial<BiKpiTarget> | null>(null);
+
+  const { data } = useQuery({
+    queryKey: ['analytics', 'kpi-targets', catFilter],
+    queryFn: () => getBiKpiTargets({ category: catFilter }),
+  });
+  const rows: BiKpiTarget[] = (data as any)?.data ?? [];
+
+  const { data: summaryData } = useQuery({
+    queryKey: ['analytics', 'kpi-summary'],
+    queryFn: () => getBiKpiSummary(),
+  });
+  const summary: (BiKpiTarget & { hit_pct: number | null })[] = (summaryData as any)?.data ?? [];
+  const hitMap = Object.fromEntries(summary.map(k => [k.id, k.hit_pct]));
+
+  const save = useMutation({
+    mutationFn: (body: Partial<BiKpiTarget>) =>
+      panel?.id ? updateBiKpiTarget(panel.id!, body) : createBiKpiTarget(body),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['analytics'] }); setPanel(null); },
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteBiKpiTarget(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['analytics'] }),
+  });
+
+  return (
+    <div>
+      <div className="flex gap-3 items-center mb-4">
+        <select value={catFilter} onChange={e => setCatFilter(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm">
+          <option value="">All Categories</option>
+          {KPI_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <button onClick={() => setPanel({ unit: 'SAR', period: 'monthly', category: 'revenue' })} className="ms-auto bg-blue-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-blue-700">+ New KPI</button>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr className="text-left text-xs text-gray-500">
+              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Category</th>
+              <th className="px-4 py-3">Current</th>
+              <th className="px-4 py-3">Target</th>
+              <th className="px-4 py-3">Unit</th>
+              <th className="px-4 py-3">Period</th>
+              <th className="px-4 py-3">Hit %</th>
+              <th className="px-4 py-3">Owner</th>
+              <th className="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {rows.map(r => (
+              <tr key={r.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-gray-800">{r.name}</td>
+                <td className="px-4 py-3"><CategoryBadge cat={r.category} /></td>
+                <td className="px-4 py-3 font-semibold">{r.current_value ?? '—'}</td>
+                <td className="px-4 py-3 text-gray-500">{r.target_value}</td>
+                <td className="px-4 py-3 text-gray-500">{r.unit}</td>
+                <td className="px-4 py-3 text-gray-500">{r.period}</td>
+                <td className="px-4 py-3"><HitBadge pct={hitMap[r.id] ?? null} /></td>
+                <td className="px-4 py-3 text-gray-500">{r.owner ?? '—'}</td>
+                <td className="px-4 py-3 text-right space-x-2">
+                  <button onClick={() => setPanel(r)} className="text-blue-600 hover:underline text-xs">Edit</button>
+                  <button onClick={() => { if (confirm('Delete KPI?')) remove.mutate(r.id); }} className="text-red-500 hover:underline text-xs">Delete</button>
+                </td>
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400">No KPI targets found</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {panel !== null && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/30">
+          <div className="bg-white w-full max-w-md h-full overflow-y-auto p-6 shadow-xl">
+            <h2 className="text-lg font-semibold mb-4">{panel.id ? 'Edit KPI Target' : 'New KPI Target'}</h2>
+            <form onSubmit={e => { e.preventDefault(); save.mutate(panel); }} className="space-y-3">
+              <div><label className="text-xs text-gray-500">Name *</label><input required value={panel.name ?? ''} onChange={e => setPanel(p => ({ ...p!, name: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-xs text-gray-500">Metric Key *</label><input required value={panel.metric_key ?? ''} onChange={e => setPanel(p => ({ ...p!, metric_key: e.target.value }))} placeholder="e.g. monthly_revenue_sar" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-xs text-gray-500">Category</label>
+                <select value={panel.category ?? 'revenue'} onChange={e => setPanel(p => ({ ...p!, category: e.target.value as any }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1">
+                  {KPI_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div><label className="text-xs text-gray-500">Target Value *</label><input required type="number" step="0.0001" value={panel.target_value ?? ''} onChange={e => setPanel(p => ({ ...p!, target_value: e.target.value as any }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-xs text-gray-500">Current Value</label><input type="number" step="0.0001" value={panel.current_value ?? ''} onChange={e => setPanel(p => ({ ...p!, current_value: e.target.value as any }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-xs text-gray-500">Unit</label>
+                <select value={panel.unit ?? 'SAR'} onChange={e => setPanel(p => ({ ...p!, unit: e.target.value as any }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1">
+                  {KPI_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
+              <div><label className="text-xs text-gray-500">Period</label>
+                <select value={panel.period ?? 'monthly'} onChange={e => setPanel(p => ({ ...p!, period: e.target.value as any }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1">
+                  {KPI_PERIODS.map(per => <option key={per} value={per}>{per}</option>)}
+                </select>
+              </div>
+              <div><label className="text-xs text-gray-500">Owner</label><input value={panel.owner ?? ''} onChange={e => setPanel(p => ({ ...p!, owner: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div className="flex gap-3 pt-2">
+                <button type="submit" disabled={save.isPending} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">Save</button>
+                <button type="button" onClick={() => setPanel(null)} className="flex-1 border border-gray-300 py-2 rounded-lg text-sm">Cancel</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {!isLoading && (
-        <>
-          {/* KPI cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard
-              label={t('totalBookings')}
-              value={totalBookings.toLocaleString()}
-              trend="up"
-              sub={t('vsLastPeriod')}
-            />
-            <StatCard
-              label={t('totalRevenue')}
-              value={`SAR ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 0 })}`}
-              trend="up"
-              sub={t('vsLastPeriod')}
-            />
-            <StatCard
-              label={t('avgBookingValue')}
-              value={`SAR ${avgValue.toLocaleString()}`}
-              trend="neutral"
-            />
-            <StatCard
-              label={t('activeUsers')}
-              value={searchCount.toLocaleString()}
-              trend="up"
-              sub={t('vsLastPeriod')}
-            />
-          </div>
+// ─── Dashboards ───────────────────────────────────────────────────────────────
 
-          {/* Row 2 */}
-          <div className="grid lg:grid-cols-2 gap-5">
+function DashboardsTab() {
+  const qc = useQueryClient();
+  const [panel, setPanel] = useState<Partial<BiDashboard> | null>(null);
 
-            {/* Top Destinations */}
-            <div className="rounded-xl border border-utu-border-default bg-utu-bg-card p-6 shadow-sm">
-              <h2 className="mb-5 text-base font-semibold text-utu-text-primary">{t('topDestinations')}</h2>
-              <div className="space-y-4">
-                <BarRow label={`🕋 ${t('destMakkah')}`}  value={makkahBookings} max={maxDest} color="bg-amber-400" />
-                <BarRow label={`🕌 ${t('destMadinah')}`} value={madinahBookings} max={maxDest} color="bg-utu-bg-subtle0" />
-              </div>
+  const { data } = useQuery({
+    queryKey: ['analytics', 'dashboards'],
+    queryFn: () => getBiDashboards(),
+  });
+  const rows: BiDashboard[] = (data as any)?.data ?? [];
+
+  const save = useMutation({
+    mutationFn: (body: Partial<BiDashboard>) =>
+      panel?.id ? updateBiDashboard(panel.id!, body) : createBiDashboard(body),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['analytics', 'dashboards'] }); setPanel(null); },
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteBiDashboard(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['analytics', 'dashboards'] }),
+  });
+
+  return (
+    <div>
+      <div className="flex justify-end mb-4">
+        <button onClick={() => setPanel({ config: {}, is_default: false })} className="bg-blue-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-blue-700">+ New Dashboard</button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {rows.map(r => (
+          <div key={r.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-blue-300 transition-colors">
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="font-semibold text-gray-800">{r.name}</h3>
+              {r.is_default && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Default</span>}
             </div>
-
-            {/* Bookings by Market */}
-            <div className="rounded-xl border border-utu-border-default bg-utu-bg-card p-6 shadow-sm">
-              <h2 className="mb-5 text-base font-semibold text-utu-text-primary">{t('bookingsByMarket')}</h2>
-              {topCountries.length > 0 ? (
-                <div className="space-y-4">
-                  {topCountries.map(([country, count]) => (
-                    <BarRow key={country} label={country.toUpperCase()} value={count} max={maxCountry} />
-                  ))}
-                </div>
-              ) : (
-                <p className="py-6 text-center text-sm text-utu-text-muted">{t('noAnalyticsData')}</p>
-              )}
+            {r.description && <p className="text-sm text-gray-500 mb-3">{r.description}</p>}
+            <p className="text-xs text-gray-400 mb-3">Created by {r.created_by}</p>
+            <div className="flex gap-2">
+              <button onClick={() => setPanel(r)} className="text-xs text-blue-600 hover:underline">Edit</button>
+              <button onClick={() => { if (confirm('Delete dashboard?')) remove.mutate(r.id); }} className="text-xs text-red-500 hover:underline">Delete</button>
             </div>
           </div>
+        ))}
+        {rows.length === 0 && (
+          <div className="col-span-3 bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">No dashboards yet</div>
+        )}
+      </div>
 
-          {/* Conversion Rate */}
-          <div className="rounded-xl border border-utu-border-default bg-utu-bg-card p-6 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h2 className="text-base font-semibold text-utu-text-primary">{t('conversionRate')}</h2>
-                <p className="mt-1 text-sm text-utu-text-muted">{t('searchToBooking')}</p>
+      {panel !== null && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/30">
+          <div className="bg-white w-full max-w-md h-full overflow-y-auto p-6 shadow-xl">
+            <h2 className="text-lg font-semibold mb-4">{panel.id ? 'Edit Dashboard' : 'New Dashboard'}</h2>
+            <form onSubmit={e => { e.preventDefault(); save.mutate(panel); }} className="space-y-3">
+              <div><label className="text-xs text-gray-500">Name *</label><input required value={panel.name ?? ''} onChange={e => setPanel(p => ({ ...p!, name: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-xs text-gray-500">Description</label><textarea value={panel.description ?? ''} onChange={e => setPanel(p => ({ ...p!, description: e.target.value }))} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-xs text-gray-500">Config (JSON)</label>
+                <textarea
+                  value={typeof panel.config === 'object' ? JSON.stringify(panel.config, null, 2) : (panel.config ?? '{}')}
+                  onChange={e => { try { setPanel(p => ({ ...p!, config: JSON.parse(e.target.value) })); } catch { setPanel(p => ({ ...p!, config: e.target.value as any })); }}
+                  rows={6}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono"
+                />
               </div>
-              <div className="text-right">
-                <p className="text-4xl font-bold text-utu-blue">{convRate}%</p>
-                <p className="text-xs text-utu-text-muted mt-1">
-                  {completedCount.toLocaleString()} / {searchCount.toLocaleString()}
-                </p>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="is_default" checked={!!panel.is_default} onChange={e => setPanel(p => ({ ...p!, is_default: e.target.checked }))} />
+                <label htmlFor="is_default" className="text-sm text-gray-700">Set as default dashboard</label>
               </div>
-            </div>
-            {/* Visual bar */}
-            <div className="mt-4 h-3 w-full rounded-full bg-utu-bg-muted">
-              <div
-                className="h-3 rounded-full bg-utu-blue transition-all duration-700"
-                style={{ width: `${Math.min(parseFloat(convRate), 100)}%` }}
-              />
-            </div>
+              <div className="flex gap-3 pt-2">
+                <button type="submit" disabled={save.isPending} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">Save</button>
+                <button type="button" onClick={() => setPanel(null)} className="flex-1 border border-gray-300 py-2 rounded-lg text-sm">Cancel</button>
+              </div>
+            </form>
           </div>
-        </>
+        </div>
       )}
+    </div>
+  );
+}
+
+// ─── Reports ──────────────────────────────────────────────────────────────────
+
+function ReportsTab() {
+  const qc = useQueryClient();
+  const [typeFilter, setTypeFilter] = useState('');
+  const [panel, setPanel] = useState<Partial<BiReport> | null>(null);
+
+  const { data } = useQuery({
+    queryKey: ['analytics', 'reports', typeFilter],
+    queryFn: () => getBiReports({ query_type: typeFilter }),
+  });
+  const rows: BiReport[] = (data as any)?.data ?? [];
+
+  const save = useMutation({
+    mutationFn: (body: Partial<BiReport>) =>
+      panel?.id ? updateBiReport(panel.id!, body) : createBiReport(body),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['analytics', 'reports'] }); setPanel(null); },
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteBiReport(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['analytics', 'reports'] }),
+  });
+
+  return (
+    <div>
+      <div className="flex gap-3 items-center mb-4">
+        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm">
+          <option value="">All Types</option>
+          {QUERY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <button onClick={() => setPanel({ query_type: 'bookings', filters: {} })} className="ms-auto bg-blue-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-blue-700">+ New Report</button>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr className="text-left text-xs text-gray-500">
+              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Type</th>
+              <th className="px-4 py-3">Filters</th>
+              <th className="px-4 py-3">Schedule</th>
+              <th className="px-4 py-3">Last Run</th>
+              <th className="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {rows.map(r => (
+              <tr key={r.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-gray-800">{r.name}</td>
+                <td className="px-4 py-3"><span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{r.query_type}</span></td>
+                <td className="px-4 py-3 text-gray-400 text-xs font-mono">{Object.keys(r.filters ?? {}).length > 0 ? JSON.stringify(r.filters).slice(0, 40) + '…' : '—'}</td>
+                <td className="px-4 py-3 text-gray-500">{r.schedule ?? '—'}</td>
+                <td className="px-4 py-3 text-gray-400 text-xs">{r.last_run_at ? new Date(r.last_run_at).toLocaleString() : 'Never'}</td>
+                <td className="px-4 py-3 text-right space-x-2">
+                  <button onClick={() => setPanel(r)} className="text-blue-600 hover:underline text-xs">Edit</button>
+                  <button onClick={() => { if (confirm('Delete report?')) remove.mutate(r.id); }} className="text-red-500 hover:underline text-xs">Delete</button>
+                </td>
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No reports found</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {panel !== null && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/30">
+          <div className="bg-white w-full max-w-md h-full overflow-y-auto p-6 shadow-xl">
+            <h2 className="text-lg font-semibold mb-4">{panel.id ? 'Edit Report' : 'New Report'}</h2>
+            <form onSubmit={e => { e.preventDefault(); save.mutate(panel); }} className="space-y-3">
+              <div><label className="text-xs text-gray-500">Name *</label><input required value={panel.name ?? ''} onChange={e => setPanel(p => ({ ...p!, name: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-xs text-gray-500">Description</label><textarea value={panel.description ?? ''} onChange={e => setPanel(p => ({ ...p!, description: e.target.value }))} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-xs text-gray-500">Query Type *</label>
+                <select value={panel.query_type ?? 'bookings'} onChange={e => setPanel(p => ({ ...p!, query_type: e.target.value as any }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1">
+                  {QUERY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div><label className="text-xs text-gray-500">Filters (JSON)</label>
+                <textarea
+                  value={typeof panel.filters === 'object' ? JSON.stringify(panel.filters, null, 2) : (panel.filters ?? '{}')}
+                  onChange={e => { try { setPanel(p => ({ ...p!, filters: JSON.parse(e.target.value) })); } catch { setPanel(p => ({ ...p!, filters: e.target.value as any })); }}
+                  rows={4}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono"
+                />
+              </div>
+              <div><label className="text-xs text-gray-500">Schedule (cron or description)</label><input value={panel.schedule ?? ''} onChange={e => setPanel(p => ({ ...p!, schedule: e.target.value }))} placeholder="e.g. 0 9 * * 1 or Every Monday 9am" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div className="flex gap-3 pt-2">
+                <button type="submit" disabled={save.isPending} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">Save</button>
+                <button type="button" onClick={() => setPanel(null)} className="flex-1 border border-gray-300 py-2 rounded-lg text-sm">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Alerts ───────────────────────────────────────────────────────────────────
+
+function AlertsTab() {
+  const qc = useQueryClient();
+  const [activeFilter, setActiveFilter] = useState('');
+  const [panel, setPanel] = useState<Partial<BiAlert> | null>(null);
+
+  const { data } = useQuery({
+    queryKey: ['analytics', 'alerts', activeFilter],
+    queryFn: () => getBiAlerts({ active: activeFilter }),
+  });
+  const rows: BiAlert[] = (data as any)?.data ?? [];
+
+  const save = useMutation({
+    mutationFn: (body: Partial<BiAlert>) =>
+      panel?.id ? updateBiAlert(panel.id!, body) : createBiAlert(body),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['analytics', 'alerts'] }); setPanel(null); },
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteBiAlert(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['analytics', 'alerts'] }),
+  });
+
+  const toggle = useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) => updateBiAlert(id, { active }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['analytics', 'alerts'] }),
+  });
+
+  return (
+    <div>
+      <div className="flex gap-3 items-center mb-4">
+        <select value={activeFilter} onChange={e => setActiveFilter(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm">
+          <option value="">All</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+        <button onClick={() => setPanel({ condition: 'below_target', active: true })} className="ms-auto bg-blue-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-blue-700">+ New Alert</button>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr className="text-left text-xs text-gray-500">
+              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Condition</th>
+              <th className="px-4 py-3">Threshold</th>
+              <th className="px-4 py-3">Notify Email</th>
+              <th className="px-4 py-3">Active</th>
+              <th className="px-4 py-3">Last Fired</th>
+              <th className="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {rows.map(r => (
+              <tr key={r.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-gray-800">{r.name}</td>
+                <td className="px-4 py-3 text-gray-500">{r.condition.replace('_', ' ')}</td>
+                <td className="px-4 py-3">{r.threshold ?? '—'}</td>
+                <td className="px-4 py-3 text-gray-500 text-xs">{r.notify_email ?? '—'}</td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => toggle.mutate({ id: r.id, active: !r.active })}
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium transition-colors ${r.active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                  >
+                    {r.active ? 'Active' : 'Off'}
+                  </button>
+                </td>
+                <td className="px-4 py-3 text-gray-400 text-xs">{r.last_fired_at ? new Date(r.last_fired_at).toLocaleString() : 'Never'}</td>
+                <td className="px-4 py-3 text-right space-x-2">
+                  <button onClick={() => setPanel(r)} className="text-blue-600 hover:underline text-xs">Edit</button>
+                  <button onClick={() => { if (confirm('Delete alert?')) remove.mutate(r.id); }} className="text-red-500 hover:underline text-xs">Delete</button>
+                </td>
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No alerts configured</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {panel !== null && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/30">
+          <div className="bg-white w-full max-w-md h-full overflow-y-auto p-6 shadow-xl">
+            <h2 className="text-lg font-semibold mb-4">{panel.id ? 'Edit Alert' : 'New Alert'}</h2>
+            <form onSubmit={e => { e.preventDefault(); save.mutate(panel); }} className="space-y-3">
+              <div><label className="text-xs text-gray-500">Name *</label><input required value={panel.name ?? ''} onChange={e => setPanel(p => ({ ...p!, name: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-xs text-gray-500">Condition *</label>
+                <select value={panel.condition ?? 'below_target'} onChange={e => setPanel(p => ({ ...p!, condition: e.target.value as any }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1">
+                  {ALERT_CONDITIONS.map(c => <option key={c} value={c}>{c.replace('_', ' ')}</option>)}
+                </select>
+              </div>
+              <div><label className="text-xs text-gray-500">Threshold</label><input type="number" step="0.0001" value={panel.threshold ?? ''} onChange={e => setPanel(p => ({ ...p!, threshold: e.target.value as any }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-xs text-gray-500">Notify Email</label><input type="email" value={panel.notify_email ?? ''} onChange={e => setPanel(p => ({ ...p!, notify_email: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="alert_active" checked={panel.active !== false} onChange={e => setPanel(p => ({ ...p!, active: e.target.checked }))} />
+                <label htmlFor="alert_active" className="text-sm text-gray-700">Active</label>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="submit" disabled={save.isPending} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">Save</button>
+                <button type="button" onClick={() => setPanel(null)} className="flex-1 border border-gray-300 py-2 rounded-lg text-sm">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function AnalyticsPage() {
+  const [tab, setTab] = useState<Tab>('Overview');
+
+  const { data: statsData } = useQuery({
+    queryKey: ['analytics', 'stats'],
+    queryFn: () => getBiStats(),
+  });
+  const stats: BiStats | undefined = (statsData as any)?.data;
+
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Analytics & BI</h1>
+        <p className="text-sm text-gray-500 mt-1">KPI scorecards, custom dashboards, reports, and alerts</p>
+      </div>
+
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+        {TABS.map(t => (
+          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            {t}
+            {t === 'KPI Targets' && (stats?.kpis_off_target ?? 0) > 0 && (
+              <span className="ms-1.5 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">{stats!.kpis_off_target}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'Overview' && <OverviewTab stats={stats} />}
+      {tab === 'KPI Targets' && <KpiTargetsTab />}
+      {tab === 'Dashboards' && <DashboardsTab />}
+      {tab === 'Reports' && <ReportsTab />}
+      {tab === 'Alerts' && <AlertsTab />}
     </div>
   );
 }

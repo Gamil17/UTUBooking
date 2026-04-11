@@ -26,6 +26,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual, createHash } from 'crypto';
 
 // ── Region definitions ────────────────────────────────────────────────────────
 
@@ -226,17 +227,43 @@ async function probeRegion(region: Region): Promise<RegionHealth> {
 
 // ── Admin auth check ─────────────────────────────────────────────────────────
 
+const COOKIE_NAME = 'utu_admin_token';
+
+function safeEqual(a: string, b: string): boolean {
+  try { return timingSafeEqual(Buffer.from(a), Buffer.from(b)); } catch { return false; }
+}
+
 function isAuthorised(req: NextRequest): boolean {
-  const adminSecret = process.env.ADMIN_API_SECRET;
+  // In dev with no secrets set: allow
+  const adminSecret    = process.env.ADMIN_SECRET ?? '';
+  const adminApiSecret = process.env.ADMIN_API_SECRET ?? '';
 
-  // Skip auth in dev when no secret is set
-  if (!adminSecret) return process.env.NODE_ENV !== 'production';
+  if (!adminSecret && !adminApiSecret) {
+    return process.env.NODE_ENV !== 'production';
+  }
 
-  const authHeader = req.headers.get('authorization') ?? '';
-  const tokenHeader = req.headers.get('x-admin-token') ?? '';
+  // Cookie auth (used by admin UI — same pattern as all other admin BFF routes)
+  if (adminSecret) {
+    const derivedToken = createHash('sha256').update(`admin-session:${adminSecret}`).digest('hex');
+    const cookie = req.cookies.get(COOKIE_NAME)?.value ?? '';
+    if (cookie && safeEqual(cookie, derivedToken)) return true;
 
-  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-  return bearer === adminSecret || tokenHeader === adminSecret;
+    // Bearer ADMIN_SECRET
+    const bearer = req.headers.get('authorization') ?? '';
+    const token  = bearer.startsWith('Bearer ') ? bearer.slice(7) : '';
+    if (token && safeEqual(token, adminSecret)) return true;
+  }
+
+  // Legacy ADMIN_API_SECRET (x-admin-token / Bearer)
+  if (adminApiSecret) {
+    const tokenHeader = req.headers.get('x-admin-token') ?? '';
+    if (tokenHeader && safeEqual(tokenHeader, adminApiSecret)) return true;
+    const bearer = req.headers.get('authorization') ?? '';
+    const token  = bearer.startsWith('Bearer ') ? bearer.slice(7) : '';
+    if (token && safeEqual(token, adminApiSecret)) return true;
+  }
+
+  return false;
 }
 
 // ── Route handler ─────────────────────────────────────────────────────────────

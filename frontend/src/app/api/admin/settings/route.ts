@@ -4,14 +4,16 @@
  *
  * Settings are stored as JSON at Redis key `settings:platform`.
  * Falls back to hardcoded defaults if key is absent.
+ *
+ * Backend services read the same Redis key (with 60 s in-process cache)
+ * so changes here take effect within ~1 minute across all services.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { timingSafeEqual, createHash } from 'crypto';
+import { isAdminAuthorized } from '@/lib/admin-bff-auth';
 import redis from '@/lib/redis';
 
-const COOKIE_NAME   = 'utu_admin_token';
-const REDIS_KEY     = 'settings:platform';
+const REDIS_KEY = 'settings:platform';
 
 const DEFAULTS = {
   notifications: {
@@ -31,25 +33,6 @@ const DEFAULTS = {
     message: '',
   },
 };
-
-function safeEqual(a: string, b: string): boolean {
-  try { return timingSafeEqual(Buffer.from(a), Buffer.from(b)); } catch { return false; }
-}
-
-function deriveSessionToken(secret: string): string {
-  return createHash('sha256').update(`admin-session:${secret}`).digest('hex');
-}
-
-function isAdminAuthorized(req: NextRequest): boolean {
-  const secret = process.env.ADMIN_SECRET ?? '';
-  if (!secret) return false;
-  const sessionToken = deriveSessionToken(secret);
-  const cookie = req.cookies.get(COOKIE_NAME)?.value ?? '';
-  if (cookie && safeEqual(cookie, sessionToken)) return true;
-  const bearer = req.headers.get('authorization') ?? '';
-  const bearerToken = bearer.startsWith('Bearer ') ? bearer.slice(7) : '';
-  return bearerToken ? safeEqual(bearerToken, secret) : false;
-}
 
 export async function GET(req: NextRequest) {
   if (!isAdminAuthorized(req)) {

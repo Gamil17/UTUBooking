@@ -11,6 +11,54 @@ const router = Router();
 router.use(adminAuth);
 
 /**
+ * GET /api/admin/tenants
+ * List all tenants with their config.
+ */
+router.get('/', async (req, res, next) => {
+  try {
+    const limit  = Math.min(parseInt(req.query.limit  ?? 50), 100);
+    const offset = parseInt(req.query.offset ?? 0);
+    const search = req.query.search || null;
+
+    const conditions = [];
+    const values     = [];
+    let   i          = 1;
+
+    if (search) {
+      conditions.push(`(t.slug ILIKE $${i} OR t.name ILIKE $${i} OR t.domain ILIKE $${i})`);
+      values.push(`%${search}%`);
+      i++;
+    }
+
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { pool } = require('../db/pg');
+
+    const { rows } = await pool.query(
+      `SELECT t.id, t.slug, t.name, t.domain, t.custom_domain, t.logo_url,
+              t.primary_color, t.secondary_color, t.currency, t.locale, t.active,
+              t.created_at, t.updated_at,
+              tc.commission_rates, tc.enabled_modules,
+              tc.hide_platform_branding, tc.revenue_share_pct
+         FROM tenants t
+         JOIN tenant_configs tc ON tc.tenant_id = t.id
+         ${where}
+        ORDER BY t.created_at DESC
+        LIMIT $${i} OFFSET $${i + 1}`,
+      [...values, limit, offset]
+    );
+
+    const totalRes = await pool.query(
+      `SELECT COUNT(*) FROM tenants t ${where}`,
+      values
+    );
+
+    return res.json({ total: parseInt(totalRes.rows[0].count), rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * POST /api/admin/tenants
  * Provision a new white-label tenant + config.
  */

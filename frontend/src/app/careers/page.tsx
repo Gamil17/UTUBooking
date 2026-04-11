@@ -2,21 +2,48 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { SITE_CONFIG } from '@/lib/siteConfig';
+
 export const metadata: Metadata = {
   title: 'Careers — UTUBooking | AMEC Solutions',
   description: 'Join the team building the best travel platform for Muslim travelers. Explore open roles at UTUBooking.com.',
 };
 
+interface ApiJob {
+  id:          string;
+  title:       string;
+  team:        string;
+  location:    string;
+  type:        string;
+  description: string | null;
+}
+
+async function fetchJobs(): Promise<ApiJob[]> {
+  try {
+    const res = await fetch(
+      `${process.env.AUTH_SERVICE_URL ?? 'http://localhost:3001'}/api/jobs`,
+      { cache: 'no-store', signal: AbortSignal.timeout(5_000) },
+    );
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function CareersPage() {
   const t = await getTranslations('careers');
 
-  const openings = [
+  const i18nOpenings = [
     { title: t('job1Title'), team: t('job1Team'), location: t('job1Location'), type: t('job1Type') },
     { title: t('job2Title'), team: t('job2Team'), location: t('job2Location'), type: t('job2Type') },
     { title: t('job3Title'), team: t('job3Team'), location: t('job3Location'), type: t('job3Type') },
     { title: t('job4Title'), team: t('job4Team'), location: t('job4Location'), type: t('job4Type') },
     { title: t('job5Title'), team: t('job5Team'), location: t('job5Location'), type: t('job5Type') },
   ];
+
+  const apiJobs   = await fetchJobs();
+  const openings  = apiJobs.length > 0 ? apiJobs : i18nOpenings;
 
   const perks = [
     { icon: '🌍', title: t('perk1Title'), desc: t('perk1Desc') },
@@ -71,7 +98,7 @@ export default async function CareersPage() {
                   </div>
                 </div>
                 <Link
-                  href={`/careers/apply?role=${encodeURIComponent(role.title)}`}
+                  href={`/careers/apply?role=${encodeURIComponent(role.title)}${'id' in role ? `&jobId=${(role as ApiJob).id}` : ''}`}
                   className="shrink-0 bg-utu-navy hover:bg-utu-blue text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
                 >
                   {t('applyBtn')}

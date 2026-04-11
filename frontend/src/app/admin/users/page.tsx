@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -142,26 +143,35 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {u.status === 'active' ? (
-                        <button
-                          onClick={() => setSuspendingUser(u)}
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/users/${u.id}`}
                           className="rounded border border-utu-border-default px-3 py-1 text-xs font-medium
-                                     text-red-500 hover:bg-red-50 transition-colors"
-                          style={{ minHeight: 32 }}
+                                     text-utu-blue hover:bg-utu-bg-subtle transition-colors"
                         >
-                          {t('suspend')}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => unsuspendMutation.mutate(u.id)}
-                          disabled={unsuspendMutation.isPending}
-                          className="rounded border border-utu-border-default px-3 py-1 text-xs font-medium
-                                     text-utu-blue hover:bg-utu-bg-subtle transition-colors disabled:opacity-40"
-                          style={{ minHeight: 32 }}
-                        >
-                          {unsuspendMutation.isPending ? t('unsuspending') : t('unsuspend')}
-                        </button>
-                      )}
+                          View
+                        </Link>
+                        {u.status === 'active' ? (
+                          <button
+                            onClick={() => setSuspendingUser(u)}
+                            className="rounded border border-utu-border-default px-3 py-1 text-xs font-medium
+                                       text-red-500 hover:bg-red-50 transition-colors"
+                            style={{ minHeight: 32 }}
+                          >
+                            {t('suspend')}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => unsuspendMutation.mutate(u.id)}
+                            disabled={unsuspendMutation.isPending}
+                            className="rounded border border-utu-border-default px-3 py-1 text-xs font-medium
+                                       text-utu-blue hover:bg-utu-bg-subtle transition-colors disabled:opacity-40"
+                            style={{ minHeight: 32 }}
+                          >
+                            {unsuspendMutation.isPending ? t('unsuspending') : t('unsuspend')}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

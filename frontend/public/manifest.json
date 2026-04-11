@@ -39,7 +39,7 @@
     {
       "name": "My Trips",
       "short_name": "My Trips",
-      "url": "/trips",
+      "url": "/account",
       "icons": [{ "src": "/icons/trips-shortcut.png", "sizes": "96x96" }]
     }
   ]

@@ -150,4 +150,32 @@ function mapStatus(stripeStatus) {
   return map[stripeStatus] || 'pending';
 }
 
-module.exports = { createPaymentIntent, createPaymentElementIntent, constructWebhookEvent, mapStatus };
+// ─── createRefund ─────────────────────────────────────────────────────────────
+
+/**
+ * Issues a full or partial refund against a Stripe PaymentIntent.
+ *
+ * @param {string} paymentIntentId — the gateway_ref stored on the payment record
+ * @param {number|null} amount     — refund amount in currency units (null = full refund)
+ * @param {string} currency        — ISO currency code (used to convert to smallest unit)
+ * @param {'requested_by_customer'|'fraudulent'|'duplicate'} reason
+ * @returns {{ id, status, amount, currency }}
+ */
+async function createRefund(paymentIntentId, amount, currency = 'SAR', reason = 'requested_by_customer') {
+  const params = {
+    payment_intent: paymentIntentId,
+    reason,
+  };
+  if (amount != null) {
+    params.amount = Math.round(parseFloat(amount) * 100); // smallest unit
+  }
+  const refund = await stripe.refunds.create(params);
+  return {
+    id:       refund.id,
+    status:   refund.status,
+    amount:   refund.amount / 100,
+    currency: refund.currency.toUpperCase(),
+  };
+}
+
+module.exports = { createPaymentIntent, createPaymentElementIntent, constructWebhookEvent, mapStatus, createRefund };

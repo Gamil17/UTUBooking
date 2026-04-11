@@ -13,9 +13,25 @@ import DpdpConsentBanner from '@/components/compliance/DpdpConsentBanner';
 import CCPAFooterLink    from '@/components/compliance/CCPAFooterLink';
 import Footer            from '@/components/Footer';
 import ConditionalHeader from '@/components/ConditionalHeader';
+import redis from '@/lib/redis';
 import './globals.css';
 import '@/styles/urdu.css';
 import '@/styles/hindi.css';
+
+/** Read maintenance mode from Redis (same key written by admin settings). */
+async function getMaintenanceMode(): Promise<{ on: boolean; message: string }> {
+  try {
+    const raw = await redis.get('settings:platform');
+    if (!raw) return { on: false, message: '' };
+    const s = JSON.parse(raw);
+    return {
+      on:      !!s.maintenance?.mode,
+      message: s.maintenance?.message ?? '',
+    };
+  } catch {
+    return { on: false, message: '' }; // Redis unavailable — don't block traffic
+  }
+}
 
 const inter = Inter({
   subsets: ['latin'],
@@ -93,12 +109,17 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   // Read tenant config injected by middleware.ts edge function
-  const headersList = await headers();
+  const headersList  = await headers();
   const tenantConfig = parseTenantHeader(headersList.get('x-tenant-config'));
   // x-user-locale: user's manual language selection (from LocaleSwitcher cookie), takes priority
   const userLocale   = headersList.get('x-user-locale') ?? tenantConfig.locale;
   const { lang, dir } = getLocaleAttrs(userLocale);
   const countryCode  = headersList.get('x-country-code') ?? '';
+  const pathname     = headersList.get('x-pathname') ?? '';
+
+  // Maintenance mode — skip for /admin so ops can turn it off
+  const isAdminPath = pathname.startsWith('/admin');
+  const maintenance = isAdminPath ? { on: false, message: '' } : await getMaintenanceMode();
 
   // Load messages + locale for NextIntlClientProvider so 'use client' components
   // can call useTranslations() and useLocale() hooks.
@@ -128,18 +149,37 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${notoKufiArabic.variable} antialiased`}
       >
-        <TenantProvider config={tenantConfig}>
-          <NextIntlClientProvider locale={locale} messages={messages}>
-            <ConditionalHeader />
-            <Providers>{children}</Providers>
-            <Footer />
-            {/* Compliance banners — each self-guards by locale/countryCode */}
-            <GDPRConsentBanner countryCode={countryCode} />
-            <KVKKBanner        countryCode={countryCode} />
-            <DpdpConsentBanner countryCode={countryCode} />
-            <CCPAFooterLink    countryCode={countryCode} />
-          </NextIntlClientProvider>
-        </TenantProvider>
+        {maintenance.on ? (
+          /* ── Maintenance mode — full page block (admin paths are exempt) ── */
+          <div className="min-h-screen bg-utu-navy flex items-center justify-center px-4">
+            <div className="max-w-md w-full text-center">
+              <div className="text-6xl mb-6">🛠️</div>
+              <h1 className="text-3xl font-bold text-white mb-3">Down for Maintenance</h1>
+              <p className="text-white/70 text-lg mb-4">
+                {maintenance.message || 'UTUBooking is undergoing scheduled maintenance. We\'ll be back shortly.'}
+              </p>
+              <p className="text-white/50 text-sm">
+                For urgent support, contact{' '}
+                <a href="mailto:support@utubooking.com" className="text-amber-300 hover:underline">
+                  support@utubooking.com
+                </a>
+              </p>
+            </div>
+          </div>
+        ) : (
+          <TenantProvider config={tenantConfig}>
+            <NextIntlClientProvider locale={locale} messages={messages}>
+              <ConditionalHeader />
+              <Providers>{children}</Providers>
+              <Footer />
+              {/* Compliance banners — each self-guards by locale/countryCode */}
+              <GDPRConsentBanner countryCode={countryCode} />
+              <KVKKBanner        countryCode={countryCode} />
+              <DpdpConsentBanner countryCode={countryCode} />
+              <CCPAFooterLink    countryCode={countryCode} />
+            </NextIntlClientProvider>
+          </TenantProvider>
+        )}
         <PwaInit />
       </body>
     </html>

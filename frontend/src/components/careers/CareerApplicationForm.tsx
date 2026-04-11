@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { SITE_CONFIG } from '@/lib/siteConfig';
 
 interface Props {
@@ -19,6 +20,8 @@ const inputClass =
   'border border-utu-border-default rounded-xl px-3 py-2.5 text-sm text-utu-text-primary placeholder:text-utu-text-muted focus:outline-none focus:ring-2 focus:ring-utu-blue focus:border-transparent';
 
 export default function CareerApplicationForm({ role }: Props) {
+  const t = useTranslations('careers');
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -41,13 +44,13 @@ export default function CareerApplicationForm({ role }: Props) {
     setCvError('');
     if (!file) { setCvFile(null); return; }
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      setCvError('Only PDF, DOC, or DOCX files are accepted.');
+      setCvError(t('cvErrorType'));
       e.target.value = '';
       setCvFile(null);
       return;
     }
     if (file.size > MAX_FILE_BYTES) {
-      setCvError('File must be under 5 MB.');
+      setCvError(t('cvErrorSize'));
       e.target.value = '';
       setCvFile(null);
       return;
@@ -81,12 +84,12 @@ export default function CareerApplicationForm({ role }: Props) {
         setStatus('success');
       } else {
         const json = await res.json().catch(() => ({}));
-        setErrorMsg(json.message || 'Something went wrong. Please try again.');
+        setErrorMsg(json.message || t('errorGeneric2'));
         setStatus('error');
       }
     } catch {
       setErrorMsg(
-        `Unable to submit your application. Please email us directly at ${SITE_CONFIG.careersEmail}`
+        `${t('questionsEmail')} ${SITE_CONFIG.careersEmail}`
       );
       setStatus('error');
     }
@@ -107,13 +110,12 @@ export default function CareerApplicationForm({ role }: Props) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-lg font-bold text-utu-text-primary mb-2">Application Received!</h3>
+        <h3 className="text-lg font-bold text-utu-text-primary mb-2">{t('successTitle2')}</h3>
         <p className="text-sm text-utu-text-muted mb-1">
-          Thank you for applying for the{' '}
-          <span className="font-medium text-utu-text-primary">{role}</span> position.
+          {t('successFor', { role })}
         </p>
         <p className="text-sm text-utu-text-muted">
-          Our team will review your application and get back to you within 5&ndash;7 business days.
+          {t('successDesc2')}
         </p>
       </div>
     );
@@ -133,14 +135,14 @@ export default function CareerApplicationForm({ role }: Props) {
       {/* Role (read-only) */}
       <div className="flex flex-col gap-1">
         <label className="text-xs font-medium text-utu-text-secondary uppercase tracking-wide">
-          Applying For
+          {t('fieldApplyingFor')}
         </label>
         <input
           type="text"
           readOnly
           value={role}
           className={`${inputClass} bg-utu-bg-subtle cursor-default`}
-          aria-label="Position you are applying for"
+          aria-label={t('fieldApplyingFor')}
         />
       </div>
 
@@ -148,12 +150,12 @@ export default function CareerApplicationForm({ role }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-utu-text-secondary uppercase tracking-wide">
-            Full Name <span className="text-red-500">*</span>
+            {t('fieldFullName')} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             required
-            placeholder="Your full name"
+            placeholder={t('fieldFullName')}
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
             className={inputClass}
@@ -161,7 +163,7 @@ export default function CareerApplicationForm({ role }: Props) {
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-utu-text-secondary uppercase tracking-wide">
-            Email Address <span className="text-red-500">*</span>
+            {t('fieldEmail')} <span className="text-red-500">*</span>
           </label>
           <input
             type="email"
@@ -178,8 +180,8 @@ export default function CareerApplicationForm({ role }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-utu-text-secondary uppercase tracking-wide">
-            Phone{' '}
-            <span className="text-utu-text-muted font-normal normal-case">(optional)</span>
+            {t('fieldPhone')}{' '}
+            <span className="text-utu-text-muted font-normal normal-case">{t('fieldOptional')}</span>
           </label>
           <input
             type="tel"
@@ -191,8 +193,8 @@ export default function CareerApplicationForm({ role }: Props) {
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-utu-text-secondary uppercase tracking-wide">
-            LinkedIn / Portfolio{' '}
-            <span className="text-utu-text-muted font-normal normal-case">(optional)</span>
+            {t('fieldLinkedIn')}{' '}
+            <span className="text-utu-text-muted font-normal normal-case">{t('fieldOptional')}</span>
           </label>
           <input
             type="url"
@@ -207,8 +209,8 @@ export default function CareerApplicationForm({ role }: Props) {
       {/* CV Upload */}
       <div className="flex flex-col gap-1">
         <label className="text-xs font-medium text-utu-text-secondary uppercase tracking-wide">
-          CV / Resume{' '}
-          <span className="text-utu-text-muted font-normal normal-case">(optional — PDF, DOC, DOCX, max 5 MB)</span>
+          {t('fieldCv')}{' '}
+          <span className="text-utu-text-muted font-normal normal-case">{t('fieldCvHint')}</span>
         </label>
 
         {cvFile ? (
@@ -235,7 +237,7 @@ export default function CareerApplicationForm({ role }: Props) {
             <button
               type="button"
               onClick={removeFile}
-              aria-label="Remove CV file"
+              aria-label={t('fieldCvRemove')}
               className="flex-shrink-0 text-utu-text-muted hover:text-red-500 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -264,9 +266,9 @@ export default function CareerApplicationForm({ role }: Props) {
               />
             </svg>
             <span className="text-sm text-utu-text-secondary font-medium">
-              Click to upload your CV
+              {t('fieldCvUpload')}
             </span>
-            <span className="text-xs text-utu-text-muted">PDF, DOC, DOCX up to 5 MB</span>
+            <span className="text-xs text-utu-text-muted">{t('fieldCvUploadHint')}</span>
             <input
               id="cv-upload"
               ref={fileInputRef}
@@ -286,12 +288,12 @@ export default function CareerApplicationForm({ role }: Props) {
       {/* Cover Letter */}
       <div className="flex flex-col gap-1">
         <label className="text-xs font-medium text-utu-text-secondary uppercase tracking-wide">
-          Why do you want to join UTUBooking? <span className="text-red-500">*</span>
+          {t('fieldCoverLetter')} <span className="text-red-500">*</span>
         </label>
         <textarea
           required
           rows={5}
-          placeholder="Tell us about yourself, your experience, and why this role excites you..."
+          placeholder={t('fieldCoverLetter')}
           value={form.coverLetter}
           onChange={(e) => set('coverLetter', e.target.value)}
           className={`${inputClass} resize-none`}
@@ -303,11 +305,11 @@ export default function CareerApplicationForm({ role }: Props) {
         disabled={status === 'loading'}
         className="w-full bg-utu-navy hover:bg-utu-blue active:bg-utu-navy text-white text-sm font-semibold py-3 rounded-xl transition-colors disabled:opacity-60 min-h-[44px]"
       >
-        {status === 'loading' ? 'Submitting…' : 'Submit Application'}
+        {status === 'loading' ? t('submitting2') : t('submitBtn2')}
       </button>
 
       <p className="text-center text-xs text-utu-text-muted">
-        Questions? Email us at{' '}
+        {t('questionsEmail')}{' '}
         <a href={`mailto:${SITE_CONFIG.careersEmail}`} className="text-utu-blue underline">
           {SITE_CONFIG.careersEmail}
         </a>

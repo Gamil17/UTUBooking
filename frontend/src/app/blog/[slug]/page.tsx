@@ -120,12 +120,45 @@ const POSTS: Record<string, {
   },
 };
 
+// ─── DB fetch ─────────────────────────────────────────────────────────────────
+
+interface DbPost {
+  slug:           string;
+  category:       string;
+  title:          string;
+  excerpt:        string;
+  published_date: string;
+  read_time:      string;
+  sections:       { heading: string; body: string }[];
+}
+
+async function fetchDbPost(slug: string): Promise<DbPost | null> {
+  try {
+    const res = await fetch(
+      `${process.env.AUTH_SERVICE_URL ?? 'http://localhost:3001'}/api/blog/${encodeURIComponent(slug)}`,
+      { cache: 'no-store', signal: AbortSignal.timeout(5_000) },
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
   const { slug } = await params;
+  const dbPost = await fetchDbPost(slug);
+  if (dbPost) {
+    return {
+      title:       `${dbPost.title} — UTUBooking Blog`,
+      description: dbPost.excerpt.slice(0, 155),
+    };
+  }
   if (!POSTS[slug]) return { title: 'Article Not Found — UTUBooking' };
   const t = await getTranslations('blog');
   const idx = SLUG_INDEX[slug];
@@ -146,17 +179,36 @@ export default async function BlogPostPage(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const post = POSTS[slug];
-  if (!post) notFound();
 
+  // Try DB first; fall back to hardcoded POSTS; 404 if neither
+  const dbPost = await fetchDbPost(slug);
+
+  let title:    string;
+  let category: string;
+  let date:     string;
+  let readTime: string;
+  let sections: { heading: string; body: string }[];
+
+  // Load translations for UI strings (back link, CTA, etc.) + i18n post metadata
   const t = await getTranslations('blog');
-  const idx = SLUG_INDEX[slug];
 
-  // Use translated title/category/date/readTime when available; fall back to slug
-  const title    = idx ? t(`post${idx}Title`    as Parameters<typeof t>[0]) : slug;
-  const category = idx ? t(`post${idx}Category` as Parameters<typeof t>[0]) : '';
-  const date     = idx ? t(`post${idx}Date`     as Parameters<typeof t>[0]) : '';
-  const readTime = idx ? t(`post${idx}ReadTime` as Parameters<typeof t>[0]) : '';
+  if (dbPost) {
+    title    = dbPost.title;
+    category = dbPost.category;
+    date     = dbPost.published_date;
+    readTime = dbPost.read_time;
+    sections = dbPost.sections;
+  } else {
+    const post = POSTS[slug];
+    if (!post) notFound();
+
+    const idx = SLUG_INDEX[slug];
+    title    = idx ? t(`post${idx}Title`    as Parameters<typeof t>[0]) : slug;
+    category = idx ? t(`post${idx}Category` as Parameters<typeof t>[0]) : '';
+    date     = idx ? t(`post${idx}Date`     as Parameters<typeof t>[0]) : '';
+    readTime = idx ? t(`post${idx}ReadTime` as Parameters<typeof t>[0]) : '';
+    sections = post.sections;
+  }
 
   return (
     <div className="min-h-screen bg-utu-bg-page">
@@ -188,7 +240,7 @@ export default async function BlogPostPage(
       {/* Article body */}
       <article className="max-w-3xl mx-auto px-4 py-12">
         <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default shadow-sm p-8 space-y-8">
-          {post.sections.map((section) => (
+          {sections.map((section) => (
             <section key={section.heading}>
               <h2 className="text-lg font-bold text-utu-text-primary mb-3">{section.heading}</h2>
               <p className="text-utu-text-secondary leading-relaxed text-base">{section.body}</p>

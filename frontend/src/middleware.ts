@@ -45,25 +45,42 @@ const USER_LOCALE_COOKIE = 'utu_locale';
 // ── Admin auth guard ──────────────────────────────────────────────────────────
 const ADMIN_COOKIE = 'utu_admin_token';
 
-function checkAdminAuth(request: NextRequest): NextResponse | null {
+/**
+ * Derive the expected session token using the Web Crypto API
+ * (Edge runtime compatible — no Node.js 'crypto' module needed).
+ * Matches the derivation in /api/admin/auth and admin-bff-auth.ts:
+ *   sha256("admin-session:<ADMIN_SECRET>") → hex string
+ */
+async function deriveAdminToken(secret: string): Promise<string> {
+  const enc    = new TextEncoder();
+  const buf    = await crypto.subtle.digest('SHA-256', enc.encode(`admin-session:${secret}`));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function checkAdminAuth(request: NextRequest): Promise<NextResponse | null> {
   const { pathname } = request.nextUrl;
 
-  // Only guard /admin paths — exempt /admin/login and /api/admin/auth
+  // Only guard /admin paths — exempt /admin/login
   if (!pathname.startsWith('/admin')) return null;
-  if (pathname === '/admin/login' || pathname.startsWith('/admin/login')) return null;
+  if (pathname.startsWith('/admin/login')) return null;
 
   const adminSecret = process.env.ADMIN_SECRET ?? '';
-  const cookie      = request.cookies.get(ADMIN_COOKIE)?.value ?? '';
+  if (!adminSecret) {
+    return NextResponse.redirect(new URL('/admin/login', request.url));
+  }
 
-  if (!adminSecret || cookie !== adminSecret) {
+  const cookie        = request.cookies.get(ADMIN_COOKIE)?.value ?? '';
+  const expectedToken = await deriveAdminToken(adminSecret);
+
+  if (!cookie || cookie !== expectedToken) {
     return NextResponse.redirect(new URL('/admin/login', request.url));
   }
   return null;
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   // Admin guard runs first — short-circuits before tenant resolution
-  const adminRedirect = checkAdminAuth(request);
+  const adminRedirect = await checkAdminAuth(request);
   if (adminRedirect) return adminRedirect;
 
   const domain = extractDomain(request);
@@ -74,6 +91,10 @@ export async function proxy(request: NextRequest) {
   // INCOMING REQUEST headers, not response headers. We must pass custom data via
   // NextResponse.next({ request: { headers } }) — not response.headers.set().
   const requestHeaders = new Headers(request.headers);
+
+  // Expose the current pathname to server components (used by root layout for
+  // maintenance-mode check and other path-sensitive server-side logic).
+  requestHeaders.set('x-pathname', request.nextUrl.pathname);
 
   // Tenant white-label config
   if (tenantConfig) {

@@ -54,6 +54,9 @@ app.get('/health', (req, res) =>
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/payments', paymentRouter);
 
+const adminPaymentRouter = require('./src/routes/admin.router');
+app.use('/api/admin/payments', adminPaymentRouter);
+
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => res.status(404).json({ error: 'NOT_FOUND' }));
 

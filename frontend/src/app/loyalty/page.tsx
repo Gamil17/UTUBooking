@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import LoyaltyStatusWidget from '@/components/loyalty/LoyaltyStatusWidget';
+import LoyaltyRewardsSection from '@/components/loyalty/LoyaltyRewardsSection';
 
 export const metadata: Metadata = {
   title: 'UTU Rewards Loyalty Program — UTUBooking',
@@ -73,20 +75,7 @@ export default async function LoyaltyPage() {
         </p>
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{t('heroHeading')}</h1>
         <p className="text-white/80 max-w-xl mx-auto text-lg mb-8">{t('heroDesc')}</p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            href="/register"
-            className="inline-block bg-amber-400 hover:bg-amber-300 text-utu-navy font-bold px-8 py-3 rounded-xl transition-colors text-sm"
-          >
-            {t('joinNow')}
-          </Link>
-          <Link
-            href="/login"
-            className="inline-block border border-utu-blue hover:bg-utu-navy text-white/80 font-medium px-8 py-3 rounded-xl transition-colors text-sm"
-          >
-            {t('signIn')}
-          </Link>
-        </div>
+        <LoyaltyStatusWidget joinLabel={t('joinNow')} signInLabel={t('signIn')} />
       </section>
 
       {/* How It Works */}
@@ -151,6 +140,9 @@ export default async function LoyaltyPage() {
           ))}
         </div>
       </section>
+
+      {/* Rewards Catalog — renders only for logged-in users */}
+      <LoyaltyRewardsSection />
 
       {/* FAQ */}
       <section className="bg-utu-bg-card border-t border-utu-border-default py-16 px-4">

@@ -60,4 +60,23 @@ async function findByGatewayRef(gatewayRef) {
   return rows[0] || null;
 }
 
-module.exports = { createPayment, updatePayment, findById, findByBookingId, findByGatewayRef };
+// ─── Mark refunded ────────────────────────────────────────────────────────────
+
+/**
+ * Records a successful refund on the payment record.
+ *
+ * @param {string} id           — payment UUID
+ * @param {string|null} refundRef — gateway refund ID (null for manual/non-Stripe)
+ * @param {number} refundAmount — amount actually refunded
+ * @returns {object} updated payment row
+ */
+async function markRefunded(id, refundRef, refundAmount) {
+  return updatePayment(id, {
+    status:          'refunded',
+    refunded_at:     new Date().toISOString(),
+    refund_amount:   refundAmount,
+    gateway_payload: refundRef ? { refund_ref: refundRef } : undefined,
+  });
+}
+
+module.exports = { createPayment, updatePayment, findById, findByBookingId, findByGatewayRef, markRefunded };

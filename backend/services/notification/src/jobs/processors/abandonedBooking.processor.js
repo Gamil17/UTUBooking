@@ -4,6 +4,7 @@ const repo               = require('../../db/notification.repo');
 const { checkEmailAllowed } = require('../../lib/compliance');
 const { send }           = require('../../lib/sendgrid');
 const { render }         = require('../../lib/templateRenderer');
+const { getNotificationSettings } = require('../../lib/settings');
 const Redis              = require('ioredis');
 
 let redisClient;
@@ -18,9 +19,6 @@ function getRedis() {
   }
   return redisClient;
 }
-
-const MAX_RECOVERY_EMAILS = 7;
-const MIN_INTERVAL_MS     = 23 * 60 * 60 * 1000; // 23h — give 1h buffer
 
 /**
  * Build the product display name from booking meta.
@@ -38,6 +36,11 @@ function getProductName(booking) {
  * Called both by the scanner and by the manual trigger endpoint.
  */
 async function processAbandonedBookingEmail({ bookingId, booking: bookingData }) {
+  // Load configurable settings (cached 60s)
+  const cfg = await getNotificationSettings();
+  const maxEmails       = cfg.max_recovery_attempts;
+  const minIntervalMs   = Math.max(1, cfg.recovery_delay_hours) * 60 * 60 * 1000;
+
   // If called from scanner, bookingData is already fetched; if from trigger, reload
   let booking = bookingData;
   if (!booking) {
@@ -52,14 +55,14 @@ async function processAbandonedBookingEmail({ bookingId, booking: bookingData })
   }
 
   const count = await repo.getRecoveryEmailCount(booking.booking_id);
-  if (count >= MAX_RECOVERY_EMAILS) {
+  if (count >= maxEmails) {
     return { skipped: true, reason: 'max_emails_reached' };
   }
 
-  // Rate limit — at least 23h between sends (unless triggered manually)
+  // Rate limit — at least recovery_delay_hours between sends (unless triggered manually)
   if (!bookingData) { // only check timer for scanner, not manual trigger
     const lastSent = await repo.getLastRecoveryEmailTime(booking.booking_id);
-    if (lastSent && Date.now() - new Date(lastSent).getTime() < MIN_INTERVAL_MS) {
+    if (lastSent && Date.now() - new Date(lastSent).getTime() < minIntervalMs) {
       return { skipped: true, reason: 'too_soon' };
     }
   }

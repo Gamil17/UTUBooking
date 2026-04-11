@@ -5,13 +5,16 @@ const express         = require('express');
 const bookingsRouter  = require('./src/routes/bookings.router');
 const errorHandler    = require('./src/middleware/errorHandler');
 
+const adminBookingsRouter = require('./src/routes/admin.router');
+
 const app = express();
 
 app.use(express.json({ limit: '64kb' }));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'booking-service' }));
 
-app.use('/api/v1/bookings', bookingsRouter);
+app.use('/api/v1/bookings',    bookingsRouter);
+app.use('/api/admin/bookings', adminBookingsRouter);
 
 app.use(errorHandler);
 

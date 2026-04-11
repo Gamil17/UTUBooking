@@ -398,6 +398,31 @@ services:
       timeout: 5s
       retries: 5
 
+  sales-service:
+    image: node:22-alpine
+    <<: *service-defaults
+    env_file: ./backend/.env
+    environment:
+      <<: *common-env
+      PORT: 3013
+      # SALES_SECRET: falls back to ADMIN_SECRET from backend/.env if not set separately
+    working_dir: /app
+    volumes:
+      - ./backend/services/sales:/app
+    command: sh -c "npm install && node server.js"
+    ports:
+      - "3013:3013"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3013/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ── API Gateway (nginx) ───────────────────────────────────────────────────────
 
   gateway:
@@ -419,6 +444,8 @@ services:
       - wallet-service
       - pricing-service
       - notification-service
+      - admin-service
+      - sales-service
 
 # ── Volumes ───────────────────────────────────────────────────────────────────
 

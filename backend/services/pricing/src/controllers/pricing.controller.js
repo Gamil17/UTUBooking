@@ -1,8 +1,9 @@
 'use strict';
 
-const pricingSvc = require('../services/pricing.service');
-const demandSvc  = require('../services/demand.service');
-const repo       = require('../db/pricing.repo');
+const pricingSvc        = require('../services/pricing.service');
+const demandSvc         = require('../services/demand.service');
+const repo              = require('../db/pricing.repo');
+const { getPricingSettings } = require('../lib/settings');
 
 // ── POST /api/v1/pricing/recommend ───────────────────────────────────────────
 async function recommend(req, res, next) {
@@ -145,6 +146,10 @@ async function getFunnelMetrics(req, res, next) {
 // ── POST /api/v1/pricing/internal/cron  (Lambda — x-internal-secret) ─────────
 async function runCron(req, res, next) {
   try {
+    const cfg    = await getPricingSettings();
+    const windowDays      = Math.max(7, cfg.demand_window_days);
+    const minConfidence   = cfg.min_confidence_to_apply / 100; // percent → fraction
+
     const hotels  = await repo.getActivePilgrimageHotels();
     const results = [];
 
@@ -153,9 +158,9 @@ async function runCron(req, res, next) {
         // 1. Demand forecast + conditional push alert
         const demand = await demandSvc.runForecastForHotel(hotel.hotel_id);
 
-        // 2. AI pricing recommendation for check-in 30 days from now (proxy window)
-        const checkIn  = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
-        const checkOut = new Date(Date.now() + 33 * 86400000).toISOString().slice(0, 10);
+        // 2. AI pricing recommendation for check-in <demand_window_days> from now
+        const checkIn  = new Date(Date.now() + windowDays * 86400000).toISOString().slice(0, 10);
+        const checkOut = new Date(Date.now() + (windowDays + 3) * 86400000).toISOString().slice(0, 10);
 
         const aiResult = await pricingSvc.generateRecommendation({
           hotelId:   hotel.hotel_id,
@@ -164,6 +169,12 @@ async function runCron(req, res, next) {
           checkIn,
           checkOut,
         });
+
+        // Skip low-confidence recommendations (configurable via admin settings)
+        if (aiResult.confidenceScore < minConfidence) {
+          results.push({ hotelId: hotel.hotel_id, demand, skipped: 'low_confidence', confidence: aiResult.confidenceScore });
+          continue;
+        }
 
         // Persist as pending — admin reviews on dashboard
         const rec = await repo.insertRecommendation({

@@ -4,6 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import dynamic from 'next/dynamic';
+
+const WalletSection = dynamic(
+  () => import('@/components/wallet/WalletSection'),
+  { ssr: false },
+);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ProductType = 'hotel' | 'flight' | 'car';
@@ -172,6 +178,7 @@ export default function AccountPage() {
   const [error,      setError]      = useState('');
   const [authed,     setAuthed]     = useState<boolean | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [userToken,  setUserToken]  = useState<string | null>(null);
 
   useEffect(() => {
     const token = typeof window !== 'undefined'
@@ -185,6 +192,7 @@ export default function AccountPage() {
     }
 
     setAuthed(true);
+    setUserToken(token);
 
     fetch('/api/bookings', {
       headers: { Authorization: `Bearer ${token}` },
@@ -365,6 +373,13 @@ export default function AccountPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Wallet */}
+        {userToken && (
+          <div className="mt-10 rounded-2xl border border-utu-border-default bg-utu-bg-card shadow-sm p-6">
+            <WalletSection token={userToken} />
           </div>
         )}
 

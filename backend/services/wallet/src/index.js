@@ -3,7 +3,8 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-app.use('/api/v1/wallet', require('./routes/wallet.routes'));
+app.use('/api/v1/wallet',   require('./routes/wallet.routes'));
+app.use('/api/admin/wallet', require('./routes/admin.router'));
 
 // Health check
 app.get('/health', (_, res) => res.json({ status: 'ok', service: 'wallet' }));

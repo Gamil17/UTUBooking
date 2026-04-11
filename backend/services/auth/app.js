@@ -3,6 +3,10 @@ const express        = require('express');
 const authRouter     = require('./src/routes/auth.router');
 const adminRouter    = require('./src/routes/admin.router');
 const careersRouter  = require('./src/routes/careers.router');
+const contactRouter  = require('./src/routes/contact.router');
+const { publicRouter: jobsPublicRouter, adminRouter: jobsAdminRouter } = require('./src/routes/jobs.router');
+const { publicRouter: blogPublicRouter, adminRouter: blogAdminRouter } = require('./src/routes/blog.router');
+const { publicRouter: promosPublicRouter, adminRouter: promosAdminRouter } = require('./src/routes/promos.router');
 const gdprRouter     = require('./src/routes/gdpr.router');
 const ccpaRouter     = require('./src/routes/ccpa.router');
 const pipedaRouter   = require('./src/routes/pipeda.router');
@@ -38,6 +42,13 @@ app.get('/health', (req, res) =>
 app.use('/api/auth',           authRouter);
 app.use('/api/admin',          adminRouter);
 app.use('/api/admin/careers',  careersRouter);
+app.use('/api/admin/contact',  contactRouter);
+app.use('/api/admin/jobs',     jobsAdminRouter);
+app.use('/api/jobs',           jobsPublicRouter);
+app.use('/api/admin/blog',     blogAdminRouter);
+app.use('/api/blog',           blogPublicRouter);
+app.use('/api/admin/promos',   promosAdminRouter);
+app.use('/api/promos',         promosPublicRouter);
 // GDPR user rights — Art. 15/17/20 endpoints (JWT required)
 app.use('/api/user/gdpr', authMiddleware, gdprRouter);
 // CCPA user rights — Cal. Civ. Code §1798.100+ (JWT required)

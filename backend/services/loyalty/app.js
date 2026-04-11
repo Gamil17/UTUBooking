@@ -13,6 +13,9 @@ app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'loyalty-ser
 
 app.use('/api/v1/loyalty', loyaltyRouter);
 
+const adminLoyaltyRouter = require('./src/routes/admin.router');
+app.use('/api/admin/loyalty', adminLoyaltyRouter);
+
 app.use(errorHandler);
 
 module.exports = app;

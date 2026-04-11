@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { getJobDescription } from '@/lib/careers/jobDescriptions';
 import CareerApplyView from '@/components/careers/CareerApplyView';
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default async function CareersApplyPage({ searchParams }: Props) {
+  const t = await getTranslations('careers');
   const { role } = await searchParams;
   const roleName = role?.trim() || '';
   const job = roleName ? getJobDescription(roleName) : null;
@@ -36,7 +38,7 @@ export default async function CareersApplyPage({ searchParams }: Props) {
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Careers
+          {t('applyPageBack')}
         </Link>
 
         {job ? (
@@ -45,15 +47,14 @@ export default async function CareersApplyPage({ searchParams }: Props) {
           <div className="bg-utu-bg-card rounded-2xl border border-utu-border-default p-8 text-center">
             <p className="text-utu-text-muted text-sm mb-4">
               {roleName
-                ? `No description found for "${roleName}".`
-                : 'No role selected.'}{' '}
-              Please select a position from our open roles.
+                ? `${t('applyPageNoRole')} "${roleName}"`
+                : t('applyPageNotFound')}
             </p>
             <Link
               href="/careers"
               className="inline-block bg-utu-navy hover:bg-utu-blue text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors"
             >
-              View Open Positions
+              {t('applyPageViewOpen')}
             </Link>
           </div>
         )}
