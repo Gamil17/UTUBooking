@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getProcurementStats, getProcurementSuppliers, createProcurementSupplier, updateProcurementSupplier, deleteProcurementSupplier,
   getProcurementContracts, createProcurementContract, updateProcurementContract, deleteProcurementContract,
   getExpiringContracts,
   getProcurementSlas, createProcurementSla, updateProcurementSla, deleteProcurementSla,
-  getProcurementPurchaseOrders, createProcurementPurchaseOrder, updateProcurementPurchaseOrder, deleteProcurementPurchaseOrder,
+  getProcurementPOs as getProcurementPurchaseOrders, createProcurementPO as createProcurementPurchaseOrder, updateProcurementPO as updateProcurementPurchaseOrder, deleteProcurementPO as deleteProcurementPurchaseOrder,
+  getProcurementRisk, analyzeProcurementRisk,
   type ProcurementStats, type ProcurementSupplier, type ProcurementContract, type ProcurementSla, type ProcurementPurchaseOrder,
+  type ProcurementRisk,
 } from '@/lib/api';
 
 const TABS = ['Overview', 'Suppliers', 'Contracts', 'SLAs', 'Purchase Orders'] as const;
@@ -66,6 +68,164 @@ function StatusBadge({ status }: { status: string }) {
     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${map[status] ?? 'bg-gray-100 text-gray-500'}`}>
       {status.replace('_', ' ')}
     </span>
+  );
+}
+
+// ─── AI Procurement Risk Panel ────────────────────────────────────────────────
+
+const PROC_RISK_BADGE: Record<string, string> = {
+  low:      'bg-green-100 text-green-700 border-green-200',
+  medium:   'bg-amber-100 text-amber-700 border-amber-200',
+  high:     'bg-orange-100 text-orange-700 border-orange-200',
+  critical: 'bg-red-100 text-red-600 border-red-200',
+};
+
+function AIProcurementRiskPanel() {
+  const [risk,    setRisk]    = useState<ProcurementRisk | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error,   setError]   = useState('');
+  const [open,    setOpen]    = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getProcurementRisk()
+      .then(r => { if (!cancelled) { setRisk(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  async function handleAnalyze() {
+    setRunning(true); setError('');
+    try {
+      const res = await analyzeProcurementRisk();
+      if (res.data) setRisk(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch { setError('Failed to run analysis.'); }
+    finally { setRunning(false); }
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-violet-50/40 mb-4">
+      <button className="flex w-full items-center justify-between px-4 py-3 text-left" onClick={() => setOpen(o => !o)}>
+        <div className="flex items-center gap-2">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Procurement Risk Analysis</span>
+          {risk && (
+            <span className={`rounded-md border px-2 py-0.5 text-xs font-medium capitalize ${PROC_RISK_BADGE[risk.overall_risk] ?? ''}`}>
+              {risk.overall_risk} risk
+            </span>
+          )}
+          {risk && <span className="text-xs text-violet-500">{risk.total_suppliers} suppliers · {risk.total_contracts} contracts</span>}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-5 pt-4 space-y-5">
+          {loading && <p className="text-xs text-utu-text-muted italic">Loading risk analysis…</p>}
+
+          {!loading && !risk && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">Run AI Procurement Risk to get expiring contracts, SLA breach risks, supplier consolidation opportunities, and ZATCA compliance gaps.</p>
+              <button onClick={handleAnalyze} disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                {running ? 'Analysing…' : '✦ Run Risk Analysis'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {risk && !loading && (
+            <>
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{risk.executive_summary}</p>
+
+              {risk.expiring_contracts.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Expiring Contracts</h3>
+                  <div className="space-y-2">
+                    {risk.expiring_contracts.map((c, i) => (
+                      <div key={i} className={`rounded-lg border px-3 py-2 ${c.days_left <= 30 ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+                        <p className={`text-xs font-semibold ${c.days_left <= 30 ? 'text-red-800' : 'text-amber-800'}`}>{c.supplier} — {c.title}</p>
+                        <p className={`text-xs mt-0.5 ${c.days_left <= 30 ? 'text-red-600' : 'text-amber-700'}`}>{c.days_left} days left · {c.end_date}</p>
+                        <p className={`text-xs mt-0.5 italic ${c.days_left <= 30 ? 'text-red-500' : 'text-amber-600'}`}>{c.action_needed}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {risk.sla_breach_risks.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">SLA Breach Risks</h3>
+                  <div className="space-y-2">
+                    {risk.sla_breach_risks.map((s, i) => (
+                      <div key={i} className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2">
+                        <p className="text-xs font-semibold text-orange-800">{s.supplier} — {s.metric}</p>
+                        <p className="text-xs text-orange-600 mt-0.5">Gap: {s.gap} · Impact: {s.impact}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {risk.high_risk_suppliers.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">High Risk Suppliers</h3>
+                  <div className="space-y-1">
+                    {risk.high_risk_suppliers.map((s, i) => (
+                      <div key={i} className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                        <p className="text-xs font-semibold text-red-800">{s.name} <span className="font-normal text-red-600">— {s.risk}</span></p>
+                        <p className="text-xs text-red-500 mt-0.5">{s.reason}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {risk.spend_concentration && (
+                <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                  <p className="text-xs font-semibold text-utu-text-muted mb-1">Spend Concentration</p>
+                  <p className="text-xs text-utu-text-secondary">{risk.spend_concentration}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {risk.consolidation_opportunities.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Consolidation Opportunities</h3>
+                    <ul className="space-y-1">{risk.consolidation_opportunities.map((o, i) => <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary"><span className="text-green-500 mt-0.5">●</span>{o}</li>)}</ul>
+                  </div>
+                )}
+                {risk.compliance_gaps.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Compliance Gaps</h3>
+                    <ul className="space-y-1">{risk.compliance_gaps.map((g, i) => <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary"><span className="text-amber-500 mt-0.5">●</span>{g}</li>)}</ul>
+                  </div>
+                )}
+              </div>
+
+              {risk.recommendations.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</h3>
+                  <ul className="space-y-1">{risk.recommendations.map((r, i) => <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary"><span className="text-violet-400 mt-0.5">▸</span>{r}</li>)}</ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-violet-200">
+                <p className="text-xs text-utu-text-muted">Generated {new Date(risk.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                <button onClick={handleAnalyze} disabled={running}
+                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors">
+                  {running ? 'Re-analysing…' : 'Re-analyse'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -592,7 +752,7 @@ export default function ProcurementPage() {
         ))}
       </div>
 
-      {tab === 'Overview' && <OverviewTab stats={stats} />}
+      {tab === 'Overview' && <><AIProcurementRiskPanel /><OverviewTab stats={stats} /></>}
       {tab === 'Suppliers' && <SuppliersTab />}
       {tab === 'Contracts' && <ContractsTab />}
       {tab === 'SLAs' && <SlasTab />}

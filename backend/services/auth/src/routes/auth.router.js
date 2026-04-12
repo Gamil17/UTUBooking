@@ -39,5 +39,6 @@ router.post('/refresh',                           controller.refresh);
 router.post('/logout',                            controller.logout);
 router.post('/forgot-password',  forgotLimiter,   controller.forgotPassword);
 router.post('/reset-password',   forgotLimiter,   controller.resetPassword);
+router.post('/change-password',                   controller.changePassword);
 
 module.exports = router;

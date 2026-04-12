@@ -2,6 +2,7 @@
 
 const { Router } = require('express');
 const { Pool }   = require('pg');
+const wf         = require('../lib/workflow-client');
 
 const pool   = new Pool({ connectionString: process.env.DATABASE_URL });
 const router = Router();
@@ -169,7 +170,27 @@ router.post('/suppliers', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
       [name, type, status, country||null, contact_name||null, contact_email||null, website||null, account_id||null, annual_value_sar, owner||null, notes||null],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const supplier = result.rows[0];
+
+    // ── Launch supplier onboarding workflow when a new supplier enters onboarding ─
+    if (status === 'onboarding') {
+      wf.launch({
+        triggerEvent:   'supplier_onboard_requested',
+        triggerRef:     supplier.id,
+        triggerRefType: 'supplier',
+        initiatedBy:    req.user?.email ?? 'admin',
+        context: {
+          supplier_name:     name,
+          supplier_type:     type,
+          country:           country || null,
+          contact_name:      contact_name || null,
+          contact_email:     contact_email || null,
+          annual_value_sar:  annual_value_sar,
+        },
+      });
+    }
+
+    res.status(201).json({ data: supplier });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'SUPPLIER_EXISTS' });
     console.error('[procurement] POST /suppliers error:', err);

@@ -3,6 +3,144 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+// ─── Inline markdown renderer ─────────────────────────────────────────────────
+// Handles the subset of markdown used in the blog drafts:
+//   [text](url)       → <a> with external link handling
+//   **text**          → <strong>
+//   `code`            → <code>
+//   - item (line)     → bullet list item (collected into <ul>)
+//   blank line        → paragraph break
+// No npm dependency — keeps the bundle lean.
+
+type Node =
+  | { type: 'p';  children: InlineNode[] }
+  | { type: 'ul'; items: InlineNode[][] }
+  | { type: 'br' };
+
+type InlineNode =
+  | { type: 'text';   value: string }
+  | { type: 'strong'; value: string }
+  | { type: 'code';   value: string }
+  | { type: 'a';      href: string; children: string };
+
+function parseInline(text: string): InlineNode[] {
+  const nodes: InlineNode[] = [];
+  // Combined regex: [text](url) | **bold** | `code`
+  const re = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|`([^`]+)`/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) {
+      nodes.push({ type: 'text', value: text.slice(last, m.index) });
+    }
+    if (m[1] !== undefined) {
+      nodes.push({ type: 'a', href: m[2], children: m[1] });
+    } else if (m[3] !== undefined) {
+      nodes.push({ type: 'strong', value: m[3] });
+    } else if (m[4] !== undefined) {
+      nodes.push({ type: 'code', value: m[4] });
+    }
+    last = re.lastIndex;
+  }
+
+  if (last < text.length) {
+    nodes.push({ type: 'text', value: text.slice(last) });
+  }
+
+  return nodes;
+}
+
+function parseBodyNodes(raw: string): Node[] {
+  const lines  = raw.split('\n');
+  const nodes: Node[] = [];
+  let   pLines: string[] = [];
+  let   ulLines: string[] = [];
+
+  function flushP() {
+    const joined = pLines.join(' ').trim();
+    if (joined) nodes.push({ type: 'p', children: parseInline(joined) });
+    pLines = [];
+  }
+  function flushUl() {
+    if (ulLines.length === 0) return;
+    nodes.push({
+      type:  'ul',
+      items: ulLines.map(l => parseInline(l.replace(/^-\s+/, '').trim())),
+    });
+    ulLines = [];
+  }
+
+  for (const line of lines) {
+    if (line.startsWith('- ') || line.startsWith('* ')) {
+      flushP();
+      ulLines.push(line);
+    } else if (line.trim() === '') {
+      flushUl();
+      flushP();
+    } else {
+      flushUl();
+      pLines.push(line.trim());
+    }
+  }
+
+  flushUl();
+  flushP();
+
+  return nodes;
+}
+
+function renderInlineNodes(nodes: InlineNode[]) {
+  return nodes.map((n, i) => {
+    if (n.type === 'text')   return <span key={i}>{n.value}</span>;
+    if (n.type === 'strong') return <strong key={i}>{n.value}</strong>;
+    if (n.type === 'code')   return <code key={i} className="bg-utu-bg-muted rounded px-1 text-sm font-mono">{n.value}</code>;
+    if (n.type === 'a') {
+      const isExternal = n.href.startsWith('http');
+      return (
+        <a
+          key={i}
+          href={n.href}
+          className="text-utu-blue hover:underline"
+          {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        >
+          {n.children}
+        </a>
+      );
+    }
+    return null;
+  });
+}
+
+function RichBody({ markdown }: { markdown: string }) {
+  const nodes = parseBodyNodes(markdown);
+  return (
+    <>
+      {nodes.map((node, i) => {
+        if (node.type === 'p') {
+          return (
+            <p key={i} className="text-utu-text-secondary leading-relaxed text-base mb-3 last:mb-0">
+              {renderInlineNodes(node.children)}
+            </p>
+          );
+        }
+        if (node.type === 'ul') {
+          return (
+            <ul key={i} className="list-disc list-outside ps-5 space-y-1 mb-3">
+              {node.items.map((item, j) => (
+                <li key={j} className="text-utu-text-secondary text-base leading-relaxed">
+                  {renderInlineNodes(item)}
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        return null;
+      })}
+    </>
+  );
+}
+
 // ─── Slug → translation key index ─────────────────────────────────────────────
 // Maps each post slug to the numeric suffix used in blog.* translation keys.
 // e.g. 'hajj-2026-guide' → 1 → t('post1Title'), t('post1Category'), etc.
@@ -154,18 +292,47 @@ export async function generateMetadata(
   const { slug } = await params;
   const dbPost = await fetchDbPost(slug);
   if (dbPost) {
+    const desc = dbPost.excerpt.slice(0, 155);
     return {
       title:       `${dbPost.title} — UTUBooking Blog`,
-      description: dbPost.excerpt.slice(0, 155),
+      description: desc,
+      alternates:  { canonical: `https://utubooking.com/blog/${slug}` },
+      openGraph: {
+        type:        'article',
+        url:         `https://utubooking.com/blog/${slug}`,
+        title:       dbPost.title,
+        description: desc,
+        publishedTime: dbPost.published_date,
+        siteName:    'UTUBooking',
+      },
+      twitter: {
+        card:        'summary_large_image',
+        title:       dbPost.title,
+        description: desc,
+      },
     };
   }
   if (!POSTS[slug]) return { title: 'Article Not Found — UTUBooking' };
   const t = await getTranslations('blog');
-  const idx = SLUG_INDEX[slug];
+  const idx   = SLUG_INDEX[slug];
   const title = idx ? t(`post${idx}Title` as Parameters<typeof t>[0]) : slug;
+  const desc  = POSTS[slug].sections[0]?.body.slice(0, 155) ?? '';
   return {
-    title: `${title} — UTUBooking Blog`,
-    description: POSTS[slug].sections[0]?.body.slice(0, 155),
+    title:       `${title} — UTUBooking Blog`,
+    description: desc,
+    alternates:  { canonical: `https://utubooking.com/blog/${slug}` },
+    openGraph: {
+      type:        'article',
+      url:         `https://utubooking.com/blog/${slug}`,
+      title,
+      description: desc,
+      siteName:    'UTUBooking',
+    },
+    twitter: {
+      card:        'summary_large_image',
+      title,
+      description: desc,
+    },
   };
 }
 
@@ -210,8 +377,42 @@ export default async function BlogPostPage(
     sections = post.sections;
   }
 
+  // ── Article JSON-LD — boosts eligibility for Google's Article rich result ──
+  const jsonLd = {
+    '@context':         'https://schema.org',
+    '@type':            'Article',
+    headline:           title,
+    description:        sections[0]?.body.slice(0, 155) ?? '',
+    datePublished:      dbPost?.published_date ?? date,
+    dateModified:       dbPost?.published_date ?? date,
+    author: {
+      '@type': 'Organization',
+      name:    'UTUBooking Editorial Team',
+      url:     'https://utubooking.com/about',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name:    'UTUBooking',
+      url:     'https://utubooking.com',
+      logo: {
+        '@type': 'ImageObject',
+        url:     'https://utubooking.com/icons/icon-512x512.png',
+      },
+    },
+    mainEntityOfPage: {
+      '@type': '@id',
+      '@id':   `https://utubooking.com/blog/${slug}`,
+    },
+  };
+
   return (
     <div className="min-h-screen bg-utu-bg-page">
+
+      {/* Article structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* Hero */}
       <section className="bg-utu-navy py-12 px-4">
@@ -243,7 +444,7 @@ export default async function BlogPostPage(
           {sections.map((section) => (
             <section key={section.heading}>
               <h2 className="text-lg font-bold text-utu-text-primary mb-3">{section.heading}</h2>
-              <p className="text-utu-text-secondary leading-relaxed text-base">{section.body}</p>
+              <RichBody markdown={section.body} />
             </section>
           ))}
         </div>

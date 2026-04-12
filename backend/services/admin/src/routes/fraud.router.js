@@ -2,6 +2,7 @@
 
 const { Router } = require('express');
 const { Pool }   = require('pg');
+const wf         = require('../lib/workflow-client');
 
 const pool   = new Pool({ connectionString: process.env.DATABASE_URL });
 const router = Router();
@@ -166,7 +167,28 @@ router.post('/cases', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
       [booking_ref||null, user_id||null, user_email||null, amount_sar||null, payment_method||null, ip_address||null, country||null, risk_score, flags, assigned_to||null],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const fraudCase = result.rows[0];
+
+    // ── Launch fraud review workflow for high-risk cases (score >= 70) ────────
+    if (parseInt(risk_score) >= 70) {
+      wf.launch({
+        triggerEvent:   'case_flagged',
+        triggerRef:     fraudCase.id,
+        triggerRefType: 'fraud_case',
+        initiatedBy:    req.user?.email ?? 'system',
+        context: {
+          booking_ref:    booking_ref || null,
+          user_email:     user_email || null,
+          amount_sar:     amount_sar || null,
+          risk_score:     parseInt(risk_score),
+          flags,
+          payment_method: payment_method || null,
+          country:        country || null,
+        },
+      });
+    }
+
+    res.status(201).json({ data: fraudCase });
   } catch (err) {
     console.error('[fraud] POST /cases error:', err);
     res.status(500).json({ error: 'DB_ERROR' });
@@ -261,7 +283,26 @@ router.post('/rules', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
       [name, type, description||null, JSON.stringify(condition), action, severity, created_by],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const rule = result.rows[0];
+
+    // ── Launch fraud rule change approval workflow ─────────────────────────────
+    wf.launch({
+      triggerEvent:   'rule_change_proposed',
+      triggerRef:     rule.id,
+      triggerRefType: 'fraud_rule',
+      initiatedBy:    req.user?.email ?? created_by,
+      context: {
+        rule_id:     rule.id,
+        rule_name:   name,
+        type,
+        action,
+        severity,
+        description: description ?? null,
+        condition:   JSON.stringify(condition),
+      },
+    });
+
+    res.status(201).json({ data: rule });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'RULE_EXISTS' });
     console.error('[fraud] POST /rules error:', err);

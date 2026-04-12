@@ -28,6 +28,7 @@
 const { Router } = require('express');
 const { Pool }   = require('pg');
 const adminAuth  = require('../middleware/adminAuth');
+const wf         = require('../lib/workflow-client');
 
 const router = Router();
 router.use(adminAuth);
@@ -261,7 +262,29 @@ router.post('/matters', async (req, res) => {
         notes        || null,
       ]
     );
-    return res.status(201).json({ data: rows[0] });
+    const matter = rows[0];
+
+    // ── Trigger contract review workflow for contract-type matters (fire-and-forget)
+    if (['contract','nda','partnership'].includes(matter.matter_type)) {
+      wf.launch({
+        triggerEvent:   'contract_drafted',
+        triggerRef:     matter.id,
+        triggerRefType: 'legal_matter',
+        initiatedBy:    req.user?.email ?? 'system',
+        context: {
+          title:        matter.title,
+          matter_type:  matter.matter_type,
+          urgency:      matter.urgency,
+          jurisdiction: matter.jurisdiction ?? 'SA',
+          due_date:     matter.due_date ?? null,
+          assigned_to:  matter.assigned_to ?? null,
+          // value defaults to 0 — set via context if passed by the caller
+          value:        req.body.value ?? 0,
+        },
+      });
+    }
+
+    return res.status(201).json({ data: matter });
   } catch (err) {
     console.error('[legal/matters POST]', err.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });

@@ -6,18 +6,196 @@
  * Tabs: Overview | Incidents | Support Tickets | Platform Health
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle, CheckCircle, Clock, Ticket, Activity, Plus,
-  Pencil, Trash2, ChevronDown, ExternalLink, RefreshCw, X,
+  Pencil, Trash2, ChevronDown, ExternalLink, RefreshCw, X, Copy, Check,
 } from 'lucide-react';
 import {
   getOpsStats, getOpsIncidents, createOpsIncident, updateOpsIncident, deleteOpsIncident,
   getOpsTickets, createOpsTicket, updateOpsTicket, deleteOpsTicket,
+  getSupportTriage, triageTicket,
   type OpsStats, type OpsIncident, type OpsSupportTicket,
   type IncidentSeverity, type IncidentStatus, type TicketPriority, type TicketStatus, type TicketCategory,
+  type SupportTriage, type TicketSentiment,
+  getOpsAdvice, analyzeOps, type OpsAdvice,
 } from '@/lib/api';
+
+// ─── AI Ops Advisor Panel ─────────────────────────────────────────────────────
+
+const OPS_HEALTH_BADGE: Record<string, string> = {
+  excellent: 'border-green-300  bg-green-50  text-green-700',
+  good:      'border-blue-200   bg-blue-50   text-blue-700',
+  fair:      'border-amber-200  bg-amber-50  text-amber-700',
+  poor:      'border-red-200    bg-red-50    text-red-700',
+};
+
+function AIOpsPanelInner() {
+  const [advice,  setAdvice]  = useState<OpsAdvice | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error,   setError]   = useState('');
+  const [open,    setOpen]    = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getOpsAdvice()
+      .then(r => { if (!cancelled) { setAdvice(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  async function handleAnalyze() {
+    setRunning(true); setError('');
+    try {
+      const res = await analyzeOps();
+      if (res.data) setAdvice(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch { setError('Failed to run analysis.'); }
+    finally { setRunning(false); }
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-violet-50/40 mb-4">
+      <button className="flex w-full items-center justify-between px-4 py-3 text-left" onClick={() => setOpen(o => !o)}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Ops Health Advisor</span>
+          {advice && (
+            <span className={`rounded-md border px-2 py-0.5 text-xs font-medium capitalize ${OPS_HEALTH_BADGE[advice.ops_health] ?? ''}`}>
+              {advice.ops_health}
+            </span>
+          )}
+          {advice && (
+            <span className="text-xs text-violet-500">
+              {advice.open_incidents} open incidents · {advice.open_tickets} open tickets
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-5 pt-4 space-y-5">
+          {loading && <p className="text-xs text-utu-text-muted italic">Loading ops analysis…</p>}
+
+          {!loading && !advice && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">
+                Run AI Ops Advisor to surface critical incidents, SLA breach risks, ticket backlog patterns, and platform health flags — including Hajj/Umrah season risk windows.
+              </p>
+              <button onClick={handleAnalyze} disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                {running ? 'Analysing…' : '✦ Run Ops Analysis'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {advice && !loading && (
+            <>
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{advice.executive_summary}</p>
+
+              {advice.critical_incidents.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Critical Open Incidents</h3>
+                  <div className="space-y-2">
+                    {advice.critical_incidents.map((inc, i) => (
+                      <div key={i} className={`rounded-lg border px-3 py-2 ${inc.severity === 'critical' ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <p className={`text-xs font-semibold ${inc.severity === 'critical' ? 'text-red-800' : 'text-amber-800'}`}>{inc.title}</p>
+                          <span className={`text-xs font-medium ${inc.severity === 'critical' ? 'text-red-600' : 'text-amber-600'}`}>{inc.age_hours}h old</span>
+                        </div>
+                        <p className={`text-xs mt-0.5 ${inc.severity === 'critical' ? 'text-red-600' : 'text-amber-700'}`}>{inc.service}</p>
+                        <p className={`text-xs mt-0.5 italic ${inc.severity === 'critical' ? 'text-red-500' : 'text-amber-600'}`}>{inc.recommended_action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {advice.sla_risks.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">SLA Breach Risks</h3>
+                  <div className="space-y-2">
+                    {advice.sla_risks.map((s, i) => (
+                      <div key={i} className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-medium text-orange-700 capitalize">{s.type}</span>
+                          <p className="text-xs font-semibold text-orange-800">{s.segment} ({s.count})</p>
+                        </div>
+                        <p className="text-xs text-orange-600 mt-0.5">{s.breach_risk}</p>
+                        <p className="text-xs text-orange-500 mt-0.5 italic">{s.action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {advice.incident_patterns && (
+                  <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                    <p className="text-xs font-semibold text-utu-text-muted mb-1">Incident Patterns</p>
+                    <p className="text-xs text-utu-text-secondary">{advice.incident_patterns}</p>
+                  </div>
+                )}
+                {advice.ticket_backlog && (
+                  <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                    <p className="text-xs font-semibold text-utu-text-muted mb-1">Ticket Backlog</p>
+                    <p className="text-xs text-utu-text-secondary">{advice.ticket_backlog}</p>
+                  </div>
+                )}
+              </div>
+
+              {advice.platform_risk_flags.length > 0 && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                  <p className="text-xs font-semibold text-red-800 mb-1">Platform Risk Flags</p>
+                  <ul className="space-y-0.5">
+                    {advice.platform_risk_flags.map((f, i) => <li key={i} className="text-xs text-red-700">• {f}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {advice.quick_wins.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Quick Wins</h3>
+                    <ul className="space-y-1">
+                      {advice.quick_wins.map((w, i) => (
+                        <li key={i} className="text-xs text-utu-text-secondary before:content-['→'] before:mr-1.5 before:text-green-500">{w}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {advice.recommendations.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</h3>
+                    <ul className="space-y-1">
+                      {advice.recommendations.map((r, i) => (
+                        <li key={i} className="text-xs text-utu-text-secondary before:content-['✓'] before:mr-1.5 before:text-violet-500">{r}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-violet-200">
+                <p className="text-xs text-violet-400">Last run: {new Date(advice.generated_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                <button onClick={handleAnalyze} disabled={running}
+                  className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                  {running ? 'Refreshing…' : '↺ Refresh'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -247,6 +425,210 @@ const BLANK_TICKET: TicketFormData = {
   assignee: '', description: '', resolution: '',
 };
 
+// ─── AI Triage Panel ──────────────────────────────────────────────────────────
+
+const SENTIMENT_CONFIG: Record<TicketSentiment, { label: string; bg: string; text: string; dot: string }> = {
+  positive:   { label: 'Positive',   bg: 'bg-green-50',  text: 'text-green-700',  dot: 'bg-green-500' },
+  neutral:    { label: 'Neutral',    bg: 'bg-slate-100', text: 'text-slate-600',  dot: 'bg-slate-400' },
+  frustrated: { label: 'Frustrated', bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500' },
+  angry:      { label: 'Angry',      bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500' },
+};
+
+const URGENCY_COLORS: Record<TicketPriority, string> = {
+  urgent: 'bg-red-100 text-red-700',
+  high:   'bg-orange-100 text-orange-700',
+  medium: 'bg-yellow-100 text-yellow-700',
+  low:    'bg-green-100 text-green-700',
+};
+
+function AITriagePanel({ ticketId }: { ticketId: string }) {
+  const [triage,  setTriage]  = useState<SupportTriage | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error,   setError]   = useState('');
+  const [copied,  setCopied]  = useState(false);
+  const [open,    setOpen]    = useState(false);
+
+  // Auto-load existing triage when panel opens
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getSupportTriage(ticketId)
+      .then(r => { if (!cancelled) { setTriage(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [ticketId, open]);
+
+  async function handleTriage() {
+    setRunning(true);
+    setError('');
+    try {
+      const res = await triageTicket(ticketId);
+      if (res.data) setTriage(res.data);
+      else setError('Triage failed. Please try again.');
+    } catch {
+      setError('Failed to run triage. Check your connection.');
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  function copyResponse() {
+    if (!triage?.draft_response) return;
+    navigator.clipboard.writeText(triage.draft_response).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  const sentiment = triage ? SENTIMENT_CONFIG[triage.sentiment] : null;
+
+  return (
+    <div className="mt-2 rounded-xl border border-violet-200 bg-violet-50/40">
+      {/* Header toggle */}
+      <button
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
+        onClick={() => setOpen(o => !o)}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Triage</span>
+          {triage && (
+            <>
+              {triage.escalation_flag && (
+                <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700">ESCALATE</span>
+              )}
+              <span className="text-xs text-violet-500 font-normal">
+                · {new Date(triage.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              </span>
+            </>
+          )}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-4 pt-3 space-y-3">
+          {loading && <p className="text-xs text-utu-text-muted italic">Loading triage…</p>}
+
+          {!loading && !triage && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">
+                No triage yet. Run AI Triage to get sentiment analysis, urgency assessment, a draft customer response, and internal resolution steps.
+              </p>
+              <button
+                onClick={handleTriage}
+                disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                {running ? 'Triaging…' : 'Triage with AI'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {triage && !loading && (
+            <>
+              {/* Escalation banner */}
+              {triage.escalation_flag && triage.escalation_reason && (
+                <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2.5">
+                  <p className="text-xs font-bold text-red-700 mb-0.5">Escalation Required</p>
+                  <p className="text-xs text-red-700">{triage.escalation_reason}</p>
+                </div>
+              )}
+
+              {/* Badges row */}
+              <div className="flex flex-wrap items-center gap-2">
+                {sentiment && (
+                  <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${sentiment.bg} ${sentiment.text}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${sentiment.dot}`} />
+                    {sentiment.label}
+                  </span>
+                )}
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${URGENCY_COLORS[triage.urgency_override]}`}>
+                  AI Priority: {triage.urgency_override.charAt(0).toUpperCase() + triage.urgency_override.slice(1)}
+                </span>
+                {triage.category_suggestion && (
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
+                    Category: {triage.category_suggestion}
+                  </span>
+                )}
+                <button
+                  onClick={handleTriage}
+                  disabled={running}
+                  className="ms-auto rounded border border-violet-300 px-2.5 py-1 text-xs text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+                >
+                  {running ? 'Re-triaging…' : 'Re-triage'}
+                </button>
+              </div>
+
+              {/* Summary + root cause */}
+              {triage.summary && (
+                <p className="text-xs text-utu-text-secondary leading-relaxed">{triage.summary}</p>
+              )}
+              {triage.root_cause && (
+                <div className="rounded-lg bg-utu-bg-muted px-3 py-2">
+                  <p className="text-xs font-semibold text-utu-text-secondary mb-0.5">Root Cause</p>
+                  <p className="text-xs text-utu-text-secondary leading-relaxed">{triage.root_cause}</p>
+                </div>
+              )}
+
+              {/* Resolution steps */}
+              {triage.resolution_steps.length > 0 && (
+                <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3">
+                  <p className="mb-2 text-xs font-semibold text-blue-800">Internal Resolution Steps</p>
+                  <ol className="space-y-1 list-none">
+                    {triage.resolution_steps.map((step, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-200 text-[10px] font-bold text-blue-700">
+                          {i + 1}
+                        </span>
+                        <span className="text-xs text-blue-900 leading-relaxed">{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* Pattern note */}
+              {triage.pattern_note && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2">
+                  <p className="text-xs font-semibold text-amber-800 mb-0.5">Pattern Detected</p>
+                  <p className="text-xs text-amber-800 leading-relaxed">{triage.pattern_note}</p>
+                </div>
+              )}
+
+              {/* Draft customer response */}
+              {triage.draft_response && (
+                <div className="rounded-lg border border-violet-200 bg-white p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold text-violet-800">Draft Customer Response</p>
+                    <button
+                      onClick={copyResponse}
+                      className="flex items-center gap-1 rounded border border-violet-200 px-2 py-0.5 text-xs text-violet-600 hover:bg-violet-50 transition-colors"
+                    >
+                      {copied ? <Check size={11} /> : <Copy size={11} />}
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                  <pre className="whitespace-pre-wrap text-xs text-utu-text-secondary leading-relaxed font-sans">
+                    {triage.draft_response}
+                  </pre>
+                </div>
+              )}
+
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Ticket Panel ─────────────────────────────────────────────────────────────
+
 function TicketPanel({
   ticket,
   onClose,
@@ -408,6 +790,9 @@ function TicketPanel({
               placeholder="How was it resolved?"
             />
           </div>
+
+          {/* AI Triage — only for existing tickets */}
+          {ticket && <AITriagePanel ticketId={ticket.id} />}
         </div>
         <div className="border-t border-utu-border-default px-6 py-4 flex justify-end gap-3">
           <button onClick={onClose} className="rounded border border-utu-border-default px-4 py-2 text-sm text-utu-text-secondary hover:bg-utu-bg-muted">
@@ -992,7 +1377,7 @@ export default function OpsPage() {
       </div>
 
       {/* Tab content */}
-      {activeTab === 'Overview'         && <OverviewTab onGoToIncidents={() => setActiveTab('Incidents')} onGoToTickets={() => setActiveTab('Support Tickets')} />}
+      {activeTab === 'Overview'         && <><AIOpsPanelInner /><OverviewTab onGoToIncidents={() => setActiveTab('Incidents')} onGoToTickets={() => setActiveTab('Support Tickets')} /></>}
       {activeTab === 'Incidents'        && <IncidentsTab />}
       {activeTab === 'Support Tickets'  && <TicketsTab />}
       {activeTab === 'Platform Health'  && <PlatformHealthTab />}

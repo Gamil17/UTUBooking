@@ -6,7 +6,7 @@
  * Tabs: Overview | Sprint Board | Tasks | Deployments
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Code, GitBranch, Rocket, CheckCircle, Clock, AlertCircle,
@@ -16,9 +16,11 @@ import {
   getDevStats, getDevSprints, createDevSprint, updateDevSprint, deleteDevSprint,
   getDevTasks, createDevTask, updateDevTask, deleteDevTask,
   getDevDeployments, createDevDeployment, updateDevDeployment, deleteDevDeployment,
+  getSprintHealth, analyzeSprintHealth,
   type DevStats, type DevSprint, type DevTask, type DevDeployment,
   type TaskType, type TaskPriority, type TaskStatus,
   type SprintStatus, type DeployEnv, type DeployStatus,
+  type SprintHealth,
 } from '@/lib/api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -605,11 +607,188 @@ function OverviewTab({ onGoToBoard, onGoToDeployments }: { onGoToBoard: () => vo
   );
 }
 
+// ─── AI Sprint Health Modal ───────────────────────────────────────────────────
+
+const SPRINT_HEALTH_BADGE: Record<string, string> = {
+  on_track: 'bg-green-100 text-green-700 border-green-200',
+  at_risk:  'bg-amber-100 text-amber-700 border-amber-200',
+  behind:   'bg-orange-100 text-orange-700 border-orange-200',
+  critical: 'bg-red-100 text-red-600 border-red-200',
+};
+
+const SPRINT_VELOCITY_BADGE: Record<string, string> = {
+  accelerating: 'bg-green-100 text-green-700',
+  stable:       'bg-blue-50  text-blue-700',
+  slowing:      'bg-amber-100 text-amber-700',
+  blocked:      'bg-red-100  text-red-600',
+};
+
+const URGENCY_BADGE: Record<string, string> = {
+  today:     'bg-red-100 text-red-700',
+  this_week: 'bg-amber-100 text-amber-700',
+};
+
+function AISprintHealthModal({ sprint, onClose }: { sprint: DevSprint; onClose: () => void }) {
+  const [health,  setHealth]  = useState<SprintHealth | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error,   setError]   = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getSprintHealth(sprint.id)
+      .then(r => { if (!cancelled) { setHealth(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [sprint.id]);
+
+  async function handleAnalyze() {
+    setRunning(true); setError('');
+    try {
+      const res = await analyzeSprintHealth(sprint.id);
+      if (res.data) setHealth(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch { setError('Failed to run analysis.'); }
+    finally { setRunning(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-utu-border-default px-6 py-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-violet-600">✦</span>
+              <h2 className="text-base font-bold text-utu-text-primary">AI Sprint Health</h2>
+            </div>
+            <p className="mt-0.5 text-xs text-utu-text-muted">{sprint.name}</p>
+          </div>
+          <button onClick={onClose} className="text-utu-text-muted hover:text-utu-text-primary text-lg">✕</button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          {loading && <p className="text-xs text-utu-text-muted italic py-8 text-center">Loading sprint analysis…</p>}
+
+          {!loading && !health && (
+            <div className="py-8 text-center space-y-3">
+              <p className="text-sm text-utu-text-secondary">Run AI Sprint Health to get health status, blockers, velocity trend, deployment health, and daily actions.</p>
+              <button onClick={handleAnalyze} disabled={running}
+                className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                {running ? 'Analysing…' : '✦ Analyse Sprint'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {health && !loading && (
+            <>
+              {/* KPI row */}
+              <div className="flex flex-wrap gap-3">
+                <div className={`rounded-xl border px-4 py-3 ${SPRINT_HEALTH_BADGE[health.health_status] ?? ''}`}>
+                  <p className="text-xs font-semibold uppercase tracking-wide">Status</p>
+                  <p className="mt-0.5 text-sm font-bold capitalize">{health.health_status.replace('_', ' ')}</p>
+                </div>
+                <div className={`rounded-xl px-4 py-3 ${SPRINT_VELOCITY_BADGE[health.velocity_trend] ?? ''}`}>
+                  <p className="text-xs font-semibold uppercase tracking-wide">Velocity</p>
+                  <p className="mt-0.5 text-sm font-bold capitalize">{health.velocity_trend}</p>
+                </div>
+                <div className="rounded-xl border border-utu-border-default bg-utu-bg-card px-4 py-3">
+                  <p className="text-xs text-utu-text-muted">Completion</p>
+                  <p className="mt-0.5 text-lg font-bold text-utu-text-primary">{health.completion_pct}%</p>
+                </div>
+                {health.scope_creep_flag && (
+                  <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">
+                    <p className="text-xs font-semibold text-orange-700">Scope Creep</p>
+                    <p className="text-xs text-orange-600 mt-0.5">Detected</p>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{health.executive_summary}</p>
+
+              {health.deployment_health && (
+                <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                  <p className="text-xs font-semibold text-utu-text-muted mb-1">Deployment Health</p>
+                  <p className="text-xs text-utu-text-secondary">{health.deployment_health}</p>
+                </div>
+              )}
+
+              {health.blockers.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Blockers</p>
+                  <div className="space-y-2">
+                    {health.blockers.map((b, i) => (
+                      <div key={i} className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                        <p className="text-xs font-semibold text-red-800">{b.task}</p>
+                        <p className="text-xs text-red-600 mt-0.5">{b.assignee} · {b.risk}</p>
+                        <p className="text-xs text-red-500 mt-0.5 italic">{b.suggested_action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {health.daily_actions.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Daily Actions</p>
+                  <div className="space-y-2">
+                    {health.daily_actions.map((a, i) => (
+                      <div key={i} className="flex items-start gap-2 rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                        <span className={`mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-xs font-medium ${URGENCY_BADGE[a.urgency] ?? ''}`}>{a.urgency.replace('_', ' ')}</span>
+                        <div>
+                          <p className="text-xs font-semibold text-utu-text-primary">{a.action}</p>
+                          <p className="text-xs text-utu-text-muted">{a.owner}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                {health.achievements.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-green-600 mb-1">Achievements</p>
+                    <ul className="space-y-1">{health.achievements.map((a, i) => <li key={i} className="text-xs text-utu-text-secondary">• {a}</li>)}</ul>
+                  </div>
+                )}
+                {health.risks.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-amber-600 mb-1">Risks</p>
+                    <ul className="space-y-1">{health.risks.map((r, i) => <li key={i} className="text-xs text-utu-text-secondary">• {r}</li>)}</ul>
+                  </div>
+                )}
+              </div>
+
+              {health.recommendations.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</p>
+                  <ul className="space-y-1">{health.recommendations.map((r, i) => <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary"><span className="text-violet-400 mt-0.5">▸</span>{r}</li>)}</ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-utu-border-default">
+                <p className="text-xs text-utu-text-muted">Generated {new Date(health.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                <button onClick={handleAnalyze} disabled={running}
+                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors">
+                  {running ? 'Re-analysing…' : 'Re-analyse'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Sprint Board Tab ─────────────────────────────────────────────────────────
 
 function SprintBoardTab() {
   const qc = useQueryClient();
   const [sprintPanel, setSprintPanel] = useState<DevSprint | null | 'new'>(null);
+  const [healthSprint, setHealthSprint] = useState<DevSprint | null>(null);
   const [taskPanel,   setTaskPanel]   = useState<DevTask   | null | 'new'>(null);
   const [selectedSprint, setSelectedSprint] = useState<string>('');
   const [delId, setDelId] = useState('');
@@ -673,6 +852,13 @@ function SprintBoardTab() {
             </button>
             <button onClick={() => setDelId(selectedSprint)} className="rounded border border-utu-border-default p-2 text-utu-text-muted hover:bg-red-50 hover:text-red-600" title="Delete sprint">
               <Trash2 size={14} />
+            </button>
+            <button
+              onClick={() => setHealthSprint(sprints.find(s => s.id === selectedSprint) ?? null)}
+              className="flex items-center gap-1 rounded border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-medium text-violet-700 hover:bg-violet-100"
+              title="AI Sprint Health"
+            >
+              <span>✦</span> Health
             </button>
           </>
         )}
@@ -771,6 +957,9 @@ function SprintBoardTab() {
           onClose={() => setSprintPanel(null)}
           onSaved={() => { setSprintPanel(null); refresh(); }}
         />
+      )}
+      {healthSprint && (
+        <AISprintHealthModal sprint={healthSprint} onClose={() => setHealthSprint(null)} />
       )}
       {taskPanel !== null && (
         <TaskPanel

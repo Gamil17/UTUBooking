@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, AlertTriangle, Heart, Plus, Edit2, Trash2, X, MessageSquare } from 'lucide-react';
 import {
   getCsStats, getCsAccounts, createCsAccount, updateCsAccount, deleteCsAccount,
   getCsTouchpoints, createCsTouchpoint,
   getCsEscalations, createCsEscalation, updateCsEscalation, deleteCsEscalation,
+  getAccountHealth, analyzeAccountHealth,
   type CsAccount, type CsTouchpoint, type CsEscalation,
+  type AccountHealth,
 } from '@/lib/api';
 
 const TABS = ['Overview', 'Accounts', 'Escalations', 'Activity Log'] as const;
@@ -48,6 +50,168 @@ function fmtDate(d?: string | null) {
 
 function daysSince(d: string) {
   return Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
+}
+
+// ── AI Account Health Modal ───────────────────────────────────────────────────
+
+const CS_CHURN_BADGE: Record<string, string> = {
+  critical: 'bg-red-100 text-red-700 border-red-200',
+  high:     'bg-orange-100 text-orange-700 border-orange-200',
+  medium:   'bg-amber-100 text-amber-700 border-amber-200',
+  low:      'bg-green-100 text-green-700 border-green-200',
+};
+
+const CS_TREND_BADGE: Record<string, string> = {
+  improving: 'bg-green-100 text-green-700',
+  stable:    'bg-blue-50  text-blue-700',
+  declining: 'bg-amber-100 text-amber-700',
+  at_risk:   'bg-red-100  text-red-600',
+};
+
+function AIAccountHealthModal({ account, onClose }: { account: CsAccount; onClose: () => void }) {
+  const [health,  setHealth]  = useState<AccountHealth | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error,   setError]   = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getAccountHealth(account.id)
+      .then(r => { if (!cancelled) { setHealth(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [account.id]);
+
+  async function handleAnalyze() {
+    setRunning(true); setError('');
+    try {
+      const res = await analyzeAccountHealth(account.id);
+      if (res.data) setHealth(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch { setError('Failed to run analysis.'); }
+    finally { setRunning(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-utu-border-default px-6 py-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-violet-600">✦</span>
+              <h2 className="text-base font-bold text-utu-text-primary">AI Account Health</h2>
+            </div>
+            <p className="mt-0.5 text-xs text-utu-text-muted">{account.name}</p>
+          </div>
+          <button onClick={onClose} className="text-utu-text-muted hover:text-utu-text-primary text-lg">✕</button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          {loading && <p className="text-xs text-utu-text-muted italic py-8 text-center">Loading health analysis…</p>}
+
+          {!loading && !health && (
+            <div className="py-8 text-center space-y-3">
+              <p className="text-sm text-utu-text-secondary">Run AI Account Health to get churn risk, engagement trend, next touchpoints, and renewal alerts.</p>
+              <button onClick={handleAnalyze} disabled={running}
+                className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                {running ? 'Analysing…' : '✦ Analyse Account'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {health && !loading && (
+            <>
+              {/* KPI row */}
+              <div className="flex flex-wrap gap-3">
+                <div className={`rounded-xl border px-4 py-3 ${CS_CHURN_BADGE[health.churn_risk] ?? ''}`}>
+                  <p className="text-xs font-semibold uppercase tracking-wide">Churn Risk</p>
+                  <p className="mt-0.5 text-lg font-bold capitalize">{health.churn_risk}</p>
+                </div>
+                <div className="rounded-xl border border-utu-border-default bg-utu-bg-card px-4 py-3">
+                  <p className="text-xs text-utu-text-muted">Health Score</p>
+                  <p className="mt-0.5 text-lg font-bold text-utu-text-primary">{health.health_score}/100</p>
+                </div>
+                <div className={`rounded-xl px-4 py-3 ${CS_TREND_BADGE[health.engagement_trend] ?? ''}`}>
+                  <p className="text-xs font-semibold uppercase tracking-wide">Engagement</p>
+                  <p className="mt-0.5 text-sm font-bold capitalize">{health.engagement_trend.replace('_', ' ')}</p>
+                </div>
+              </div>
+
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{health.executive_summary}</p>
+
+              {health.renewal_alert && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                  <p className="text-xs font-semibold text-amber-700">Renewal Alert</p>
+                  <p className="text-xs text-amber-600 mt-0.5">{health.renewal_alert}</p>
+                </div>
+              )}
+              {health.escalation_summary && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                  <p className="text-xs font-semibold text-red-700">Open Escalations</p>
+                  <p className="text-xs text-red-600 mt-0.5">{health.escalation_summary}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                {health.strengths.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-green-600 mb-1">Strengths</p>
+                    <ul className="space-y-1">{health.strengths.map((s, i) => <li key={i} className="text-xs text-utu-text-secondary">• {s}</li>)}</ul>
+                  </div>
+                )}
+                {health.concerns.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-amber-600 mb-1">Concerns</p>
+                    <ul className="space-y-1">{health.concerns.map((c, i) => <li key={i} className="text-xs text-utu-text-secondary">• {c}</li>)}</ul>
+                  </div>
+                )}
+              </div>
+
+              {health.next_touchpoints.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Next Touchpoints</p>
+                  <div className="space-y-2">
+                    {health.next_touchpoints.map((t, i) => (
+                      <div key={i} className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                        <p className="text-xs font-semibold text-utu-text-primary">{t.action}</p>
+                        <p className="text-xs text-utu-text-muted mt-0.5">{t.type} · {t.timeline}{t.owner ? ` · ${t.owner}` : ''}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {health.recommendations.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</p>
+                  <ul className="space-y-1">{health.recommendations.map((r, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary"><span className="mt-0.5 text-violet-400">▸</span>{r}</li>
+                  ))}</ul>
+                </div>
+              )}
+
+              {health.red_flags.length > 0 && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                  <p className="text-xs font-semibold text-red-700 mb-1">Red Flags</p>
+                  <ul className="space-y-1">{health.red_flags.map((f, i) => <li key={i} className="text-xs text-red-600">• {f}</li>)}</ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-utu-border-default">
+                <p className="text-xs text-utu-text-muted">Generated {new Date(health.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                <button onClick={handleAnalyze} disabled={running}
+                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors">
+                  {running ? 'Re-analysing…' : 'Re-analyse'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── Account Panel (slide-in) ──────────────────────────────────────────────────
@@ -156,6 +320,7 @@ function AccountsTab() {
   const [search, setSearch] = useState('');
   const [panel, setPanel] = useState<CsAccount | null>(null);
   const [editPanel, setEditPanel] = useState<Partial<CsAccount> | null>(null);
+  const [healthAccount, setHealthAccount] = useState<CsAccount | null>(null);
   const [isNew, setIsNew] = useState(false);
 
   const params: Record<string, unknown> = {};
@@ -225,6 +390,7 @@ function AccountsTab() {
                 <td className="px-4 py-3 text-xs text-utu-text-muted">{a.last_contacted_at ? `${daysSince(a.last_contacted_at)}d ago` : 'Never'}</td>
                 <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                   <div className="flex gap-1">
+                    <button onClick={() => setHealthAccount(a)} title="AI Health" className="p-1 text-violet-500 hover:text-violet-700"><span className="text-xs font-bold">✦</span></button>
                     <button onClick={() => { setIsNew(false); setEditPanel(a); }} className="p-1 text-utu-text-muted hover:text-utu-blue"><Edit2 size={14} /></button>
                     <button onClick={() => delMut.mutate(a.id)} className="p-1 text-utu-text-muted hover:text-red-500"><Trash2 size={14} /></button>
                   </div>
@@ -237,6 +403,7 @@ function AccountsTab() {
       </div>
 
       {panel && <AccountPanel account={panel} onClose={() => setPanel(null)} />}
+      {healthAccount && <AIAccountHealthModal account={healthAccount} onClose={() => setHealthAccount(null)} />}
 
       {editPanel !== null && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/30">

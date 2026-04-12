@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { getTranslations } from 'next-intl/server';
 import AdminSignOut from './AdminSignOut';
 import { AdminNav } from './AdminNav';
+import WorkflowTaskBadge from './WorkflowTaskBadge';
+import AdminAIChat from './AdminAIChat';
 
 /**
  * Admin shell layout — Server Component.
@@ -23,7 +25,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <span className="text-sm text-utu-text-muted">/</span>
             <span className="text-sm font-medium text-utu-text-primary">{t('revenueAdmin')}</span>
           </div>
-          <AdminSignOut />
+          <div className="flex items-center gap-3">
+            <WorkflowTaskBadge />
+            <AdminSignOut />
+          </div>
         </div>
       </header>
 
@@ -78,13 +83,16 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             {
               heading: 'Sales',
               items: [
-                { label: 'CRM & Pipeline', href: '/admin/sales' },
+                { label: 'CRM & Pipeline',    href: '/admin/sales' },
+                { label: 'Corporate Travel',  href: '/admin/corporate' },
               ],
             },
             {
               heading: 'Business Development',
               items: [
                 { label: 'Partnership Hub', href: '/admin/bizdev' },
+                { label: 'Affiliates',      href: '/admin/affiliates' },
+                { label: 'Advertising',     href: '/admin/advertising' },
               ],
             },
             {
@@ -183,10 +191,30 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               ],
             },
             {
+              heading: 'AI Intelligence',
+              items: [
+                { label: 'Daily Briefings',    href: '/admin/briefings' },
+                { label: 'Document Generator', href: '/admin/documents' },
+              ],
+            },
+            {
+              heading: 'Workflow Engine',
+              items: [
+                { label: 'My Task Inbox', href: '/admin/tasks' },
+                { label: 'Workflows',     href: '/admin/workflows' },
+              ],
+            },
+            {
               heading: 'Infrastructure',
               items: [
                 { label: 'Health Monitor', href: '/admin/infrastructure' },
                 { label: 'White-label Tenants', href: '/admin/tenants' },
+              ],
+            },
+            {
+              heading: 'Help',
+              items: [
+                { label: 'User Manual', href: '/admin/help' },
               ],
             },
           ]} />
@@ -195,6 +223,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           {children}
         </main>
       </div>
+
+      {/* Floating AI assistant — Client Component, present on every admin page */}
+      <AdminAIChat />
     </div>
   );
 }

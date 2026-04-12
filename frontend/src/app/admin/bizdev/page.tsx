@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getBizDevStats, getBizDevPartners, createBizDevPartner, updateBizDevPartner, deleteBizDevPartner,
@@ -10,6 +10,7 @@ import {
   type BizDevStats, type BizDevPartner, type BizDevAgreement, type BizDevActivity, type BizDevMarket,
   type PartnerType, type PartnerTier, type PartnerStatus,
   type AgreementType, type AgreementStatus, type MarketStatus, type MarketRegion, type MarketPriority, type BdActivityType,
+  getBizDevAdvice, analyzeBizDev, type BizDevAdvice,
 } from '@/lib/api';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -110,6 +111,209 @@ const inputCls   = 'w-full rounded-lg border border-utu-border-default bg-white 
 const selectCls  = 'w-full rounded-lg border border-utu-border-default bg-white px-3 py-2 text-sm text-utu-text-primary focus:outline-none focus:ring-2 focus:ring-utu-blue';
 const btnPrimary = 'rounded-lg bg-utu-navy px-4 py-2 text-sm font-medium text-white hover:bg-utu-blue transition-colors';
 const btnGhost   = 'rounded-lg border border-utu-border-default px-3 py-1.5 text-sm text-utu-text-muted hover:bg-gray-50';
+
+// ─── AI BizDev Advisor Panel ──────────────────────────────────────────────────
+
+const HEALTH_BADGE: Record<string, string> = {
+  excellent: 'border-green-300  bg-green-50  text-green-700',
+  good:      'border-blue-200   bg-blue-50   text-blue-700',
+  fair:      'border-amber-200  bg-amber-50  text-amber-700',
+  poor:      'border-red-200    bg-red-50    text-red-700',
+};
+const URGENCY_COLORS: Record<string, string> = {
+  immediate:   'bg-red-100 text-red-700',
+  this_week:   'bg-amber-100 text-amber-700',
+  this_month:  'bg-blue-100 text-blue-700',
+};
+
+function AIBizDevAdvisorPanel() {
+  const [advice,  setAdvice]  = useState<BizDevAdvice | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error,   setError]   = useState('');
+  const [open,    setOpen]    = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getBizDevAdvice()
+      .then(r => { if (!cancelled) { setAdvice(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  async function handleAnalyze() {
+    setRunning(true); setError('');
+    try {
+      const res = await analyzeBizDev();
+      if (res.data) setAdvice(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch { setError('Failed to run analysis.'); }
+    finally { setRunning(false); }
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-violet-50/40 mb-4">
+      <button className="flex w-full items-center justify-between px-4 py-3 text-left" onClick={() => setOpen(o => !o)}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Business Development Advisor</span>
+          {advice && (
+            <span className={`rounded-md border px-2 py-0.5 text-xs font-medium capitalize ${HEALTH_BADGE[advice.pipeline_health] ?? ''}`}>
+              {advice.pipeline_health} pipeline
+            </span>
+          )}
+          {advice && (
+            <span className="text-xs text-violet-500">
+              {advice.total_partners} partners · {advice.total_agreements} agreements
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-5 pt-4 space-y-5">
+          {loading && <p className="text-xs text-utu-text-muted italic">Loading analysis…</p>}
+
+          {!loading && !advice && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">
+                Run AI BizDev Advisor to surface at-risk partners, expiring agreements, market expansion priorities, and strategic pipeline gaps.
+              </p>
+              <button onClick={handleAnalyze} disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                {running ? 'Analysing…' : '✦ Run BizDev Analysis'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {advice && !loading && (
+            <>
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{advice.executive_summary}</p>
+
+              {advice.at_risk_partners.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">At-Risk Partners</h3>
+                  <div className="space-y-2">
+                    {advice.at_risk_partners.map((p, i) => (
+                      <div key={i} className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <p className="text-xs font-semibold text-red-800">{p.name}</p>
+                          <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${URGENCY_COLORS[p.urgency] ?? ''}`}>{p.urgency.replace('_', ' ')}</span>
+                        </div>
+                        <p className="text-xs text-red-600 mt-0.5">{p.risk}</p>
+                        <p className="text-xs text-red-500 mt-0.5 italic">{p.action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {advice.expiring_agreements.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Expiring Agreements</h3>
+                  <div className="space-y-2">
+                    {advice.expiring_agreements.map((a, i) => (
+                      <div key={i} className={`rounded-lg border px-3 py-2 ${a.days_left <= 30 ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+                        <p className={`text-xs font-semibold ${a.days_left <= 30 ? 'text-red-800' : 'text-amber-800'}`}>{a.partner} — {a.title}</p>
+                        <p className={`text-xs mt-0.5 ${a.days_left <= 30 ? 'text-red-600' : 'text-amber-700'}`}>{a.days_left} days remaining</p>
+                        <p className={`text-xs mt-0.5 italic ${a.days_left <= 30 ? 'text-red-500' : 'text-amber-600'}`}>{a.renewal_strategy}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {advice.top_partners.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Top Partners to Develop</h3>
+                  <div className="space-y-2">
+                    {advice.top_partners.map((p, i) => (
+                      <div key={i} className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2">
+                        <p className="text-xs font-semibold text-violet-800">{p.name} <span className="font-normal text-violet-500">({p.type})</span></p>
+                        <p className="text-xs text-violet-600 mt-0.5">{p.why}</p>
+                        <p className="text-xs text-violet-500 mt-0.5 italic">Opportunity: {p.opportunity}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {advice.market_expansion_rec.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Market Expansion Priorities</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {advice.market_expansion_rec.map((m, i) => (
+                      <div key={i} className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2">
+                        <p className="text-xs font-semibold text-indigo-800">{m.country} <span className="font-normal text-indigo-500">({m.region})</span></p>
+                        <p className="text-xs text-indigo-600 mt-0.5">{m.rationale}</p>
+                        <p className="text-xs text-indigo-500 mt-0.5">Need: {m.partner_type_needed}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {advice.quick_wins.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Quick Wins</h3>
+                    <ul className="space-y-1">
+                      {advice.quick_wins.map((w, i) => (
+                        <li key={i} className="text-xs text-utu-text-secondary before:content-['→'] before:mr-1.5 before:text-green-500">{w}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {advice.strategic_priorities.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Strategic Priorities</h3>
+                    <ul className="space-y-1">
+                      {advice.strategic_priorities.map((p, i) => (
+                        <li key={i} className="text-xs text-utu-text-secondary before:content-['▶'] before:mr-1.5 before:text-violet-500">{p}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {advice.pipeline_gaps.length > 0 && (
+                <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2">
+                  <p className="text-xs font-semibold text-orange-800 mb-1">Pipeline Gaps</p>
+                  <ul className="space-y-0.5">
+                    {advice.pipeline_gaps.map((g, i) => <li key={i} className="text-xs text-orange-700">• {g}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {advice.recommendations.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</h3>
+                  <ul className="space-y-1">
+                    {advice.recommendations.map((r, i) => (
+                      <li key={i} className="text-xs text-utu-text-secondary before:content-['✓'] before:mr-1.5 before:text-violet-500">{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-1 border-t border-violet-200">
+                <p className="text-xs text-violet-400">Last run: {new Date(advice.generated_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                <button onClick={handleAnalyze} disabled={running}
+                  className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                  {running ? 'Refreshing…' : '↺ Refresh'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Tab: Overview ────────────────────────────────────────────────────────────
 
@@ -927,7 +1131,7 @@ export default function BizDevPage() {
         </div>
 
         {/* Tab content */}
-        {activeTab === 'Overview'          && <OverviewTab onNavigate={setActiveTab} />}
+        {activeTab === 'Overview'          && <><AIBizDevAdvisorPanel /><OverviewTab onNavigate={setActiveTab} /></>}
         {activeTab === 'Partners'          && <PartnersTab />}
         {activeTab === 'Agreements'        && <AgreementsTab />}
         {activeTab === 'Activity Log'      && <ActivityLogTab />}

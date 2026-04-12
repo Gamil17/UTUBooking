@@ -1,5 +1,7 @@
 'use strict';
 
+const wf = require('../lib/workflow-client');
+
 /**
  * Business Development Department routes — admin service.
  *
@@ -301,7 +303,29 @@ router.post('/partners', async (req, res) => {
        status || 'prospect', contact_name || null, contact_email || null,
        contact_phone || null, parseFloat(revenue_share_pct ?? 0), owner || null, notes || null]
     );
-    res.status(201).json({ data: rows[0] });
+    const partner = rows[0];
+
+    // ── Launch partner onboarding workflow when partner enters active engagement ──
+    const activeStatuses = ['contacted', 'negotiating', 'signed', 'live'];
+    if (activeStatuses.includes(partner.status)) {
+      wf.launch({
+        triggerEvent:   'partner_onboard_requested',
+        triggerRef:     partner.id,
+        triggerRefType: 'bizdev_partner',
+        initiatedBy:    req.user?.email ?? owner ?? 'admin',
+        context: {
+          company_name:      company_name.trim(),
+          type:              type || 'other',
+          country:           country || null,
+          tier:              tier || 'standard',
+          status:            partner.status,
+          revenue_share_pct: parseFloat(revenue_share_pct ?? 0),
+          contact_email:     contact_email || null,
+        },
+      });
+    }
+
+    res.status(201).json({ data: partner });
   } catch (err) {
     console.error('[bizdev/partners POST]', err.message);
     res.status(500).json({ error: 'INTERNAL_ERROR' });

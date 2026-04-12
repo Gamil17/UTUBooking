@@ -21,6 +21,13 @@
 > | Compliance | `compliance/CLAUDE.md` |
 > | Products | `products/CLAUDE.md` |
 > | Legal | `legal/CLAUDE.md` |
+> | Customer Success | `customer-success/CLAUDE.md` |
+> | Fraud | `fraud/CLAUDE.md` |
+> | Revenue | `revenue/CLAUDE.md` |
+> | Procurement | `procurement/CLAUDE.md` |
+> | Analytics | `analytics/CLAUDE.md` |
+> | BizDev | `bizdev/CLAUDE.md` |
+> | Corporate | `corporate/CLAUDE.md` |
 
 ---
 
@@ -54,9 +61,53 @@
 | SOP-DEV-003 | Database Backup Verification | Dev AI | Weekly |
 | SOP-CS-001 | Customer Support Response | CS AI | < 2 hours SLA |
 | SOP-CS-002 | Cancellation & Refund Process | CS AI + Finance AI | Within 24 hours of request |
+| SOP-INV-001 | Weekly Inventory Health Review | Ops Agent + Revenue Agent | Every Monday |
+| SOP-INV-002 | Hajj/Umrah Inventory Readiness | Ops Agent | 12 weeks before Hajj season |
+| SOP-LOY-001 | Loyalty Programme Weekly Review | Ops Agent + CS Agent | Every Monday |
+| SOP-LOY-002 | Monthly Points & Rewards Management | Ops Agent + Finance Agent | 1st of month |
+| SOP-BKG-001 | Daily Booking Operations Review | Ops Agent + CS Agent | Every morning |
+| SOP-BKG-002 | Booking Dispute & Manual Override | CS Agent + Finance Agent | Per dispute |
+| SOP-WAL-001 | Wallet & Credit Operations | Finance Agent + Ops Agent | Weekly + per request |
+| SOP-PRO-001 | Promo Code Lifecycle | Marketing Agent + Finance Agent | Per campaign + monthly |
+| SOP-ANA-001 | Weekly KPI Dashboard Review | Analytics Agent + CEO | Every Monday |
+| SOP-ANA-002 | Monthly BI Report & Alert Management | Analytics Agent | 1st of month |
+| SOP-BIZ-001 | Weekly Partner Pipeline Review | BizDev Agent + CEO | Every Monday |
+| SOP-BIZ-002 | New Market Entry Assessment | BizDev Agent + CEO + Legal | Per new market |
+| SOP-BIZ-003 | Partnership Agreement Lifecycle | BizDev Agent + Legal | Per agreement |
+| SOP-ADV-001 | Advertising Enquiry Response | BizDev Agent + CEO | Within 4h of new enquiry |
+| SOP-ADV-002 | Advertising Proposal & Media Kit | BizDev Agent + CEO | Per qualified lead |
+| SOP-AFF-001 | Affiliate Application Review | BizDev Agent + CEO | Weekly + within 48h |
+| SOP-AFF-002 | Monthly Affiliate Payout Processing | Finance Agent + BizDev | 1st of month |
+| SOP-CORP-001 | Corporate Account Onboarding | Sales Agent + CEO | Per new account |
+| SOP-CORP-002 | Corporate Enquiry Response | Sales Agent + CEO | Within 4h of enquiry |
+| SOP-FRD-001 | Daily Fraud Queue Review | Fraud Agent + CEO | Every morning |
+| SOP-FRD-002 | Fraud Rule Governance | Fraud Agent + CEO | Per rule add/change |
+| SOP-FRD-003 | Persistent Bad Actor — Watchlist | Fraud Agent | Per confirmed fraud incident |
+| SOP-RVN-001 | Seasonal Pricing Rule Setup | Revenue Agent + CEO | 8 weeks before each season |
+| SOP-RVN-002 | Monthly Revenue Target Review | Revenue Agent + Finance Agent | 1st of month |
+| SOP-RVN-003 | Emergency Price Override | Revenue Agent + CEO | Within 2h of trigger |
+| SOP-PRC-001 | Supplier Onboarding & Contracting | Procurement Agent + CEO | Per new supplier |
+| SOP-PRC-002 | Monthly Contract & SLA Review | Procurement Agent | 1st of month |
+| SOP-PRC-003 | Purchase Order Approval | Procurement Agent + CEO | Per PO >= SAR 10,000 |
+| SOP-FIN-001 | Payment Gateway Reconciliation | Finance Agent | Monthly — 1st of month |
+| SOP-FIN-002 | Currency Risk Monitoring | Finance Agent + CEO | Weekly |
+| SOP-HR-001 | New Employee Onboarding | HR Agent + Legal | Per new hire |
+| SOP-HR-002 | Outsourced Developer Management | HR Agent + Dev Agent | Per new contractor |
+| SOP-COM-001 | GDPR Erasure Request Processing | Compliance Agent | Per request — 30-day SLA |
+| SOP-COM-002 | CCPA Opt-Out Processing | Compliance Agent | Per request — 45-day SLA |
+| SOP-COM-003 | LGPD Request Processing | Compliance Agent | Per request — 15-day SLA |
+| SOP-COM-004 | PIPEDA Request Processing | Compliance Agent | Per request — 30-day SLA |
+| SOP-COM-005 | KVKK Request Processing | Compliance Agent | Per request — 30-day SLA |
+| SOP-CRM-001 | Daily Deal Pipeline Review | Sales Agent + CEO | Every morning |
+| SOP-CRM-002 | Hotel Partner Pipeline Review | Sales Agent + Revenue Agent | Every Monday |
+| SOP-OPS-001 | Daily Incident Management | Ops Agent + Dev Agent | Every morning + on alert |
+| SOP-OPS-002 | Support Ticket Queue Management | Ops Agent + CS Agent | Every morning + hourly (urgent) |
 | SOP-EMG-001 | Platform Outage Response | CEO + Dev AI | When uptime < 99% / 5 min |
 | SOP-EMG-002 | Data Breach Response | CEO + Legal AI | Immediately on detection |
 | SOP-EMG-003 | Claude AI Agent Malfunction | CEO | When AI output is problematic |
+| SOP-EMG-004 | GDS / Hotel API Failure | Dev Agent + Ops Agent | On API failure alert |
+| SOP-EMG-005 | DDoS or Security Incident | CEO + Dev Agent | Immediately on detection |
+| SOP-EMG-006 | Regulatory Inquiry or Audit | CEO + Legal + Compliance | Within 24h of inquiry |
 
 ---
 
@@ -4758,6 +4809,1916 @@ If fine issued: notify finance agent + CEO. Escalate to Board if > €50K equiva
 
 ---
 
+# SECTION 5 — Fraud & Risk Department SOPs
+
+---
+
+## FRD-001 · Daily Fraud Queue Review
+
+**Owner:** Fraud Agent &nbsp;|&nbsp; **Frequency:** Every morning, before customer support shift starts
+
+**Purpose:** Clear the pending fraud case queue, action high-risk cases, and surface patterns before they become financial losses.
+
+**Trigger:** Any morning where `fraud_cases.status = 'pending'` count > 0, or automatically as part of GBL-001 morning briefing.
+
+### Step 1 — Paste into Claude Code
+
+```
+Daily fraud queue review — [DATE].
+
+QUEUE SUMMARY:
+- Query pending cases: GET /api/admin/fraud/cases?status=pending
+- Sort by risk_score DESC. How many cases are pending?
+- How many are risk_score >= 70 (HIGH RISK — auto-workflow already triggered)?
+- How many are risk_score 40–69 (MEDIUM — manual review needed)?
+- Confirmed fraud this month so far (SAR value): GET /api/admin/fraud/stats
+
+HIGH-RISK CASES (risk_score >= 70):
+For each pending case with score >= 70:
+  - Booking ref, user_email, amount_sar, payment_method, country, flags
+  - Has the fraud review workflow launched? (check workflow engine)
+  - Recommendation: CONFIRM FRAUD / FALSE POSITIVE / ESCALATE TO CEO
+
+MEDIUM-RISK CASES (risk_score 40–69):
+For each pending case with score 40–69:
+  - Review flags. Common flags: geo_mismatch, high_velocity, late_night_bulk
+  - Cross-reference: has this email/IP appeared in any watchlist entry?
+  - Recommendation: REVIEW / MONITOR / DISMISS
+
+PATTERN ANALYSIS:
+- Which fraud rule has the highest hit_count this week? Any spike vs. 7-day avg?
+- Any new country appearing disproportionately in flagged cases?
+- Any payment method with unusual fraud rate (> 3% of transactions)?
+
+Output: case-by-case decision list. Flag any case needing CEO sign-off before action.
+```
+
+### Step 2 — Decision Matrix
+
+| Risk Score | Status | Action | CEO Required |
+|-----------|--------|--------|-------------|
+| >= 90 | pending | Block booking + confirm fraud + add to watchlist | Yes |
+| 70–89 | pending | Hold booking, request user verification, escalate if no response 4h | Yes |
+| 40–69 | pending | Flag for 24h monitoring. Auto-release if no further signals. | No |
+| < 40 | pending | Dismiss — log reason | No |
+
+### Step 3 — Decision Logging
+
+All decisions must be recorded via `PATCH /api/admin/fraud/cases/:id` with:
+- `status`: `confirmed_fraud` / `false_positive` / `escalated`
+- `decision_reason`: mandatory — minimum 10 words explaining the decision
+
+> **Human approval required** for all `confirmed_fraud` decisions affecting bookings > SAR 5,000 or involving chargebacks.
+
+---
+
+## FRD-002 · Fraud Rule Governance
+
+**Owner:** Fraud Agent + CEO &nbsp;|&nbsp; **Frequency:** Per new rule proposal or existing rule modification
+
+**Purpose:** Ensure fraud detection rules are effective, not over-triggering false positives, and approved before going live. Every rule change auto-launches an approval workflow.
+
+**Trigger:** False positive rate > 15% in 30 days, new fraud pattern detected, or quarterly rule hygiene review.
+
+### Step 1 — Rule Effectiveness Review
+
+```
+Fraud rule effectiveness review — [DATE].
+
+CURRENT RULES AUDIT:
+- GET /api/admin/fraud/rules?active=true
+- For each rule: hit_count, severity, action (flag/block/review/allow)
+- False positive rate this month: GET /api/admin/fraud/stats → false_positive_rate
+- Target: false_positive_rate < 10%. Current: [X]%
+
+RULES TO REVIEW:
+- Rules with hit_count = 0 in 30 days → candidate for deactivation or condition adjustment
+- Rules with hit_count > 200/day → may be too broad, review condition specificity
+- Rules with action='block' → highest stakes, verify severity justifies hard block
+
+PROPOSE CHANGES (if any):
+For each proposed change:
+  Rule name:
+  Current condition: [JSON]
+  Proposed condition: [JSON]
+  Reason: [why this change improves precision]
+  Expected impact: [estimated reduction in false positives / new fraud caught]
+
+NEW RULE PROPOSAL (if applicable):
+  Name: [descriptive, unique]
+  Type: threshold / velocity / geo / device / card / pattern / ml
+  Condition: [JSON — see existing rules for format]
+  Action: flag / block / review
+  Severity: critical / high / medium / low
+  Business justification: [1–2 sentences]
+
+All new rules and changes require CEO approval before activation.
+Save rule change log: legal/regulatory-inquiries/ is wrong — save to: docs/fraud/rule-changes/[DATE]-[rule-name].md
+```
+
+### Step 2 — Rule Change Approval Gate
+
+| Change Type | Approval Required | Workflow |
+|------------|-----------------|---------|
+| New `block` or `critical` rule | CEO + manual test on 7-day historical data | Yes — workflow auto-launched on POST /rules |
+| New `flag` or `review` rule | Fraud Agent review sufficient | Yes — workflow auto-launched |
+| Deactivate existing rule | Fraud Agent + document reason | Patch rule: `active: false` |
+| Adjust threshold on existing rule | Fraud Agent review | Patch rule condition |
+
+> **Never delete a rule.** Set `active: false`. Deletion loses hit_count audit history.
+
+### Step 3 — Monthly Rule Hygiene Prompt
+
+Run on the 1st of each month as part of FRD-001 extended review:
+
+```
+Monthly fraud rule hygiene — [MONTH YEAR].
+
+1. Rules with zero hits in 30 days — list. Deactivate candidates.
+2. Rules that fired but had > 50% false positive rate — list. Tune conditions.
+3. New fraud patterns seen in confirmed_fraud cases this month — any rule gaps?
+4. Watchlist entries expiring in next 30 days — review: extend or let expire?
+5. Confirmed fraud SAR total this month vs. last month. Trend?
+6. Geographic shift in fraud attempts? Any new country entering top 5?
+
+Output: rule hygiene report. Save to: docs/fraud/monthly-reports/[YYYY-MM].md
+```
+
+---
+
+## FRD-003 · Persistent Bad Actor — Watchlist Management
+
+**Owner:** Fraud Agent &nbsp;|&nbsp; **Trigger:** Any `confirmed_fraud` decision, or external threat intelligence flag
+
+**Purpose:** Ensure persistent fraudsters are blocked across all booking channels (email, IP, card BIN, device, phone). Watchlist entries are upserted — same type+value updates rather than duplicates.
+
+### Watchlist Entry Procedure
+
+```
+Watchlist entry — [DATE] — triggered by case [CASE_ID] / [EXTERNAL SOURCE].
+
+Actor details:
+  Email: [if known]
+  IP address: [if known — check if residential or datacenter/VPN]
+  Card BIN: [first 6 digits only — never store full card]
+  Device fingerprint: [if available]
+  Phone: [if known]
+
+Evidence:
+  - Booking refs involved: [list]
+  - Total attempted fraud SAR: [amount]
+  - Rule(s) that fired: [list]
+  - Decision basis: [brief narrative]
+
+Watchlist entries to create (POST /api/admin/fraud/watchlist for each):
+  type: email | ip | card_bin | device_id | phone
+  value: [the identifier]
+  reason: [minimum 15 words linking back to confirmed case]
+  severity: critical | high | medium
+  expires_at: [null for permanent ban; ISO date for temporary — default 12 months for IP, permanent for card_bin]
+
+Post-entry checks:
+  - Any existing active bookings from this email/IP? Flag for cancellation review.
+  - Notify customer success: if legitimate user was wrongly listed, they have an appeal path.
+  - Log to: docs/fraud/watchlist-log/[DATE]-[type]-[value-masked].md
+
+Human approval required before watchlist entry for any EU/UK user (GDPR Art. 22 — automated profiling).
+```
+
+### Watchlist Expiry Policy
+
+| Entry Type | Default Expiry | Review |
+|-----------|---------------|--------|
+| email | 24 months | Annual — confirm still active fraud risk |
+| ip | 12 months | Quarterly — IPs reassign; residential IPs should not be permanent |
+| card_bin | Permanent | Annual — verify BIN still associated with fraudulent issuer |
+| device_id | 18 months | Semi-annual |
+| phone | 24 months | Annual |
+
+---
+
+# SECTION 6 — Revenue Management SOPs
+
+---
+
+## RVN-001 · Seasonal Pricing Rule Setup
+
+**Owner:** Revenue Agent + CEO &nbsp;|&nbsp; **Frequency:** 8 weeks before each major season (Ramadan, Hajj, Eid Al-Fitr, Eid Al-Adha, Summer Peak)
+
+**Purpose:** Set, review, and activate time-bound pricing rules for peak periods so hotels in Makkah, Madinah, and key markets are priced optimally — maximising revenue without losing bookings to competitors.
+
+**Trigger:** 8 weeks before season start date OR when occupancy signals indicate early demand spike.
+
+### UTUBooking Seasonal Calendar
+
+| Season | Approx. Dates | Markets Affected | Typical Uplift |
+|--------|--------------|-----------------|---------------|
+| Ramadan | 28 Feb – 29 Mar 2026 | Makkah, Madinah, KSA, UAE | +20% |
+| Hajj | 1 Jun – 20 Jun 2026 | Makkah, Madinah only | +35% |
+| Eid Al-Fitr | 29 Mar – 2 Apr 2026 | All MEANA markets | +15% |
+| Eid Al-Adha | Jun 2026 (post-Hajj) | All MEANA markets | +15% |
+| KSA National Day | 23 Sep 2026 | KSA | +10% |
+| Summer Peak | 15 Jun – 31 Aug 2026 | UAE, EU, NA | +10% |
+
+### Step 1 — Pre-Season Pricing Prompt
+
+```
+Seasonal pricing rule setup — [SEASON NAME] [YEAR].
+
+MARKET INTELLIGENCE:
+1. What are competitors (Almosafer, Wego, Booking.com) charging for Makkah/Madinah hotels
+   during [SEASON DATES]? Search for comparable 3-5 star hotels near Haram.
+2. What is our current average booking lead time for this season vs. last year?
+3. Hotelbeds availability signal: any hotels already showing < 20% availability
+   for peak dates? (check GET /api/hotels/search for peak weekend dates)
+
+RULE PROPOSAL:
+For each proposed rule, specify:
+  Name: [Season] [Year] [Market/Hotel]
+  Type: seasonal | event
+  Applies to: all | hotel (specify hotel_id if single property)
+  Adjustment: percent | absolute
+  Value: [number — positive = uplift, negative = discount]
+  Start date: [YYYY-MM-DD]
+  End date: [YYYY-MM-DD]
+  Priority: 1 (highest) to 9 (lowest)
+  Notes: [business rationale]
+
+BLACKOUT PERIODS (if applicable):
+  Hotels that should NOT be bookable for certain dates (e.g. blocked for group contracts):
+  Name, hotel_id, start_date, end_date, reason
+
+REVIEW CHECKLIST before activating:
+  [ ] Does the rule conflict with any existing active rule (same hotel, overlapping dates)?
+  [ ] Have finance and CEO reviewed the projected revenue impact?
+  [ ] Are competitor prices within 15% of our proposed prices?
+  [ ] Is the adjustment reversible if demand underperforms?
+
+Output: rule proposal document for CEO review. DO NOT activate rules until CEO approves.
+Save draft: docs/revenue/seasonal-rules/[SEASON]-[YEAR]-draft.md
+```
+
+### Step 2 — Activation (CEO approved)
+
+```
+Activate approved seasonal pricing rules — [SEASON] [YEAR].
+
+Rules approved by CEO on [DATE]:
+[List each approved rule name]
+
+For each rule:
+  POST /api/admin/revenue/rules — with approved parameters
+  Confirm: rule is active = true, priority correct, dates correct
+  Test: run a test hotel search for peak dates — confirm price uplift is applied correctly
+
+Post-activation monitoring:
+  Day 1: check booking conversion rate for affected hotels vs. pre-rule baseline
+  Day 7: check booking volume — if > 20% below forecast, flag to CEO for price adjustment
+  Day 14: mid-season check — are high-demand dates approaching full occupancy?
+          If yes: consider additional uplift rule for last 20% of inventory.
+
+Save activation log: docs/revenue/seasonal-rules/[SEASON]-[YEAR]-activated.md
+```
+
+---
+
+## RVN-002 · Monthly Revenue Target Review
+
+**Owner:** Revenue Agent + Finance Agent &nbsp;|&nbsp; **Frequency:** 1st of every month
+
+**Purpose:** Review actual RevPAR, occupancy, and ADR against targets. Adjust pricing strategy for the coming month based on forward booking data.
+
+**Trigger:** Automatically part of GBL-002 Weekly Report extended monthly version.
+
+### Step 1 — Monthly Review Prompt
+
+```
+Monthly revenue target review — [MONTH YEAR].
+
+ACTUALS vs. TARGETS (GET /api/admin/revenue/targets?period=[YYYY-MM]):
+  Target RevPAR: [SAR] | Actual RevPAR: [SAR] | Variance: [%]
+  Target Occupancy: [%] | Actual Occupancy: [%]
+  Target ADR: [SAR] | Actual ADR: [SAR]
+
+If any metric is > 10% below target: root cause analysis required.
+  - Which specific hotels dragged occupancy down?
+  - Which markets underperformed?
+  - Were there any blackout periods or rule conflicts that suppressed bookings?
+
+FORWARD BOOKING ANALYSIS:
+  For the next 30/60/90 days: what is current on-the-books occupancy vs. same period last year?
+  Any specific dates showing < 40% occupancy that need a demand-stimulation rule?
+  Any specific dates showing > 85% occupancy that justify a further uplift?
+
+ACTIVE RULE HEALTH CHECK:
+  GET /api/admin/revenue/rules?active=true
+  Are all rules correctly scoped (dates, hotels, priorities)?
+  Any rules that expired and need renewal?
+  Any rules that are conflicting with each other (same priority, same hotel, overlapping dates)?
+
+PRICING SERVICE PROXY:
+  POST /api/admin/revenue/pricing-proxy with sample hotel searches across top 5 markets
+  Confirm pricing service (port 3011) is returning correct adjusted prices.
+
+Output: monthly revenue report (1 page). Update revenue_targets table with actual_revpar.
+Save to: docs/revenue/monthly-reports/[YYYY-MM]-revenue-review.md
+```
+
+### Step 2 — Revenue Target Setting (new period)
+
+```
+Set revenue targets for [MONTH YEAR].
+
+INPUTS:
+  - Last month actuals: RevPAR [SAR], Occupancy [%], ADR [SAR]
+  - 12-month trend: improving / stable / declining?
+  - Upcoming seasons or events in this period?
+  - New hotel supply in key markets (new competition)?
+  - Budget target from Finance Agent (if set in annual budget)?
+
+PROPOSED TARGETS:
+  RevPAR (SAR): [X]  — basis: [last month +/-X% or seasonal factor]
+  Occupancy %: [X]
+  ADR (SAR): [X]
+  Notes: [any specific assumptions, e.g. Ramadan uplift baked in]
+
+POST /api/admin/revenue/targets with period=[YYYY-MM], period_type=month
+CEO approval required if targets deviate > 20% from prior period.
+```
+
+---
+
+## RVN-003 · Emergency Price Override
+
+**Owner:** Revenue Agent + CEO &nbsp;|&nbsp; **Trigger:** Competitor price dump, hotel contract change, system pricing error, or demand crash requiring same-day response
+
+**Purpose:** Apply an immediate date-specific price override for a single hotel, bypassing the standard rule engine, with full audit trail.
+
+### Override Conditions
+
+| Trigger | Example | Response Time |
+|---------|---------|--------------|
+| Competitor price dump | Wego shows Makkah hotel 30% cheaper | < 2 hours |
+| Hotel contract renegotiation | Partner reduces our net rate by 15% | < 4 hours |
+| System pricing error | Rule misconfiguration causes 90% discount shown publicly | < 30 minutes — P1 |
+| Demand crash | Flight cancellation wipes 40% of weekend bookings | < 2 hours |
+
+### Override Prompt
+
+```
+Emergency price override — [DATE] — triggered by: [REASON].
+
+SITUATION:
+  Hotel: [hotel_name] (hotel_id: [ID])
+  Affected dates: [start_date] to [end_date]
+  Current displayed price: SAR [X]
+  Target price after override: SAR [Y]
+  Reason: [specific business justification — minimum 20 words]
+
+IMPACT ASSESSMENT before override:
+  1. How many unconfirmed quotes / search sessions are live for this hotel/date?
+     (Check session cache — Redis key: search:results:{hotelId}:*)
+  2. Are there any confirmed bookings at the current (incorrect) price that need honouring?
+     If yes: honour them, do NOT retroactively reprice confirmed bookings.
+  3. Is this a temporary override (specific dates) or a rule adjustment (ongoing)?
+     If ongoing: use RVN-001 rule creation process instead.
+
+EXECUTE OVERRIDE:
+  POST /api/admin/revenue/overrides with:
+    hotel_id, hotel_name, override_date (one entry per date), price_sar, reason, approved_by
+
+POST-OVERRIDE:
+  1. Clear Redis hotel search cache for affected dates: DEL search:results:{hotelId}:*
+  2. Confirm new price is displayed correctly — test via hotel search API.
+  3. Notify customer success: if customers ask about price change, standard reply is "prices vary by availability."
+  4. Document in: docs/revenue/overrides/[DATE]-[hotel_id]-override.md
+
+CEO approval required for any override affecting bookings already in cart (conversion risk).
+ALL overrides are immutable in the audit table — log reason accurately.
+```
+
+---
+
+# SECTION 7 — Procurement SOPs
+
+---
+
+## PRC-001 · Supplier Onboarding & Contracting
+
+**Owner:** Procurement Agent + CEO &nbsp;|&nbsp; **Frequency:** Per new supplier engagement
+
+**Purpose:** Ensure every API provider, GDS, hotel chain, technology vendor, or service partner is properly vetted, contracted, and set up before any production access is granted.
+
+**Trigger:** BD team identifies a new supplier, or Dev Agent requests a new API integration.
+
+### Supplier Types
+
+| Type | Examples | Risk Level |
+|------|---------|-----------|
+| api_provider | Hotelbeds, Amadeus, Booking.com | High — core revenue dependency |
+| gds | Amadeus, Sabre, Galileo | High |
+| hotel_chain | Direct hotel group APIs | Medium-High |
+| airline | Pegasus, Air Arabia, flyadeal | Medium-High |
+| technology | AWS, Twilio, SendGrid, Redis Cloud | Medium |
+| insurance | Travel insurance API partners | Medium |
+| car_rental | Hertz, Budget API | Low-Medium |
+| other | Freelancers, consultants | Low |
+
+### Step 1 — Supplier Due Diligence Prompt
+
+```
+New supplier onboarding — [SUPPLIER NAME] — [DATE].
+
+SUPPLIER PROFILE:
+  Name: [supplier name]
+  Type: [api_provider / gds / hotel_chain / airline / technology / other]
+  Country of incorporation: [country]
+  Website: [URL]
+  Contact: [name, email]
+  Account/partner ID: [if known]
+  Estimated annual contract value (SAR): [X]
+
+DUE DILIGENCE CHECKLIST:
+  [ ] Is the supplier on any sanctions list? (OFAC, UN, EU, UK HMT)
+      — Check company name + country. Especially critical for suppliers in sanctioned regions.
+  [ ] Does the supplier have a DPA (Data Processing Agreement) for GDPR compliance?
+      — Required for any supplier processing EU/UK user data.
+  [ ] Does the supplier have SOC 2 Type II or ISO 27001 certification?
+      — Required for any supplier with access to user PII.
+  [ ] API SLA: what uptime guarantee does the supplier offer? Target: 99.5% minimum.
+  [ ] Payment terms: NET 30 standard. NET 60 requires Finance Agent approval.
+  [ ] Does the supplier require exclusivity? Flag to CEO — exclusivity clauses require board review.
+
+LEGAL REVIEW:
+  Legal Agent must review any contract > SAR 100,000 annual value before signing.
+  For contracts < SAR 100,000: Procurement Agent review sufficient, CEO countersigns.
+
+OUTPUT: supplier due diligence report. Save to: docs/procurement/due-diligence/[SUPPLIER]-[DATE].md
+Do NOT create the supplier record in the database until due diligence is complete.
+```
+
+### Step 2 — Supplier Record Creation
+
+```
+Create supplier record — [SUPPLIER NAME] — due diligence approved [DATE].
+
+POST /api/admin/procurement/suppliers:
+  name: [full legal entity name]
+  type: [supplier type]
+  status: onboarding
+  country: [ISO 2-letter code]
+  contact_name: [name]
+  contact_email: [email]
+  website: [URL]
+  account_id: [partner/account ID from their portal]
+  annual_value_sar: [estimated annual spend]
+  owner: [internal owner — CEO / Dev / Finance]
+  notes: [key commercial terms, SLA summary, renewal date]
+
+After record created: POST /api/admin/procurement/contracts with contract details.
+After contract signed: PATCH supplier status → active.
+Notify Dev Agent: supplier is active — API credentials can now be provisioned from SSM.
+```
+
+### Step 3 — Contract Creation Prompt
+
+```
+Draft supplier contract record — [SUPPLIER] — [DATE].
+
+POST /api/admin/procurement/contracts:
+  supplier_id: [UUID from supplier record]
+  supplier_name: [name]
+  title: [contract title — e.g. "Hotelbeds API Distribution Agreement 2026"]
+  type: api | service | license | distribution | nda | framework | other
+  value_sar: [total contract value or annual value]
+  start_date: [YYYY-MM-DD]
+  end_date: [YYYY-MM-DD — if open-ended, use 2099-12-31 and note in fields]
+  auto_renews: true | false
+  signed_by: [CEO name]
+  file_url: [link to signed contract in secure document store — e.g. Google Drive or legal/contracts/]
+  notes: [key terms: notice period, SLA, liability cap, data processing, exit clause]
+
+Post-contract actions:
+  1. Calendar reminder 90 days before end_date for renewal review.
+  2. If auto_renews = true: calendar reminder 60 days before end_date — confirm or cancel.
+  3. Create SLA entries (POST /api/admin/procurement/slas) for each contractual SLA metric.
+  4. Brief Finance Agent: add to vendor payment schedule.
+```
+
+---
+
+## PRC-002 · Monthly Contract & SLA Review
+
+**Owner:** Procurement Agent &nbsp;|&nbsp; **Frequency:** 1st of every month
+
+**Purpose:** Monitor supplier health, catch SLA breaches before they escalate, and flag contracts coming up for renewal so nothing auto-renews unexpectedly.
+
+### Monthly Review Prompt
+
+```
+Monthly procurement & SLA review — [MONTH YEAR].
+
+SLA STATUS (GET /api/admin/procurement/slas):
+  How many SLAs are currently: met | at_risk | breached | pending?
+  For any SLA with status = 'breached':
+    - Which supplier? Which metric?
+    - What is the contractual remedy (service credit, termination right)?
+    - Has the supplier been formally notified? (required for credit claim)
+    - Draft breach notification email for CEO review.
+  For any SLA with status = 'at_risk':
+    - Proactively contact supplier — request remediation plan within 7 days.
+
+CONTRACT RENEWALS — NEXT 90 DAYS:
+  Query: contracts WHERE end_date BETWEEN NOW() AND NOW() + INTERVAL '90 days'
+  For each expiring contract:
+    - Do we want to renew? (check supplier performance, market alternatives)
+    - If yes: initiate renewal negotiation now — do not wait for auto-renew.
+    - If no: serve notice per contract notice period. Flag to Dev Agent if API access will terminate.
+    - If auto_renews = true and we want to cancel: notice must be served NOW if < 60 days.
+
+CONTRACT SPEND ANALYSIS:
+  Total active contract value (SAR): [sum of all active contracts]
+  Top 5 suppliers by annual value: list
+  Any supplier where actual API spend differs > 20% from contracted estimate? Flag to Finance.
+
+NEW SUPPLIERS THIS MONTH:
+  Any suppliers still in 'onboarding' status > 30 days? Flag — may need nudging.
+
+Output: monthly procurement health report.
+Save to: docs/procurement/monthly-reports/[YYYY-MM]-procurement-review.md
+```
+
+---
+
+## PRC-003 · Purchase Order Approval
+
+**Owner:** Procurement Agent + CEO &nbsp;|&nbsp; **Trigger:** Any procurement spend request >= SAR 10,000
+
+**Purpose:** Ensure all significant spend is pre-approved, tracked against budget, and has a clear business case before commitment.
+
+### PO Approval Tiers
+
+| Amount (SAR) | Approver | Turnaround |
+|-------------|---------|-----------|
+| < 10,000 | Procurement Agent self-approve | Same day |
+| 10,000 – 49,999 | CEO approval | Within 48h |
+| 50,000 – 249,999 | CEO + Finance Agent | Within 72h |
+| >= 250,000 | CEO + Board notification | Within 5 business days |
+
+### PO Request Prompt
+
+```
+Purchase Order request — [DATE] — [SUPPLIER NAME].
+
+PO DETAILS:
+  Supplier: [name] (must exist in procurement_suppliers table — check first)
+  PO number: PO-[YYYY]-[sequential 3-digit number, e.g. PO-2026-001]
+  Description: [what is being purchased — specific, not generic]
+  Amount (SAR): [X]
+  Ordered date: [YYYY-MM-DD]
+  Expected delivery: [YYYY-MM-DD]
+  Business justification: [why is this needed? which OKR or project does it support?]
+
+BUDGET CHECK (before submitting for approval):
+  What budget line does this fall under? (Marketing / Dev / Ops / Legal / HR)
+  Finance Agent: is there remaining budget in this line for [MONTH/QUARTER]?
+  If over budget: flag — CEO must approve both the PO and the budget exception.
+
+APPROVAL REQUEST (paste for CEO):
+  "PO-[NUMBER] approval request — [SUPPLIER] — SAR [AMOUNT]
+   Purpose: [1 sentence]
+   Budget line: [X] — [remaining budget after this PO: SAR Y]
+   Expected delivery: [DATE]
+   Approve? YES / NO / QUERY"
+
+ONCE APPROVED:
+  POST /api/admin/procurement/purchase_orders with status=approved, approved_by=[CEO name]
+  Notify Finance Agent: PO approved, add to payment schedule.
+  On delivery: PATCH status → delivered. On payment: PATCH status → paid.
+```
+
+---
+
+# SECTION 8 — Platform Operations SOPs
+
+> These SOPs are owned by the **Ops Agent** and **CS Agent** — they cover cross-cutting admin platform functions that don't belong to a single department.
+
+---
+
+## INV-001 · Weekly Inventory Health Review
+
+**Owner:** Ops Agent + Revenue Agent &nbsp;|&nbsp; **Frequency:** Every Monday as part of GBL-002 Weekly Report
+
+**Purpose:** Ensure hotel, flight, and car inventory is live, correctly priced, and that any coverage gaps — especially in Makkah and Madinah — are identified and actioned before they cost bookings.
+
+**Trigger:** Weekly Monday briefing. Also triggered when AI Inventory Advisor flags health = `poor` or `fair`.
+
+### Step 1 — Inventory Pulse Prompt
+
+```
+Weekly inventory health review — [DATE].
+
+HOTEL INVENTORY:
+  GET /api/admin/inventory?type=hotels
+  Total hotels in system: [X]
+  Active (enabled=true): [Y] | Paused/disabled: [Z]
+  
+  MAKKAH COVERAGE (critical):
+    Hotels near Haram: [count] | 5-star: [n] | 4-star: [n] | 3-star: [n]
+    Any hotel showing status=unavailable in Hotelbeds this week? (check adapter logs)
+    Are all Makkah hotels correctly tagged is_halal_friendly=true?
+  
+  MADINAH COVERAGE:
+    Hotels near Masjid al-Nabawi: [count]
+    Any availability gaps for Hajj season dates (June 2026)? Flag immediately.
+  
+  OTHER KEY MARKETS:
+    Riyadh, Jeddah, Dubai, Istanbul — are flagship properties active?
+    Any hotel toggled off this week? What was the reason?
+
+FLIGHT INVENTORY:
+  GET /api/admin/inventory?type=flights
+  Active routes: [X] | Key routes: IST↔JED, CGK↔JED, KUL↔JED, KHI↔JED, DEL↔JED
+  Any route showing no availability for next 30 days? Flag — may indicate GDS issue.
+  Amadeus API error rate this week? (check GBL-001 infrastructure section)
+
+CAR INVENTORY:
+  GET /api/admin/inventory?type=cars
+  Active car categories: [X]
+  Makkah/Madinah car availability for Hajj period? Critical — pilgrim transport demand.
+
+AI INVENTORY ADVISOR:
+  Run ✦ AI Inventory Advisor from /admin/inventory panel.
+  Note: inventory_health, critical/high priority gaps, Hajj readiness assessment.
+  Any gaps flagged as critical: action immediately before end of day.
+
+Output: inventory health table (hotels/flights/cars counts + gap flags).
+Save to: Notion > Ops > Weekly Inventory > [DATE].
+```
+
+### Step 2 — Toggle Action Protocol
+
+When toggling a hotel/flight/car active or inactive:
+
+| Action | When | Who | Required Documentation |
+|--------|------|-----|----------------------|
+| Toggle hotel OFF | Supplier confirmed unavailable, maintenance, rate dispute | Ops Agent | Reason logged in admin_notes; Revenue Agent notified |
+| Toggle hotel ON | New property confirmed, supplier rate loaded | Ops Agent + Revenue | Test search to confirm availability appears |
+| Toggle flight OFF | Route suspended, GDS error confirmed | Dev Agent | Dev incident logged; GBL-004 alert if > 3 routes affected |
+| Emergency toggle | Any critical inventory issue | Ops Agent + CEO | CEO notified within 30 minutes |
+
+---
+
+## INV-002 · Hotel/Flight/Car Availability Management
+
+**Owner:** Ops Agent &nbsp;|&nbsp; **Trigger:** Supplier notification, GDS error, peak-season inventory review
+
+**Purpose:** Proactively manage inventory availability to prevent "no results" experiences — especially for Hajj/Umrah searches which have the highest customer sensitivity.
+
+### Hajj Season Inventory Checklist (run 12 weeks before Hajj)
+
+```
+Hajj inventory readiness check — [YEAR] — [DATE].
+
+MAKKAH HOTEL COVERAGE:
+  [ ] All registered Hotelbeds properties in Makkah zone: active = true
+  [ ] Hotel distance from Haram: < 500m (5-star), < 1km (4-star), < 2km (3-star)
+  [ ] Minimum 5 hotels per star category available in Makkah
+  [ ] All Makkah properties is_halal_friendly = true (no exceptions)
+  [ ] Hotelbeds rate loaded for Hajj dates (1 Jun – 20 Jun [YEAR]): verify in adapter
+  [ ] Revenue blackout dates for group-contracted blocks: created in revenue_blackouts table
+
+MADINAH HOTEL COVERAGE:
+  [ ] Minimum 3 hotels per star category active in Madinah
+  [ ] Masjid al-Nabawi proximity data accurate
+  [ ] Pre-Hajj Madinah dates (26 May – 31 May) covered
+
+FLIGHT COVERAGE:
+  [ ] All Hajj-relevant routes active: IST/CGK/KUL/KHI/DEL/LHE/ISB/BOM → JED
+  [ ] Direct + connection routing via Amadeus GDS confirmed live
+  [ ] No Amadeus API errors on test search for Hajj period dates
+
+CAR COVERAGE:
+  [ ] Makkah car hire (airport → hotel) inventory confirmed with partners
+  [ ] Minibus/group vehicle categories active (Hajj groups travel together)
+
+If any item above fails: assign to Dev Agent (GDS/API issue) or Revenue Agent (pricing/blackout).
+CEO notified if Makkah hotel coverage < 5 properties per star tier within 6 weeks of Hajj.
+```
+
+---
+
+## LOY-001 · Loyalty Programme Weekly Review
+
+**Owner:** Ops Agent + CS Agent &nbsp;|&nbsp; **Frequency:** Weekly Monday briefing (part of GBL-002)
+
+**Purpose:** Monitor loyalty programme health — tier distribution, points liability, redemption rates, and churn risk — to protect retention and ensure the programme is incentivising repeat bookings.
+
+**Trigger:** Weekly. Also triggered when AI Loyalty Advisor flags health = `poor` or churn_risk segments appear.
+
+### Step 1 — Weekly Loyalty Pulse Prompt
+
+```
+Weekly loyalty programme review — [DATE].
+
+OVERVIEW: GET /api/admin/loyalty/stats
+  Total members: [X]
+  Tier breakdown: Bronze [n] | Silver [n] | Gold [n] | Platinum [n]
+  Points outstanding (unredeemed): [X] pts
+  Points redeemed this week: [Y] pts
+  New member registrations this week: [Z]
+
+TIER HEALTH:
+  Platinum members: [n] — any Platinum at risk of downgrade (approaching tier renewal)?
+  Gold members: [n] — any who haven't booked in 60 days? Risk of dropping to Silver.
+  Bronze members: [n] — conversion rate to Silver? (members who booked 2+ times)
+  
+  Flag: any tier with > 20% fewer members than last month → churn signal
+
+REDEMPTION ANALYSIS:
+  What are the top 3 rewards being redeemed this week? (GET /api/admin/loyalty/ledger)
+  Redemption rate (points redeemed / points outstanding): [X]%
+  Target: 15–25% monthly redemption rate (too low = points feel worthless; too high = liability)
+  If < 10%: redemption friction — are reward values compelling? Flag to Products Agent.
+
+POINTS LIABILITY:
+  Total outstanding points × SAR value per point = SAR [X] liability
+  Is this within budget? (compare to Finance Agent's loyalty budget line)
+  If points liability > SAR 500,000: alert Finance Agent immediately.
+
+AI LOYALTY ADVISOR:
+  Run ✦ AI Loyalty Programme Advisor from /admin/loyalty panel.
+  Note: programme_health, churn_risk_segments, re-engagement recommendations.
+  Any Gulf-specific reward recommendations for upcoming season? (Ramadan points bonus?)
+
+Output: loyalty health table + action items.
+Save to: Notion > Ops > Weekly Loyalty > [DATE].
+```
+
+---
+
+## LOY-002 · Monthly Points & Rewards Management
+
+**Owner:** Ops Agent + Finance Agent &nbsp;|&nbsp; **Frequency:** 1st of every month
+
+**Purpose:** Run the monthly loyalty accounting — expire old points, update tier standings, review reward catalogue relevance, and brief Finance Agent on points liability movement.
+
+### Monthly Loyalty Accounting Prompt
+
+```
+Monthly loyalty programme management — [MONTH YEAR].
+
+POINTS EXPIRY:
+  Policy: points expire 24 months after earning date (Gulf standard).
+  Query: SELECT SUM(points) FROM loyalty_ledger WHERE type='earn' AND expires_at < NOW() AND NOT redeemed
+  Points expiring this month: [X] pts from [N] members
+  Action: expiry notification sent 30 days prior? (check notification service logs)
+  Soft expiry approach: send "your points expire in 7 days" re-engagement email to affected members.
+
+TIER REVIEW:
+  Members who qualify for tier upgrade this month (hit booking/points threshold):
+    Bronze → Silver: minimum [X] bookings or [Y] points in rolling 12 months
+    Silver → Gold: minimum [X] bookings or [Y] points
+    Gold → Platinum: minimum [X] bookings or [Y] points
+  PATCH tier for eligible members in loyalty_members table.
+  Send tier upgrade email for each: "Congratulations — you've reached [TIER] status!"
+
+REWARD CATALOGUE REVIEW:
+  GET /api/admin/loyalty/rewards
+  Any reward with zero redemptions in 60 days? → consider retiring or replacing.
+  New rewards to add for upcoming season?
+    Ramadan context: hotel room upgrade vouchers, iftar experience credits
+    Hajj context: airport lounge access, priority check-in credits (partner with airline)
+  POST /api/admin/loyalty/rewards for any new rewards.
+  DELETE /api/admin/loyalty/rewards/:id for rewards being retired (soft: set active=false first).
+
+FINANCE BRIEFING:
+  Points earned this month: [X] pts → SAR value: [X × point_value]
+  Points redeemed: [Y] pts → SAR cost: [Y × redemption_value]
+  Net liability change: [+/-] SAR [Z]
+  Total outstanding liability: SAR [W]
+  Report to Finance Agent for inclusion in monthly P&L.
+```
+
+---
+
+## BKG-001 · Daily Booking Operations Review
+
+**Owner:** Ops Agent + CS Agent &nbsp;|&nbsp; **Frequency:** Every morning as part of GBL-001 Daily Briefing
+
+**Purpose:** Ensure all pending bookings are confirmed, failed payments are resolved, and unusual booking patterns are flagged before they become customer complaints.
+
+**Trigger:** First thing every morning. Also when payment team reports gateway issues.
+
+### Daily Booking Queue Prompt
+
+```
+Daily booking operations review — [DATE].
+
+BOOKING STATUS OVERVIEW: GET /api/admin/bookings/stats
+  Pending: [X] | Confirmed: [Y] | Cancelled: [Z] | Refunded: [W]
+  Any bookings in 'pending' status > 2 hours? — URGENT: customer paid but booking not confirmed.
+
+PENDING RESOLUTION (highest priority):
+  GET /api/admin/bookings?status=pending&sort=created_asc
+  For each pending booking > 2 hours:
+    booking_ref, user_email, amount_sar, hotel_id, check_in_date, payment_method
+    Likely cause: GDS timeout | Payment gateway delay | Supplier API error
+    Action:
+      1. Check payment service: did payment capture succeed?
+      2. Check Hotelbeds/Amadeus: did booking confirm at supplier?
+      3. If payment captured but supplier failed: manually confirm OR refund immediately
+      4. CS Agent contacts customer within 30 minutes with status update
+
+AI BOOKING INSIGHTS:
+  Run ✦ AI Booking Insights from /admin/bookings panel.
+  Note: anomaly type (spike/drop/pattern), health, revenue opportunities, risk flags.
+  Any anomaly flagged? Cross-reference with Fraud Agent (may be coordinated fake bookings).
+
+CANCELLATION REVIEW:
+  Cancellations in last 24h: [count] vs. 7-day average [avg]
+  Cancellation spike > 2x average: investigate — may indicate pricing issue or competitor promotion
+  Any cancellation with refund > SAR 10,000: Finance Agent notified.
+
+UNUSUAL PATTERNS:
+  Any single user with > 3 bookings in 24h? Flag to Fraud Agent.
+  Any booking from a watchlisted email/IP? Fraud Agent immediate review.
+  Any booking for Hajj dates > 6 months out with > SAR 20,000 value? Flag — may need manual confirmation.
+
+Output: daily booking health. Flag all pending > 2h for immediate CEO/CS action.
+```
+
+---
+
+## BKG-002 · Booking Dispute & Manual Override
+
+**Owner:** CS Agent + Finance Agent &nbsp;|&nbsp; **Trigger:** Customer complaint about booking, duplicate booking, system error affecting confirmed booking
+
+**Purpose:** Resolve booking disputes with clear authority levels, avoiding both over-refunding and underserving customers — especially during Hajj/Umrah where bookings carry religious significance.
+
+### Manual Status Override Protocol
+
+```
+Booking dispute resolution — Booking ref: [REF] — [DATE].
+
+SITUATION:
+  Customer: [email] | Booking type: [hotel/flight/car]
+  Issue: [duplicate_charge | not_confirmed | wrong_dates | hotel_refused | other]
+  Amount: SAR [X] | Payment method: [gateway]
+  Booking status: [current status]
+
+INVESTIGATION:
+  1. Pull full booking record: GET /api/admin/bookings?ref=[REF]
+  2. Check payment service: did payment capture correctly? Any duplicate charge?
+  3. Check supplier confirmation: Hotelbeds/Amadeus booking reference exists?
+  4. Check customer history: first dispute or repeat complainer? (GET /api/admin/users?email=[email])
+  5. Check fraud watchlist: is this customer or their payment method flagged?
+
+RESOLUTION OPTIONS:
+  A) Confirm booking (supplier confirmed, status stuck in pending):
+     PATCH /api/admin/bookings/:id status → confirmed
+     CS sends: "Your booking is confirmed. Here are your details: [details]"
+
+  B) Rebook at same price (supplier cancelled, our fault):
+     CS Agent manually books equivalent property
+     Difference in price (if any): UTUBooking absorbs — do NOT charge customer
+     Finance Agent notified for cost recording
+
+  C) Full refund (supplier unavailable, system error, double charge):
+     Finance Agent approval required if > SAR 1,000
+     CEO approval if > SAR 10,000
+     Process via payment gateway reverse/refund API
+     PATCH booking status → refunded
+     CS confirms refund timeline to customer (5–10 business days)
+
+  D) Partial refund (partial service delivered):
+     Finance Agent approval always required
+     Document exactly what was/wasn't delivered
+
+HAJJ/UMRAH OVERRIDE RULE:
+  Any booking dispute for Makkah/Madinah during Hajj season:
+  Treat as P1. CEO notified. Rebook or refund within 2 hours.
+  The religious significance means ANY delay is reputationally catastrophic.
+
+Log resolution: PATCH /api/admin/bookings/:id with admin_notes describing resolution.
+```
+
+---
+
+## WAL-001 · Wallet & Credit Operations
+
+**Owner:** Finance Agent + Ops Agent &nbsp;|&nbsp; **Frequency:** Weekly review + on-demand for credit requests
+
+**Purpose:** Manage customer wallet balances, track multi-currency credits, and process authorised wallet top-ups without creating financial control risks.
+
+**Trigger:** Customer support request for wallet credit, Finance monthly reconciliation, or unusual wallet balance movement.
+
+### Weekly Wallet Review Prompt
+
+```
+Weekly wallet operations review — [DATE].
+
+OVERVIEW: GET /api/admin/wallet?view=stats
+  Total wallet holders: [X]
+  Total balances by currency: SAR [X] | AED [Y] | USD [Z] | GBP [W] | EUR [V]
+  Transactions this week (count + volume SAR): [X txns | SAR Y]
+  
+UNUSUAL BALANCES:
+  Any single wallet balance > SAR 50,000? Flag to Finance Agent — anti-money laundering check.
+  Any wallet with > 10 transactions in 24h? Flag to Fraud Agent — potential structuring pattern.
+  Any wallet credited with a round number (10,000 / 50,000 / 100,000 SAR exactly) from admin?
+    → Verify CEO approval exists in Finance records.
+
+PENDING TOP-UP REQUESTS:
+  Any customer service requests to credit a wallet pending approval?
+  Review each against the credit authority table below.
+```
+
+### Wallet Credit Authority
+
+| Credit Amount (SAR) | Authority | Verification Required |
+|--------------------|---------|----------------------|
+| < 500 | CS Agent self-approve | Confirmed booking error or documented goodwill |
+| 500 – 4,999 | Finance Agent approval | Email from CS + booking ref or complaint ref |
+| 5,000 – 24,999 | CEO approval | Written justification + Finance Agent sign-off |
+| >= 25,000 | CEO + Board notification | Full incident report required |
+
+### Credit Wallet Prompt (use for each approved credit)
+
+```
+Wallet credit — [DATE] — [CUSTOMER EMAIL] — SAR [AMOUNT].
+
+Authorised by: [name + role]
+Reason: [specific reason — e.g. "hotel unavailable on arrival, no alternative provided, goodwill credit per CEO approval email [DATE]"]
+Booking reference: [ref] (must reference a specific transaction)
+
+POST /api/admin/wallet/credit:
+  user_id: [UUID from users table]
+  currency: SAR (default — use customer's primary currency if different)
+  amount: [approved amount — max 100,000 per transaction]
+  note: [reason — will appear on customer's statement]
+
+Post-credit:
+  Notify customer: "SAR [X] has been credited to your UTUBooking wallet. It will be applied to your next booking."
+  Finance Agent records credit in expense claims as 'goodwill_credit' category.
+  Log in CS ticket system with authorisation reference.
+```
+
+---
+
+## PRO-001 · Promo Code Lifecycle
+
+**Owner:** Marketing Agent + Finance Agent &nbsp;|&nbsp; **Frequency:** Per campaign launch + monthly audit
+
+**Purpose:** Manage discount promo codes — creation, activation, monitoring for abuse, and expiry — ensuring promotional spend stays within budget and codes are not exploited.
+
+**Trigger:** Marketing campaign launch, seasonal event (Ramadan/Hajj/Eid), partner promotion, or Finance budget review.
+
+### Code Creation Prompt
+
+```
+Promo code creation — [DATE] — [CAMPAIGN NAME].
+
+BUSINESS CASE (required before creating):
+  Campaign: [name]
+  Target segment: [all users / loyalty tier X / country / corporate clients]
+  Discount type: percent [X]% OFF | fixed SAR [Y] OFF
+  Maximum discount value per booking (for percent codes): SAR [cap]
+  Budget: maximum total redemption value = SAR [X]
+    (= max_uses × average_discount_per_use — confirm with Finance Agent)
+  Validity: [start_date] to [end_date]
+
+ABUSE PREVENTION (set all of these):
+  max_uses: [total across all users — never leave NULL for a public code]
+  max_uses_per_user: 1 (standard) or [N] (loyalty programme only)
+  minimum_booking_value: SAR [X] (prevents micro-booking abuse)
+  applicable_to: all | hotel | flight | car (limit scope where possible)
+
+POST /api/admin/promo-codes with:
+  code: [UPPERCASE-ALPHANUMERIC — easy to type, memorable]
+  discount_type: percent | fixed
+  discount_value: [number]
+  max_uses: [n]
+  max_uses_per_user: [1 or n]
+  valid_from: [ISO date]
+  valid_until: [ISO date]
+  minimum_order_value: [SAR — recommended minimum SAR 300]
+  applicable_to: all | hotel | flight | car
+  description: [internal note — campaign name + authorised by]
+
+Finance Agent approval required for any code with potential total redemption > SAR 10,000.
+CEO approval for codes with potential redemption > SAR 50,000 (e.g. Ramadan mass campaign).
+NEVER create a code with max_uses = NULL — this is an open-ended liability.
+```
+
+### Monthly Promo Code Audit
+
+```
+Monthly promo code audit — [MONTH YEAR].
+
+GET /api/admin/promo-codes
+For each active code:
+  name | discount_type | discount_value | used / max_uses | expires_at | total_redemption_SAR
+
+FLAGS TO INVESTIGATE:
+  [ ] Any code with used_count within 10% of max_uses — approaching limit
+  [ ] Any code being used at > 5x expected rate — possible leak or viral sharing
+  [ ] Any code past valid_until still showing active=true — deactivate immediately
+  [ ] Any code with max_uses_per_user > 1 — verify this was intentional, not an error
+  [ ] Any code that has never been used after 14 days of being live — check if it was announced
+
+CODES TO RETIRE:
+  Past valid_until: PATCH active → false (or DELETE if zero redemptions)
+  Campaign ended: PATCH active → false
+
+ABUSE DETECTION:
+  Any promo code appearing in fraud_cases? Flag to Fraud Agent.
+  Any single user who has used > 3 different promo codes in 30 days? Monitor — may be testing codes.
+
+Finance Agent briefing: total promotional spend this month (sum of all redemptions SAR value).
+Save audit: docs/marketing/promo-audits/[YYYY-MM]-promo-audit.md
+```
+
+---
+
+# SECTION 9 — Analytics & BI SOPs
+
+---
+
+## ANA-001 · Weekly KPI Dashboard Review
+
+**Owner:** Analytics Agent + CEO &nbsp;|&nbsp; **Frequency:** Every Monday morning, part of GBL-002 Weekly Report
+
+**Purpose:** Surface which KPIs are on-target vs. off-target, trigger owner accountability, and update current_value in the database so alerts fire correctly.
+
+**Trigger:** Automatically included in the Monday morning GBL-002 briefing. Also run ad-hoc any time a metric has a suspected data issue.
+
+### Step 1 — Weekly KPI Pulse Prompt
+
+```
+Weekly KPI dashboard review — week ending [DATE].
+
+OVERVIEW: GET /api/admin/analytics/stats
+  KPIs on-target: [X] | Off-target: [Y] | Active alerts: [Z] | Reports: [N]
+
+KPI DETAILS: GET /api/admin/analytics/kpis
+For each KPI, report: name | target | current | unit | period | owner | hit_pct (current/target * 100)
+
+TRAFFIC LIGHT STATUS:
+  🔴 OFF TARGET (< 90% of target for positive metrics, > 110% for cost metrics like hours/ms):
+     — [metric name]: target [X], actual [Y], gap [Z]
+     — Owner: [name]. Recommended action: [1 sentence]
+
+  🟡 AT RISK (90–99% of target for positive; 100–110% for cost):
+     — [metric name]: tracking [X]% of target.
+
+  🟢 ON TARGET (>= 100% of target):
+     — [list names only — no detail needed unless CEO requests]
+
+ALERT STATUS: GET /api/admin/analytics/alerts
+  Any active alerts that fired this week (last_fired_at >= 7 days ago)?
+  Alert: [name] | KPI: [name] | Condition: [below_target / above_threshold] | Fired: [date]
+  Action: notify KPI owner.
+
+UPDATE CURRENT VALUES (run after pulling actuals from Stripe/DB):
+  PATCH /api/admin/analytics/kpis/:id with current_value = [actual] for each metric updated this week.
+
+Output: KPI health table (all metrics). Flag any metric > 20% below target for CEO escalation.
+Save to: Notion > Analytics > Weekly KPI > [DATE].
+```
+
+### Core KPI Definitions
+
+| KPI | Target | Owner | Data Source |
+|-----|--------|-------|------------|
+| Monthly Revenue | SAR 5,000,000 | Finance | Stripe + DB bookings |
+| Booking Conversion Rate | 3.2% | Products | GA4 / booking funnel |
+| Monthly Active Users | 50,000 | Products | Auth service DAU logs |
+| Hotel Booking Share | 65% | Sales | DB booking.type |
+| Flight Booking Share | 25% | Sales | DB booking.type |
+| Support Ticket Resolution | < 24 hours | Ops | CS ticket DB |
+| AI Pricing Acceptance Rate | 70% | Products | Pricing service logs |
+| Net Promoter Score | 50 | Customer Success | NPS survey tool |
+
+---
+
+## ANA-002 · Monthly BI Report & Alert Management
+
+**Owner:** Analytics Agent &nbsp;|&nbsp; **Frequency:** 1st of every month + on-demand for board reports
+
+**Purpose:** Generate the full monthly business intelligence report, run all scheduled reports, review and tune alert thresholds, and produce the data pack for GBL-003 Monthly Close.
+
+### Monthly BI Report Prompt
+
+```
+Monthly BI report — [MONTH YEAR].
+
+SECTION 1 — REVENUE PERFORMANCE
+  Total revenue SAR [MONTH]: [X] — vs. target [Y] — vs. same month last year [Z]
+  Revenue by market: KSA | UAE | Gulf | EU | US | CA | LATAM | APAC — SAR each
+  Revenue by product: Hotels [%] | Flights [%] | Cars [%]
+  Average booking value SAR: this month vs. 3-month average
+
+SECTION 2 — BOOKINGS & CONVERSION
+  Total bookings: [X] — vs. target — vs. last month
+  Funnel: Search → Property View → Add to Cart → Booking Started → Confirmed
+  Conversion rate at each step. Biggest drop-off step?
+  Mobile vs. desktop conversion split.
+
+SECTION 3 — USER GROWTH
+  New registrations: [X] | Returning users: [X] | Monthly Active Users: [X]
+  Top acquisition channels: [Organic / Paid / Direct / Referral / Affiliate]
+  User retention: did users who booked last month return this month?
+
+SECTION 4 — OPERATIONS
+  Average support ticket resolution: [X] hours (target < 24h)
+  Open tickets > 48h: [count] — flag if > 20
+  AI pricing acceptance rate: [X]% (target 70%)
+  API error rates: Hotelbeds, Amadeus, Booking.com — any > 1%?
+
+SECTION 5 — BI SYSTEM HEALTH
+  Reports scheduled but not run in 30 days: list (GET /api/admin/analytics/reports)
+  Alerts that have never fired (condition may be too loose): list
+  Alerts that fire every day (condition may be too tight): list — tune threshold
+
+Save full report: Notion > Analytics > Monthly Reports > [YYYY-MM].
+Share with CEO, Finance Agent, Products Agent.
+```
+
+### Alert Management
+
+```
+BI alert review — [DATE].
+
+GET /api/admin/analytics/alerts
+For each alert:
+  - Name, KPI, condition, threshold, last_fired_at
+  - Frequency assessment: firing > 3x/week? Threshold too tight — relax.
+  - Never fired in 90 days? Condition may be too loose or metric is always green — review.
+
+For any new alert needed (identified from this week's KPI review):
+  POST /api/admin/analytics/alerts:
+    name: [descriptive]
+    kpi_target_id: [UUID from bi_kpi_targets]
+    condition: below_target | above_target | below_threshold | above_threshold
+    threshold: [numeric — null if using target value]
+    notify_email: [owner email]
+    active: true
+```
+
+---
+
+# SECTION 9 — Business Development SOPs
+
+---
+
+## BIZ-001 · Weekly Partner Pipeline Review
+
+**Owner:** BizDev Agent + CEO &nbsp;|&nbsp; **Frequency:** Every Monday, after GBL-002 Weekly Report
+
+**Purpose:** Advance the strategic partner pipeline — move prospects to signed agreements, catch stalled deals, and ensure no opportunity is > 14 days without an activity touch.
+
+**Trigger:** Every Monday. Also triggered when a new partner is added or a deal changes stage.
+
+### Step 1 — Pipeline Briefing Prompt
+
+```
+BizDev weekly pipeline review — week ending [DATE].
+
+OVERVIEW: GET /api/admin/bizdev/stats
+  Partners by status: prospect | contacted | negotiating | signed | live | paused | churned
+  Total active agreement value (SAR): [X]
+  Agreements expiring in 90 days: [count] — flag list
+
+PIPELINE MOVEMENT:
+  Partners in 'prospect' status with no activity in > 7 days:
+    GET /api/admin/bizdev/partners?status=prospect
+    For each: last_contacted_at — if > 7 days: draft outreach message
+    Outreach template:
+    "Hi [name], following up on our conversation about [partnership type] with UTUBooking.
+     We're currently signing [X] partners in [their market] and wanted to confirm your interest.
+     Happy to share our partner deck. Best, [CEO name]"
+
+  Partners in 'negotiating' > 14 days with no activity:
+    Flag to CEO — risk of deal going cold. Action: CEO to call or escalate.
+
+  Partners moved to 'signed' this week: celebrate + trigger onboarding (SLS-002 process).
+
+AGREEMENT EXPIRY PIPELINE:
+  GET /api/admin/bizdev/agreements/expiring?days=90
+  For each expiring agreement:
+    Renew / renegotiate / let expire?
+    If renew: initiate renewal conversation now. Do not wait for expiry.
+
+MARKET EXPANSION STATUS:
+  GET /api/admin/bizdev/markets?status=researching,pilot
+  Any market where status should advance? (e.g. pilot → launched, target → researching)
+  Any critical-priority market still in 'target' status > 30 days? Escalate to CEO.
+
+Output: pipeline summary table + action items for CEO.
+```
+
+### Step 2 — Activity Logging Rule
+
+Every interaction with a partner MUST be logged immediately via:
+`POST /api/admin/bizdev/partners/:id/activities`
+
+| Activity Type | Log within | Required fields |
+|--------------|-----------|----------------|
+| call | 1 hour | summary (outcome + next step) |
+| email | Same day | summary (what was sent/received) |
+| demo | 1 hour | summary (feedback, objections, interest level) |
+| meeting | 1 hour | summary + any commitments made |
+| proposal | Same day | summary (proposal value, timeline, decision maker) |
+| signed | Immediately | summary (deal terms, start date, integration timeline) |
+
+> Missing activity logs = blind pipeline. Stale `last_contacted_at` = CEO sees a worse picture than reality.
+
+---
+
+## BIZ-002 · New Market Entry Assessment
+
+**Owner:** BizDev Agent + CEO + Legal Agent &nbsp;|&nbsp; **Frequency:** Per new market being considered
+
+**Purpose:** Before investing in a new country launch, produce a structured go/no-go assessment covering regulatory, payment, partner, and technical requirements.
+
+**Trigger:** CEO identifies a new market opportunity, or a partner from an unlaunched market approaches UTUBooking.
+
+### Market Assessment Prompt
+
+```
+New market entry assessment — [COUNTRY NAME] ([ISO CODE]).
+
+MARKET OVERVIEW:
+  Population: [X]M | Internet users: [X]M | Outbound travel market size: USD [X]B/year
+  Muslim population %: [X] (relevant for Hajj/Umrah opportunity)
+  Top competing platforms in this market: [list]
+  Our current traffic from this country (Google Analytics): [X] sessions/month
+
+REGULATORY & COMPLIANCE:
+  [ ] Is there a data localisation law? (data must stay in-country)
+      If yes: new AWS region or DB shard required — brief Dev Agent.
+  [ ] Are there travel agency licensing requirements to operate legally?
+      If yes: Legal Agent to assess timeline and cost.
+  [ ] Currency restrictions: can we freely remit revenue in [local currency] → SAR/USD?
+  [ ] Is this country on any sanctions list? (OFAC, EU, UN, UK HMT)
+      If yes: STOP — do not proceed without OFAC/legal counsel.
+
+PAYMENT:
+  Which local payment methods are dominant? (e.g. mobile money, bank transfer, card)?
+  Is there a suitable gateway already in PaymentRouter.ts?
+  If not: what is the integration timeline for a new gateway? (Dev Agent estimate needed)
+
+CONTENT & UX:
+  Primary language(s): [list]
+  Does our i18n system cover this locale? (check 15 locales in backend/CLAUDE.md)
+  RTL required? [yes/no]
+  Currency: [code] | Is it in our FX rate feed?
+
+PARTNER LANDSCAPE:
+  Are there local travel agencies, OTAs, or B2B partners we should approach first?
+  Any existing UTUBooking partner (from bizdev_partners) already operating in this market?
+
+COST ESTIMATE (brief):
+  Dev effort: [S/M/L based on payment + i18n gaps]
+  Legal/compliance: [S/M/L based on regulatory requirements]
+  Marketing launch budget: [estimate based on comparable market launches]
+
+RECOMMENDATION: GO | NO-GO | INVESTIGATE FURTHER
+  Reason: [2–3 sentences]
+  If GO: propose target launch date + assign owner in bizdev_markets table.
+    PATCH /api/admin/bizdev/markets/:id status → researching, priority → [critical/high/medium]
+
+Save assessment: docs/bizdev/market-assessments/[ISO-CODE]-[DATE].md
+CEO sign-off required before any spend or legal engagement.
+```
+
+---
+
+## BIZ-003 · Partnership Agreement Lifecycle
+
+**Owner:** BizDev Agent + Legal Agent &nbsp;|&nbsp; **Trigger:** New partnership agreement to be created, amended, or renewed
+
+**Purpose:** Ensure every partnership agreement is properly drafted, stored, and tracked — with correct commission, term, and renewal flags.
+
+### Agreement Creation Prompt
+
+```
+Partnership agreement setup — [PARTNER NAME] — [DATE].
+
+PARTNER RECORD: GET /api/admin/bizdev/partners?search=[partner name]
+  Confirm partner exists and status = 'signed' or 'live'.
+  If partner is 'prospect' or 'negotiating': do not create agreement yet.
+
+AGREEMENT DETAILS:
+  Title: [e.g. "FlySaudi Revenue Share Agreement 2026–2027"]
+  Type: revenue_share | white_label | distribution | referral | api_integration | other
+  Value (SAR): [total contract value or estimated annual value]
+  Commission %: [X]% — what does the partner earn per booking?
+  Start date: [YYYY-MM-DD]
+  End date: [YYYY-MM-DD] — minimum 12 months; open-ended = 2099-12-31
+  Signed by: [CEO name]
+  File URL: [link to executed PDF in secure document store]
+
+LEGAL REVIEW:
+  Commission > 10% or value > SAR 100,000: Legal Agent must review agreement draft before signing.
+  White-label or exclusivity clause: CEO + Legal review mandatory — flag to board if exclusivity.
+  Standard referral/revenue share < SAR 50,000: BizDev Agent review sufficient.
+
+POST /api/admin/bizdev/agreements with all fields above.
+PATCH partner status → 'live' after agreement is signed and integration is complete.
+
+CALENDAR REMINDER:
+  90 days before end_date: renewal review (BIZ-003 renewal trigger)
+  30 days before end_date: final notice — renew or serve termination notice per agreement terms
+
+Save: docs/bizdev/agreements/[PARTNER-ISO]-[TYPE]-[DATE].md
+```
+
+---
+
+# SECTION 10 — Advertising Department SOPs
+
+---
+
+## ADV-001 · Advertising Enquiry Response
+
+**Owner:** BizDev Agent (handles advertising) + CEO &nbsp;|&nbsp; **Frequency:** Within 4 hours of new enquiry
+
+**Purpose:** Every inbound advertising enquiry from a tourism board, airline, hotel, or brand is a potential revenue opportunity. None should sit in `status = 'new'` for > 4 hours during business hours.
+
+**Trigger:** New entry in `advertising_enquiries` with `status = 'new'`. Check daily as part of GBL-001 morning briefing.
+
+### Daily Advertising Queue Check (part of GBL-001)
+
+```
+Advertising enquiry queue — [DATE].
+
+GET /api/admin/advertising/stats
+  New (unactioned) enquiries: [X] | Contacted: [Y] | Qualified: [Z] | Proposals sent: [N]
+  Conversion rate (won / total): [X]%
+
+NEW ENQUIRIES (status = 'new'):
+GET /api/admin/advertising/enquiries?status=new
+For each new enquiry:
+  Company: [company_name] | Type: [company_type] | Region: [region]
+  Goal: [goal] | Budget: [budget_range]
+  Message: [first 100 chars]
+
+For each:
+  1. Is this a genuine B2B advertiser or a spam/irrelevant submission?
+     If spam: PATCH status → archived, admin_notes: 'spam/irrelevant'
+  2. If genuine: PATCH status → contacted, assigned_to: [CEO or BD team]
+     Draft initial response email for CEO review:
+
+     "Dear [full_name],
+      Thank you for your interest in advertising with UTUBooking.com — the leading travel
+      platform for Gulf and Muslim-world travellers.
+
+      We serve [X]M+ searches/month across KSA, UAE, and 25 markets, with particular strength
+      in Hajj, Umrah, and family travel segments — exactly the audience [company_name] targets.
+
+      I'd love to schedule a 20-minute call to understand your [goal] objectives and share
+      our media kit. Are you available [DAY] or [DAY] this week?
+
+      Best regards,
+      [CEO name] | UTUBooking.com"
+
+     IMPORTANT: CEO must review and approve before sending. NEVER auto-send.
+```
+
+---
+
+## ADV-002 · Advertising Proposal & Media Kit
+
+**Owner:** BizDev Agent + CEO &nbsp;|&nbsp; **Trigger:** Enquiry qualified (status = 'qualified')
+
+**Purpose:** Move qualified advertisers from interest to a signed deal by producing a tailored media kit and proposal within 48 hours of qualification call.
+
+### Proposal Generation Prompt
+
+```
+Advertising proposal — [COMPANY NAME] — [DATE].
+
+ADVERTISER PROFILE (from enquiry record):
+  Company: [name] | Type: [company_type] | Region: [target region]
+  Goal: [performance_marketing / brand_awareness / lead_generation / etc.]
+  Budget range: [under_10k / 10k_50k / 50k_200k / over_200k / lets_discuss]
+  Notes from qualification call: [admin_notes from enquiry record]
+
+MEDIA KIT CONTENT — tailor to their goal:
+  OUR AUDIENCE:
+    Monthly searches: [X]M | Registered users: [X]
+    KSA users: [X]% | UAE: [X]% | Gulf region: [X]%
+    Hajj/Umrah intent segment: [X]% of hotel searches are Makkah/Madinah
+    Demographics: 65% male, 35–55 age group primary, family travel peak Eid/summer
+
+  AD FORMATS AVAILABLE:
+    Search placement: top-of-results for destination keywords
+    Hotel detail page: banner on property pages matching [their target destination]
+    Email: inclusion in our booking confirmation + pre-trip emails (opt-in list, [X]K subscribers)
+    Push notification: targeted to users who searched [destination/category]
+    Homepage banner: homepage hero rotation — limited inventory (2 slots/month)
+
+  PACKAGES (draft for this prospect):
+    Package A — [GOAL-aligned name]: [format + reach + duration] — SAR [price]
+    Package B — [GOAL-aligned name]: [format + reach + duration] — SAR [price]
+    Package C — Custom campaign: brief us on your KPIs, we'll design the plan
+
+  MEASUREMENT:
+    All campaigns tracked: impressions, clicks, CTR, bookings attributed (last-click)
+    Weekly performance report included. Campaign pause/optimise available mid-flight.
+
+PATCH enquiry status → 'proposal_sent' after CEO approves and proposal is emailed.
+If deal closes: PATCH status → 'won'. Create revenue entry in Finance (campaign billing).
+If lost: PATCH status → 'lost', admin_notes: [reason — useful for future pitch improvements]
+
+Save proposal draft: docs/advertising/proposals/[COMPANY]-[DATE].md — CEO approval required before sending.
+```
+
+---
+
+# SECTION 11 — Affiliates SOPs
+
+---
+
+## AFF-001 · Affiliate Application Review
+
+**Owner:** BizDev Agent (handles affiliates) + CEO for approvals &nbsp;|&nbsp; **Frequency:** Weekly (every Monday) + within 48h of any application
+
+**Purpose:** Approve quality affiliates (travel bloggers, YouTubers, Umrah content creators) while rejecting low-quality or brand-unsafe applicants. Every pending application > 48 hours is a missed partner opportunity.
+
+### Weekly Application Review Prompt
+
+```
+Affiliate application review — [DATE].
+
+OVERVIEW: GET /api/admin/affiliates/stats
+  Pending applications: [X] | Active partners: [Y]
+  Total earned SAR (unpaid): [Z] | Total paid SAR (all time): [W]
+
+PENDING APPLICATIONS: GET /api/admin/affiliates/applications?status=pending
+For each application:
+  Name: [name] | Platform: [platform] | Audience: [audience_size]
+  Website: [URL] | Message: [summary]
+
+QUALIFICATION CRITERIA:
+  APPROVE if:
+    [ ] Platform is travel, Islamic lifestyle, Hajj/Umrah, family, or Gulf culture focused
+    [ ] Audience size >= 1k (10k+ for Elite tier consideration)
+    [ ] Website/social profile is live, recent content (< 30 days), professional tone
+    [ ] No brand-unsafe content (political controversy, competitor exclusivity)
+  REJECT if:
+    [ ] Platform is unrelated (gaming, cooking, news with no travel angle)
+    [ ] Audience < 500 OR fake followers suspected (engagement rate < 1%)
+    [ ] Website/profile inactive > 90 days
+    [ ] Applicant is from a sanctioned country
+
+ACTIONS:
+  Approved: POST /api/admin/affiliates/applications/:id/approve
+    This auto-creates an affiliate_partners record. Set initial tier based on audience:
+    over_100k → elite (commission: 6%) | 10k_100k → pro (5%) | under_10k → starter (3%)
+
+  Rejected: PATCH /api/admin/affiliates/applications/:id
+    status: rejected | admin_notes: [brief, respectful reason — may be visible to applicant]
+
+WELCOME EMAIL (for each approved partner — draft for CEO/team review):
+  "Welcome to the UTUBooking Affiliate Programme, [name]!
+   Your unique referral code is: [referral_code]
+   Commission rate: [X]% per confirmed booking
+   Payout: monthly on the 1st, minimum SAR 200 balance
+   Affiliate dashboard: [link]
+   Media assets (banners, logos): [link to assets folder]
+   Questions: affiliates@utubooking.com"
+
+  NEVER send welcome email without confirming referral_code is active in DB.
+```
+
+---
+
+## AFF-002 · Monthly Affiliate Payout Processing
+
+**Owner:** Finance Agent + BizDev Agent &nbsp;|&nbsp; **Frequency:** 1st of every month
+
+**Purpose:** Calculate, approve, and pay all affiliate commissions earned in the previous month. Minimum payout threshold: SAR 200. All payouts require Finance Agent confirmation before transfer.
+
+### Payout Processing Prompt
+
+```
+Monthly affiliate payout run — [MONTH YEAR] — processing on [DATE].
+
+STEP 1 — CALCULATE EARNED COMMISSIONS:
+  GET /api/admin/affiliates/partners?status=active
+  For each active partner:
+    Total bookings attributed to their referral_code in [MONTH]: [count]
+    Total booking value SAR: [X]
+    Commission earned SAR: booking_value * (commission_pct / 100)
+    Current unpaid balance: total_earned_sar - total_paid_sar
+
+  Partners with unpaid balance >= SAR 200: eligible for payout this cycle
+  Partners with balance < SAR 200: carry forward to next month (no action)
+
+STEP 2 — CREATE PAYOUT RECORDS:
+  For each eligible partner: POST /api/admin/affiliates/payouts
+    partner_id, partner_name, amount_sar (= unpaid balance), period_start, period_end,
+    bookings_count, status: pending
+
+STEP 3 — FINANCE AGENT APPROVAL:
+  Finance Agent reviews total payout liability this month: SAR [X]
+  Confirm within budget. Flag to CEO if total > SAR 50,000 (unusual spike — check for fraud).
+  Any partner earning > SAR 5,000 in a single month: manual review of attributed bookings
+    (verify referral codes were not abused or self-referred).
+
+STEP 4 — PROCESS PAYMENTS:
+  Once Finance approves: PATCH payout status → 'processing'
+  Transfer via partner's preferred method:
+    bank_transfer: use Finance team bank transfer process (NET banking)
+    paypal: via PayPal batch payout
+    wise: via Wise batch transfer
+    stc_pay: via STC Pay portal
+
+  After transfer confirmed: PATCH payout status → 'paid', payment_ref = [transfer ref], paid_at = [timestamp]
+  PATCH partner total_paid_sar += amount_paid
+
+STEP 5 — PAYOUT CONFIRMATION EMAIL (draft for team review):
+  "Hi [name], your UTUBooking affiliate commission for [MONTH] has been processed.
+   Amount: SAR [X] | Bookings: [Y] | Method: [payout_method]
+   Reference: [payment_ref]
+   Thank you for promoting UTUBooking to your audience!
+   affiliates@utubooking.com"
+
+Save payout summary: docs/affiliates/payouts/[YYYY-MM]-payout-run.md
+```
+
+### Affiliate Fraud Detection
+
+Before approving any payout, run this check:
+
+```
+Affiliate payout fraud check — [PARTNER NAME] — [MONTH].
+
+Red flags — pause payout and investigate if any of the following:
+  [ ] Booking conversion rate > 15% (industry average 1–3%)
+      — likely self-referring or sharing code with close network for kickback
+  [ ] All bookings from a single IP or device fingerprint
+  [ ] Bookings all for same hotel/date (coordinated fake bookings)
+  [ ] Partner joined < 30 days ago and already earned > SAR 1,000
+      — accelerated earning is unusual; verify bookings are genuine
+
+If fraud suspected: pause payout (status: 'pending'), flag to Fraud Agent (open a fraud case),
+PATCH partner status → 'paused' pending investigation.
+Do NOT accuse partner externally until investigation complete.
+```
+
+---
+
+# SECTION 12 — Corporate Travel (B2B) SOPs
+
+---
+
+## CORP-001 · Corporate Account Onboarding
+
+**Owner:** Sales Agent + CEO &nbsp;|&nbsp; **Frequency:** Per new corporate account signed
+
+**Purpose:** Set up every new corporate travel client (government ministry, oil & gas company, bank, healthcare group) with the correct travel policy, billing structure, and portal access.
+
+**Trigger:** Enquiry in `corporate_enquiries` advances to `status = 'won'` or a direct corporate account is created.
+
+### Onboarding Prompt
+
+```
+Corporate account onboarding — [COMPANY NAME] — [DATE].
+
+STEP 1 — CREATE ACCOUNT RECORD:
+  POST /api/admin/corporate/accounts:
+    company_name: [full legal name]
+    industry: government | finance | oil_gas | tech | healthcare | education | ngo | retail | hospitality | other
+    country: [ISO code]
+    tier: enterprise (> SAR 500K/year travel) | premium (SAR 100K–500K) | standard (< SAR 100K)
+    status: active
+    annual_travel_budget_sar: [as agreed in contract]
+    max_flight_class: first | business | premium_economy | economy — as per company travel policy
+    max_hotel_stars: [1–5] — as per policy
+    per_diem_sar: [daily allowance — if applicable]
+    preferred_airlines: [list — e.g. ["Saudia","flyadeal"]]
+    advance_booking_days: [minimum days notice required — typically 14]
+    owner: [CEO or account manager name]
+    contract_start: [YYYY-MM-DD]
+    contract_end: [YYYY-MM-DD]
+    discount_pct: [X]% — negotiated rate discount off public prices
+    notes: [key commercial terms]
+
+STEP 2 — ADD CONTACTS:
+  POST /api/admin/corporate/accounts/:id/contacts for each key contact:
+    Travel Manager (role: travel_manager) — primary contact for booking queries
+    Finance/AP contact (role: finance) — for invoicing
+    Decision maker (role: decision_maker) — for contract renewal
+
+STEP 3 — PORTAL ACTIVATION (UTUBooking for Business):
+  POST /api/admin/corporate/accounts/:id/activate
+  This creates an auth service user (portal_user_id set) and sends login credentials.
+  Travel manager can now log in and book directly within their travel policy limits.
+  IMPORTANT: Do NOT activate portal until account record is complete and contract is signed.
+
+STEP 4 — BILLING SETUP:
+  Notify Finance Agent: new corporate account [name], tier [X], estimated annual value SAR [Y].
+  Invoice cycle: monthly in arrears (standard) or per-booking (enterprise option).
+  PO requirement: does this client require a PO number on every invoice?
+
+STEP 5 — WELCOME COMMUNICATION (draft for CEO review):
+  "Dear [travel_manager_name],
+   Welcome to UTUBooking for Business — your dedicated corporate travel platform.
+   Your portal is now active. Login: [email] | Temporary password: [sent separately]
+   Travel policy configured: [max_flight_class] class | [max_hotel_stars]-star max | [advance_booking_days] days notice
+   Preferred airlines: [list]
+   Your account manager: [CEO/AM name] — [email] — [phone]
+   For queries: corporate@utubooking.com"
+```
+
+---
+
+## CORP-002 · Corporate Enquiry Response
+
+**Owner:** Sales Agent + CEO &nbsp;|&nbsp; **Frequency:** Within 4 hours of new enquiry during business hours
+
+**Purpose:** Inbound corporate travel enquiries represent the highest-value customer segment. A government ministry or oil & gas company could represent SAR 500K+ in annual bookings. No enquiry should sit unactioned.
+
+**Trigger:** New entry in `corporate_enquiries` with `status = 'new'`. Checked as part of GBL-001 morning briefing.
+
+### Enquiry Response Prompt
+
+```
+Corporate travel enquiry response — [DATE].
+
+NEW ENQUIRIES: GET /api/admin/corporate/enquiries?status=new
+For each enquiry:
+  Company: [company_name] | Contact: [contact_name] | Email: [email]
+  Travellers: [traveler_count] | Destinations: [destinations] | Dates: [travel_dates]
+  Notes: [message]
+
+QUALIFICATION:
+  Employee count / travellers: [X]
+  Annual travel budget estimate: [basis — e.g. [traveler_count] * 12 trips * SAR 3,000 avg = SAR X]
+  Industry: [industry] — government/oil_gas/finance = highest priority (often have mandated local platforms)
+  Is this company already in corporate_accounts? Search first — may be an existing account re-enquiring.
+
+RESPONSE DRAFT (for CEO review before sending):
+  "Dear [contact_name],
+   Thank you for reaching out to UTUBooking for Business. We specialise in corporate travel
+   management for leading organisations across the Gulf region, with deep expertise in
+   government, oil & gas, and financial services travel programmes.
+
+   For [company_name]'s team of [traveler_count] travellers, we can offer:
+   - Negotiated hotel rates in Riyadh, Jeddah, Makkah, Dubai, and key business destinations
+   - Centralised booking with travel policy controls (class caps, approval workflows, per diems)
+   - Monthly consolidated invoicing with full expense reporting
+   - Dedicated account manager + 24/7 support
+
+   I'd like to understand your current travel spend and challenges in a 30-minute discovery call.
+   Are you available [DAY] or [DAY] this week?
+
+   Best regards,
+   [CEO name] | Corporate Travel, UTUBooking.com | [phone]"
+
+PATCH enquiry status → 'contacted' after CEO approves and email is sent.
+Create account record (status: prospect) if company not already in corporate_accounts.
+Log first activity immediately after call/meeting.
+```
+
+### Corporate Account Health Review (Monthly, part of GBL-002)
+
+```
+Corporate account health review — [MONTH YEAR].
+
+GET /api/admin/corporate/accounts?status=active
+For each active account:
+  Total bookings this month: [X] | Total spend SAR: [Y]
+  vs. monthly budget run rate (annual_travel_budget_sar / 12): on track / under / over?
+  Last activity date: [last_activity_at] — any account with no bookings in 30 days?
+    → check-in call required — are they booking via another channel?
+
+Contracts expiring in 90 days:
+  For each: renewal discussion to be initiated by account manager.
+  Flag to CEO if enterprise tier account is at risk of churn.
+
+New enquiries this month: [count] | Converted to accounts: [count] | Conversion rate: [X]%
+
+Output: corporate account health table. Flag any account > 30 days inactive to CEO.
+```
+
+---
+
+## CRM Department SOPs
+
+---
+
+## CRM-001 · Daily Deal Pipeline Review
+
+**Owner:** Sales Agent + CEO &nbsp;|&nbsp; **Frequency:** Every morning (part of GBL-001)
+
+**Purpose:** Keep the B2B deal pipeline clean and moving — hotel partnerships, airline deals, white-label resellers, and investor leads. Stale deals lose momentum and represent lost revenue.
+
+**Deal Types:** `hotel_partner` | `b2b_whitelabel` | `airline` | `investor` | `other`
+**Pipeline Stages:** `lead` → `qualified` → `demo` → `proposal` → `negotiation` → `won` | `lost`
+
+### Daily CRM Review Prompt
+
+```
+CRM pipeline review — [DATE].
+
+STATS: GET /api/admin/crm/stats
+  Review: pipeline_value_total, deals by stage, overdue count.
+
+OVERDUE DEALS: GET /api/admin/crm/overdue
+  For each deal with next_action_date in the past:
+    Deal: [title] | Stage: [stage] | Type: [deal_type] | Owner: [deal_owner]
+    Overdue by: [X days]
+    Required action: log activity + update next_action_date + advance stage if appropriate.
+
+PIPELINE SCAN: GET /api/admin/crm/deals?stage=proposal
+  Any proposal-stage deal with no activity in 7+ days?
+    → Follow-up required. PATCH deal: log follow_up activity.
+    → If no response after 2 follow-ups, discuss with CEO: advance to negotiation or move to lost.
+
+NEW LEADS: GET /api/admin/crm/deals?stage=lead
+  For each new lead (created_at within last 48h):
+    Qualify: is the partner type a good fit? (hotel_partner = inventory expansion; b2b_whitelabel = reseller revenue; investor = funding)
+    Action: PATCH stage → 'qualified' if fit confirmed, log first outreach activity.
+
+INVESTOR PIPELINE: GET /api/admin/crm/deals?type=investor
+  Status of each Series B / investor conversation:
+    CEO reviews personally — flag any investor moving to negotiation stage.
+
+OUTPUT: Pipeline health summary. List of deals requiring action today.
+```
+
+### Stage Advancement Rules
+
+| From | To | Trigger |
+|------|-----|---------|
+| lead | qualified | Partner confirmed relevant, initial contact made |
+| qualified | demo | Demo/call scheduled |
+| demo | proposal | Strong interest shown — proposal requested |
+| proposal | negotiation | Counter-offer or term discussion started |
+| negotiation | won | Contract signed |
+| any | lost | Partner declines, goes silent after 3 follow-ups, or not a fit |
+
+**Rule:** Any deal in `proposal` or `negotiation` stage for > 14 days with no activity = CEO review required.
+
+---
+
+## CRM-002 · Hotel Partner Pipeline Review
+
+**Owner:** Sales Agent + Revenue Agent &nbsp;|&nbsp; **Frequency:** Weekly (Mondays, as part of GBL-002)
+
+**Purpose:** Grow UTUBooking's direct hotel partner inventory — especially Makkah and Madinah. Direct partnerships mean better rates, higher margins, and Hajj allocation guarantees that API suppliers cannot provide.
+
+**Priority Tiers:**
+- Priority 1: Makkah and Madinah 5-star hotels within 500m of Haram — highest value
+- Priority 2: Key Gulf business destinations (Riyadh, Jeddah CBD, Dubai, Abu Dhabi)
+- Priority 3: All other cities and markets
+
+### Weekly Hotel Partner Review Prompt
+
+```
+Hotel partner pipeline review — [DATE].
+
+GET /api/admin/crm/hotel-partners
+  Filter: status = 'prospect' OR last_contacted_at is null OR last_contacted_at < [30 days ago]
+
+For each hotel NOT yet contacted in 30 days:
+  Hotel: [hotel_name] | City: [city] | Stars: [stars]★ | Priority: [priority]
+  Distance to Haram: [distance_haram_m]m (Makkah/Madinah only)
+  Status: [outreach_status] | Last contacted: [last_contacted_at]
+
+ACTION for Priority 1 hotels (Makkah/Madinah 5★, distance < 300m):
+  Draft outreach email in Arabic + English for CEO approval.
+  Subject: "UTUBooking — Hajj & Umrah Direct Partnership Opportunity"
+  Include: UTUBooking Hajj traffic volume, expected booking volume during Hajj season, revenue potential.
+  PATCH hotel-partner: log outreach activity after CEO approves email.
+
+ACTION for Priority 2 hotels:
+  Draft brief English outreach.
+  Log activity after send.
+
+PIPELINE METRICS:
+  Total hotel partners: [count] | Signed contracts: [signed] | Prospects: [prospect]
+  Makkah 5★ direct signed: [X] — target: minimum 5 per star tier
+  Madinah 5★ direct signed: [X] — target: minimum 3 per star tier
+
+OUTPUT: Hotel partner pipeline summary. List of outreach actions for the week.
+Escalate to CEO: any Priority 1 Makkah hotel not yet in active negotiation by April (Hajj season).
+```
+
+---
+
+## Ops Department SOPs
+
+---
+
+## OPS-001 · Daily Incident Management
+
+**Owner:** Ops Agent + Dev Agent &nbsp;|&nbsp; **Frequency:** Every morning + on-demand when new incident created
+
+**Purpose:** Track and resolve platform incidents. Distinguish internal Ops incidents (service degradations, minor issues) from EMG emergencies (full outages, data breaches). Ops incidents are managed here; true emergencies escalate to EMG-001/EMG-002.
+
+**Severity Levels:**
+| Severity | Definition | SLA to Resolve | Workflow |
+|----------|-----------|----------------|---------|
+| critical | Service fully down or data integrity at risk | < 1 hour | Auto-launches incident response workflow; CEO notified |
+| high | Major feature broken, significant user impact | < 4 hours | Auto-launches workflow; Dev Agent engaged |
+| medium | Degraded performance, minor feature broken | < 24 hours | Dev Agent reviews next working day |
+| low | Cosmetic issue, minor inconvenience | < 72 hours | Backlog — Dev Agent next sprint |
+
+### Morning Incident Review Prompt
+
+```
+Ops incident review — [DATE].
+
+STATS: GET /api/admin/ops/stats
+  Open incidents: [total] | Critical: [X] | High: [X] | SLA-breaching: [X]
+  Open tickets: [total] | Urgent: [X] | High: [X]
+
+CRITICAL/HIGH INCIDENTS (action required NOW):
+  GET /api/admin/ops/incidents?status=open&severity=critical
+  GET /api/admin/ops/incidents?status=open&severity=high
+  For each:
+    Incident: [title] | Service: [service] | Impact: [impact]
+    Open since: [started_at] — [X hours] ago
+    Action: PATCH status → 'investigating' if not already.
+    Notify Dev Agent: "Critical/High incident open — [title] — [X hours] elapsed."
+    If critical AND open > 1 hour: escalate to EMG-001 (platform outage SOP).
+
+MEDIUM INCIDENTS:
+  GET /api/admin/ops/incidents?status=open&severity=medium
+  Review: any new medium incidents from the past 24h?
+  Assign to Dev Agent for next working session.
+
+RESOLVE/CLOSE:
+  GET /api/admin/ops/incidents?status=investigating
+  For each investigating:
+    Has the underlying issue been fixed? Confirm with Dev Agent.
+    If fixed: PATCH status → 'resolved', set resolved_at = now().
+    After 24h in resolved: PATCH → 'closed'.
+
+OUTPUT: Incident summary table. Any critical/high incidents escalated to CEO immediately.
+```
+
+---
+
+## OPS-002 · Support Ticket Queue Management
+
+**Owner:** Ops Agent + CS Agent &nbsp;|&nbsp; **Frequency:** Every morning + hourly for urgent tickets
+
+**Purpose:** The internal Ops support ticket queue captures platform-level issues reported by staff or detected by monitoring — distinct from customer-facing CS tickets. These are operational problems: booking system errors, payment processing failures, technical account issues.
+
+**Ticket Categories:** `booking` | `payment` | `technical` | `account` | `refund` | `other`
+
+**Priority SLAs:**
+| Priority | Response | Resolution |
+|----------|----------|-----------|
+| urgent | < 30 min | < 2 hours |
+| high | < 2 hours | < 8 hours |
+| medium | < 4 hours | < 24 hours |
+| low | < 24 hours | < 72 hours |
+
+### Ticket Queue Prompt
+
+```
+Ops support ticket queue — [DATE].
+
+GET /api/admin/ops/tickets?status=open&priority=urgent
+  For each urgent ticket:
+    Ticket: [title] | Category: [category]
+    Open since: [created_at] — [X minutes] ago — SLA: 30 min response
+    Action: PATCH status → 'in_progress', set assignee.
+    Engage Dev Agent (technical/payment) or CS Agent (booking/account/refund) immediately.
+
+GET /api/admin/ops/tickets?status=open&priority=high
+  For each high ticket:
+    Open since: [created_at] — [X hours] ago — SLA: 2h response
+    Assign if unassigned. Update status → 'in_progress'.
+
+OVERDUE REVIEW:
+  Any ticket where:
+    priority = 'urgent' AND created > 30 min ago AND status = 'open' → SLA BREACH — CEO notified
+    priority = 'high' AND created > 2h ago AND status = 'open' → SLA breach risk — escalate
+
+RESOLUTION:
+  GET /api/admin/ops/tickets?status=in_progress
+  For each in-progress ticket:
+    Resolved? PATCH status → 'resolved', fill resolution field.
+    After 24h in 'resolved': PATCH → 'closed'.
+
+PATTERNS:
+  Are multiple tickets in same category (e.g. 3+ payment tickets in one day)?
+    → Investigate root cause — may indicate a systemic issue requiring OPS-001 incident creation.
+
+OUTPUT: Ticket queue summary. Urgent/high tickets with assignees and ETAs.
+```
+
+---
+
 ## Appendix — Quick Reference
 
 ### Compliance SLA Cheat Sheet
@@ -4808,19 +6769,26 @@ If fine issued: notify finance agent + CEO. Escalate to Board if > €50K equiva
 
 | Agent | CLAUDE.md | Owns |
 |-------|-----------|------|
-| Ops Agent | `docs/ops/global-ai-operations.md` | GBL-001–010, daily/weekly/monthly/quarterly routines |
+| Ops Agent | `docs/ops/global-ai-operations.md` | GBL-001–010, OPS-001–002, daily/weekly/monthly/quarterly routines |
 | Dev Agent | `backend/CLAUDE.md` | GBL-006, PH*-001, DEV-001–004, EMG-001–006 (technical) |
 | Marketing Agent | `marketing/CLAUDE.md` | MKT-001–004 |
-| Sales Agent | `sales/CLAUDE.md` | SAL-001–003 |
+| Sales Agent | `sales/CLAUDE.md` | SAL-001–003, CRM-001–002 |
 | HR Agent | `hr/CLAUDE.md` | HR-001–002 |
 | Finance Agent | `finance/CLAUDE.md` | FIN-001–002, GBL-003–004 (financial sections) |
 | Compliance Agent | `compliance/gdpr/checklist.md` | COM-001–005, EMG-003, EMG-006 |
 | Products Agent | `products/CLAUDE.md` | Feature specs, sprint planning, UX rules |
 | Legal Agent | `legal/CLAUDE.md` | Contract review, regulatory inquiries, EMG-003/006 |
+| Customer Success Agent | `customer-success/CLAUDE.md` | CS-001–002, ticket triage, refunds, NPS management |
+| Fraud Agent | `fraud/CLAUDE.md` | FRD-001–003, daily queue, rule governance, watchlist |
+| Revenue Agent | `revenue/CLAUDE.md` | RVN-001–003, seasonal rules, targets, overrides |
+| Procurement Agent | `procurement/CLAUDE.md` | PRC-001–003, supplier onboarding, contracts, SLAs, POs |
+| Analytics Agent | `analytics/CLAUDE.md` | ANA-001–002, weekly KPI review, monthly BI report, alert tuning |
+| BizDev Agent | `bizdev/CLAUDE.md` | BIZ-001–003 + ADV-001–002 + AFF-001–002, partners, markets, advertising, affiliates |
+| Corporate Agent | `corporate/CLAUDE.md` | CORP-001–002, corporate account onboarding, enquiry response |
 
 ---
 
-*Master SOP — UTUBooking.com · Phases 1–12 · 25+ Markets*
-*Last updated: 2026-03-25 · Owner: CEO / Founder (AMEC Solutions)*
+*Master SOP — UTUBooking.com · Phases 1–12 · 25+ Markets · 16 Agents · 100% Department Coverage*
+*Last updated: 2026-04-12 · Owner: CEO / Founder (AMEC Solutions)*
 *Next review: Phase 13 launch or any new market entry*
 *All AI-generated outputs require human review before external use.*

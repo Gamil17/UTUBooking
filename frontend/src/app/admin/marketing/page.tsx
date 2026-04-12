@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getCalendar, updateCalendarEntry, deleteCalendarEntry,
@@ -10,8 +10,10 @@ import {
   getTemplates, createTemplate, updateTemplate, deleteTemplate,
   getEmailLog,
   getSuppressions, liftSuppression,
+  getCampaignAnalysis, analyzeCampaigns,
   type CalendarEntry, type CalendarStatus, type DraftFile, type ConsentRow, type TimelineItem,
   type Campaign, type EmailTemplate, type EmailLogRow, type SuppressionRow,
+  type CampaignAnalysis,
 } from '@/lib/api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -1393,6 +1395,218 @@ function SuppressionsTab() {
   );
 }
 
+// ─── AI Campaign Analysis Panel ───────────────────────────────────────────────
+
+const MKT_HEALTH_COLORS: Record<string, string> = {
+  excellent: 'bg-green-100 text-green-700 border-green-200',
+  good:      'bg-blue-50  text-blue-700  border-blue-200',
+  fair:      'bg-amber-100 text-amber-700 border-amber-200',
+  poor:      'bg-red-100  text-red-600   border-red-200',
+};
+
+function AICampaignPanel() {
+  const [analysis, setAnalysis] = useState<CampaignAnalysis | null>(null);
+  const [loading,  setLoading]  = useState(false);
+  const [running,  setRunning]  = useState(false);
+  const [error,    setError]    = useState('');
+  const [open,     setOpen]     = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getCampaignAnalysis()
+      .then(r => { if (!cancelled) { setAnalysis(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  async function handleAnalyze() {
+    setRunning(true);
+    setError('');
+    try {
+      const res = await analyzeCampaigns();
+      if (res.data) setAnalysis(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch {
+      setError('Failed to run analysis. Check your connection.');
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-violet-50/40 mb-4">
+      <button
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
+        onClick={() => setOpen(o => !o)}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Campaign Analysis</span>
+          {analysis && (
+            <span className={`rounded-md border px-2 py-0.5 text-xs font-medium capitalize ${MKT_HEALTH_COLORS[analysis.overall_health] ?? ''}`}>
+              {analysis.overall_health}
+            </span>
+          )}
+          {analysis && (
+            <span className="text-xs text-violet-500 font-normal">
+              · {analysis.active_campaigns} active / {analysis.total_campaigns} total
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-5 pt-4 space-y-5">
+          {loading && <p className="text-xs text-utu-text-muted italic">Loading analysis…</p>}
+
+          {!loading && !analysis && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">
+                No analysis yet. Run AI Campaign Analysis to get portfolio health, top performers, underperformers, channel insights, and quick wins.
+              </p>
+              <button onClick={handleAnalyze} disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                {running ? 'Analysing…' : '✦ Analyse All Campaigns'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {analysis && !loading && (
+            <>
+              {/* Executive summary */}
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{analysis.executive_summary}</p>
+
+              {/* Budget assessment */}
+              {analysis.budget_assessment && (
+                <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-4 py-3">
+                  <p className="text-xs font-semibold text-utu-text-muted mb-1">Budget Assessment</p>
+                  <p className="text-xs text-utu-text-secondary">{analysis.budget_assessment}</p>
+                </div>
+              )}
+
+              {/* Top campaigns + underperformers */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {analysis.top_campaigns.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Top Campaigns</h3>
+                    <div className="space-y-2">
+                      {analysis.top_campaigns.map((c, i) => (
+                        <div key={i} className="rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                          <p className="text-xs font-semibold text-green-800">{c.name}</p>
+                          <p className="text-xs text-green-600">{c.channel} · {c.status}</p>
+                          <p className="text-xs text-green-700 mt-0.5 italic">{c.why}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {analysis.underperformers.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Needs Attention</h3>
+                    <div className="space-y-2">
+                      {analysis.underperformers.map((u, i) => (
+                        <div key={i} className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                          <p className="text-xs font-semibold text-amber-800">{u.name}</p>
+                          <p className="text-xs text-amber-600">{u.channel} · {u.issue}</p>
+                          <p className="text-xs text-amber-700 mt-0.5 italic">{u.recommendation}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Channel insights */}
+              {analysis.channel_insights.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Channel Insights</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {analysis.channel_insights.map((ch, i) => (
+                      <div key={i} className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                        <p className="text-xs font-semibold text-utu-text-primary capitalize">{ch.channel}</p>
+                        <p className="text-xs text-utu-text-secondary mt-0.5">{ch.assessment}</p>
+                        <p className="text-xs text-utu-blue mt-1">{ch.opportunity}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quick wins + content gaps */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {analysis.quick_wins.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Quick Wins</h3>
+                    <ul className="space-y-1">
+                      {analysis.quick_wins.map((w, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary">
+                          <span className="mt-0.5 text-green-500">●</span>{w}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {analysis.content_gaps.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Content Gaps</h3>
+                    <ul className="space-y-1">
+                      {analysis.content_gaps.map((g, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary">
+                          <span className="mt-0.5 text-amber-500">●</span>{g}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Recommendations */}
+              {analysis.recommendations.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</h3>
+                  <ul className="space-y-1">
+                    {analysis.recommendations.map((r, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary">
+                        <span className="mt-0.5 text-violet-400">▸</span>{r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Risk flags */}
+              {analysis.risk_flags.length > 0 && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                  <h3 className="text-xs font-semibold text-red-700 mb-1">Risk Flags</h3>
+                  <ul className="space-y-1">
+                    {analysis.risk_flags.map((f, i) => (
+                      <li key={i} className="text-xs text-red-600">• {f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-violet-200">
+                <p className="text-xs text-utu-text-muted">
+                  Generated {new Date(analysis.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+                <button onClick={handleAnalyze} disabled={running}
+                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors">
+                  {running ? 'Re-analysing…' : 'Re-analyse'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const TABS = ['Content Calendar', 'Draft Queue', 'Campaigns', 'Templates', 'Email Log', 'Consent', 'Suppressions', 'Timeline'] as const;
@@ -1430,7 +1644,7 @@ export default function MarketingPage() {
 
       {activeTab === 'Content Calendar' && <CalendarTab />}
       {activeTab === 'Draft Queue'      && <DraftQueueTab />}
-      {activeTab === 'Campaigns'        && <CampaignsTab />}
+      {activeTab === 'Campaigns'        && <><AICampaignPanel /><CampaignsTab /></>}
       {activeTab === 'Templates'        && <TemplatesTab />}
       {activeTab === 'Email Log'        && <EmailLogTab />}
       {activeTab === 'Consent'          && <ConsentTab />}

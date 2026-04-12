@@ -26,6 +26,7 @@
 
 const { Router } = require('express');
 const { Pool }   = require('pg');
+const wf         = require('../lib/workflow-client');
 
 const pool   = new Pool({ connectionString: process.env.DATABASE_URL });
 const router = Router();
@@ -271,7 +272,26 @@ router.post('/flags', async (req, res) => {
        parseInt(rollout_pct) || 0, Array.isArray(environments) ? environments : ['development'],
        owner || null, expires_at || null],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const flag = result.rows[0];
+
+    // ── Launch flag activation workflow when a flag starts enabled with rollout > 0 ──
+    if (Boolean(enabled) && parseInt(rollout_pct) > 0) {
+      wf.launch({
+        triggerEvent:   'flag_activation',
+        triggerRef:     flag.id,
+        triggerRefType: 'feature_flag',
+        initiatedBy:    req.user?.email ?? 'admin',
+        context: {
+          flag_key:     flag.key,
+          description:  description || null,
+          rollout_pct:  parseInt(rollout_pct),
+          environments: Array.isArray(environments) ? environments : ['development'],
+          owner:        owner || null,
+        },
+      });
+    }
+
+    res.status(201).json({ data: flag });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'FLAG_KEY_EXISTS', message: 'A flag with this key already exists.' });
     console.error('[products] POST /flags error:', err);
@@ -352,7 +372,27 @@ router.post('/changelog', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
       [version, title, summary || null, body || null, type, published_at || null],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const entry = result.rows[0];
+
+    // ── Launch release comms & CS handoff workflow for releases ───────────────
+    if (type === 'release') {
+      wf.launch({
+        triggerEvent:   'release_created',
+        triggerRef:     entry.id,
+        triggerRefType: 'changelog',
+        initiatedBy:    req.user?.email ?? 'system',
+        context: {
+          entry_id:     entry.id,
+          version,
+          title,
+          summary:      summary ?? null,
+          type,
+          published_at: published_at ?? null,
+        },
+      });
+    }
+
+    res.status(201).json({ data: entry });
   } catch (err) {
     console.error('[products] POST /changelog error:', err);
     res.status(500).json({ error: 'DB_ERROR' });

@@ -377,6 +377,66 @@ function HotelSections() {
         </div>
       </section>
 
+      {/* ── For Hotel Partners ─────────────────────────────────────────────── */}
+      <section className="py-16 px-4 bg-utu-bg-page">
+        <div className="max-w-5xl mx-auto bg-utu-bg-card rounded-3xl border border-utu-border-default shadow-sm overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            {/* Left: dark navy panel */}
+            <div className="bg-utu-navy p-10 flex flex-col justify-center">
+              <p className="text-amber-300 text-xs font-semibold uppercase tracking-widest mb-3">
+                For Hotel Partners
+              </p>
+              <h2 className="text-white text-2xl font-bold leading-snug mb-4">
+                List Your Property on UTUBooking
+              </h2>
+              <p className="text-white/75 text-sm leading-relaxed mb-6">
+                Reach 3M+ Hajj and Umrah travelers searching for accommodation near the Haram. Join 1,200+ partner properties across Makkah, Madinah, and the Gulf region.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/hotel-partners"
+                  className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-utu-navy font-bold text-sm px-5 py-3 rounded-xl transition-colors"
+                >
+                  Learn More
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                <Link
+                  href="/hotel-partners/apply"
+                  className="inline-flex items-center justify-center gap-2 border border-white/30 hover:border-white/60 text-white font-semibold text-sm px-5 py-3 rounded-xl transition-colors"
+                >
+                  Send Request
+                </Link>
+              </div>
+            </div>
+
+            {/* Right: stats grid */}
+            <div className="p-10 grid grid-cols-2 gap-6 content-center">
+              {[
+                { value: '3M+',   label: 'Hajj & Umrah travelers annually' },
+                { value: '1,200+', label: 'Partner properties listed' },
+                { value: '4.8%',  label: 'Average conversion rate' },
+                { value: '#1',    label: 'Gulf-focused travel platform' },
+              ].map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <p className="text-2xl font-black text-utu-navy mb-1">{stat.value}</p>
+                  <p className="text-xs text-utu-text-muted leading-snug">{stat.label}</p>
+                </div>
+              ))}
+              <div className="col-span-2 pt-2 border-t border-utu-border-default">
+                <p className="text-xs text-utu-text-muted text-center">
+                  Questions? Email{' '}
+                  <a href="mailto:partners@utubooking.com" className="text-utu-blue hover:underline">
+                    partners@utubooking.com
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <AppDownload />
     </>
   );

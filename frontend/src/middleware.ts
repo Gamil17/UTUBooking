@@ -42,6 +42,10 @@ async function resolveTenant(domain: string): Promise<TenantConfig | null> {
 // User locale cookie name — written by LocaleSwitcher component on the client
 const USER_LOCALE_COOKIE = 'utu_locale';
 
+// Affiliate referral cookie — 30-day attribution window
+const AFFILIATE_REF_COOKIE = 'utu_ref';
+const AFFILIATE_REF_REGEX  = /^UTU-[A-Z0-9]{1,10}-[A-Z0-9]{1,6}$/i;
+
 // ── Admin auth guard ──────────────────────────────────────────────────────────
 const ADMIN_COOKIE = 'utu_admin_token';
 
@@ -135,10 +139,37 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Pass modified request headers to server components
-  return NextResponse.next({
-    request: { headers: requestHeaders },
-  });
+  // ── Affiliate referral tracking ───────────────────────────────────────────
+  // If a ?ref=UTU-XXXXX-XXXX query param is present AND the cookie isn't already
+  // set (first-touch attribution), stamp the cookie and signal the client to
+  // fire a click-tracking call.
+  const incomingRef  = request.nextUrl.searchParams.get('ref') ?? '';
+  const existingRef  = request.cookies.get(AFFILIATE_REF_COOKIE)?.value ?? '';
+  const isValidRef   = AFFILIATE_REF_REGEX.test(incomingRef);
+
+  if (isValidRef && !existingRef) {
+    // Pass the ref to the client via a request header so AffiliateRefTracker
+    // can pick it up and fire the tracking POST without a full page refresh.
+    requestHeaders.set('x-affiliate-ref', incomingRef.toUpperCase());
+  } else if (existingRef) {
+    // Forward existing cookie value so server components can read it
+    requestHeaders.set('x-affiliate-ref', existingRef);
+  }
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+
+  // Stamp the 30-day cookie on the response when a new valid ref arrives
+  if (isValidRef && !existingRef) {
+    response.cookies.set(AFFILIATE_REF_COOKIE, incomingRef.toUpperCase(), {
+      maxAge:   30 * 24 * 60 * 60, // 30 days
+      path:     '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure:   process.env.NODE_ENV === 'production',
+    });
+  }
+
+  return response;
 }
 
 export const config = {

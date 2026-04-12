@@ -68,6 +68,15 @@ const resetPasswordSchema = Joi
   })
   .options({ stripUnknown: true });
 
+const changePasswordSchema = Joi
+  .object({
+    current_password: Joi.string().min(1).max(128).required().messages({
+      'any.required': 'Current password is required.',
+    }),
+    new_password: password,
+  })
+  .options({ stripUnknown: true });
+
 // ─── Validate helper ─────────────────────────────────────────────────────────
 
 function validate(schema, data) {
@@ -81,5 +90,6 @@ module.exports = {
   logoutSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  changePasswordSchema,
   validate,
 };

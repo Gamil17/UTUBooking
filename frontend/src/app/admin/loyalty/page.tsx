@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getAdminLoyaltyStats,
@@ -14,7 +14,197 @@ import {
   type LoyaltyMember,
   type LoyaltyLedgerEntry,
   type LoyaltyReward,
+  getLoyaltyAdvice, analyzeLoyalty, type LoyaltyAdvice,
 } from '@/lib/api';
+
+// ─── AI Loyalty Advisor Panel ─────────────────────────────────────────────────
+
+const PROG_HEALTH_BADGE: Record<string, string> = {
+  excellent: 'border-green-300  bg-green-50  text-green-700',
+  good:      'border-blue-200   bg-blue-50   text-blue-700',
+  fair:      'border-amber-200  bg-amber-50  text-amber-700',
+  poor:      'border-red-200    bg-red-50    text-red-700',
+};
+
+function AILoyaltyAdvisorPanel() {
+  const [advice,  setAdvice]  = useState<LoyaltyAdvice | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error,   setError]   = useState('');
+  const [open,    setOpen]    = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getLoyaltyAdvice()
+      .then(r => { if (!cancelled) { setAdvice(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  async function handleAnalyze() {
+    setRunning(true); setError('');
+    try {
+      const res = await analyzeLoyalty();
+      if (res.data) setAdvice(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch { setError('Failed to run analysis.'); }
+    finally { setRunning(false); }
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-violet-50/40 mb-4">
+      <button className="flex w-full items-center justify-between px-4 py-3 text-left" onClick={() => setOpen(o => !o)}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Loyalty Programme Advisor</span>
+          {advice && (
+            <span className={`rounded-md border px-2 py-0.5 text-xs font-medium capitalize ${PROG_HEALTH_BADGE[advice.programme_health] ?? ''}`}>
+              {advice.programme_health}
+            </span>
+          )}
+          {advice && (
+            <span className="text-xs text-violet-500">
+              {advice.total_members.toLocaleString()} members · {advice.points_outstanding.toLocaleString()} pts outstanding
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-5 pt-4 space-y-5">
+          {loading && <p className="text-xs text-utu-text-muted italic">Loading loyalty analysis…</p>}
+
+          {!loading && !advice && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">
+                Run AI Loyalty Advisor to assess tier health, churn risk segments, redemption barriers, points liability, and Gulf-specific reward recommendations.
+              </p>
+              <button onClick={handleAnalyze} disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                {running ? 'Analysing…' : '✦ Run Loyalty Analysis'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {advice && !loading && (
+            <>
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{advice.executive_summary}</p>
+
+              {advice.tier_health.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Tier Health</h3>
+                  <div className="space-y-2">
+                    {advice.tier_health.map((t, i) => (
+                      <div key={i} className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                        <p className="text-xs font-semibold text-utu-text-primary capitalize">{t.tier}</p>
+                        <p className="text-xs text-utu-text-secondary mt-0.5">{t.assessment}</p>
+                        <p className="text-xs text-violet-600 mt-0.5 italic">{t.action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {advice.churn_risk_segments.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Churn Risk Segments</h3>
+                  <div className="space-y-2">
+                    {advice.churn_risk_segments.map((s, i) => (
+                      <div key={i} className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs font-semibold text-amber-800">{s.segment}</p>
+                          <span className="text-xs text-amber-600">{s.size_estimate}</span>
+                        </div>
+                        <p className="text-xs text-amber-700 mt-0.5">{s.risk}</p>
+                        <p className="text-xs text-amber-600 mt-0.5 italic">{s.re_engagement_tactic}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {advice.redemption_insights && (
+                  <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                    <p className="text-xs font-semibold text-utu-text-muted mb-1">Redemption Insights</p>
+                    <p className="text-xs text-utu-text-secondary">{advice.redemption_insights}</p>
+                  </div>
+                )}
+                {advice.liability_assessment && (
+                  <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                    <p className="text-xs font-semibold text-utu-text-muted mb-1">Liability Assessment</p>
+                    <p className="text-xs text-utu-text-secondary">{advice.liability_assessment}</p>
+                  </div>
+                )}
+              </div>
+
+              {advice.reward_recommendations.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Reward Recommendations</h3>
+                  <div className="space-y-2">
+                    {advice.reward_recommendations.map((r, i) => (
+                      <div key={i} className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2">
+                        <p className="text-xs font-semibold text-violet-800">{r.reward}</p>
+                        <p className="text-xs text-violet-600 mt-0.5">{r.rationale}</p>
+                        <p className="text-xs text-violet-500 mt-0.5 italic">Gulf: {r.gulf_relevance}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {advice.quick_wins.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Quick Wins</h3>
+                    <ul className="space-y-1">
+                      {advice.quick_wins.map((w, i) => (
+                        <li key={i} className="text-xs text-utu-text-secondary before:content-['→'] before:mr-1.5 before:text-green-500">{w}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {advice.engagement_gaps.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Engagement Gaps</h3>
+                    <ul className="space-y-1">
+                      {advice.engagement_gaps.map((g, i) => (
+                        <li key={i} className="text-xs text-utu-text-secondary before:content-['!'] before:mr-1.5 before:text-amber-500">{g}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {advice.recommendations.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</h3>
+                  <ul className="space-y-1">
+                    {advice.recommendations.map((r, i) => (
+                      <li key={i} className="text-xs text-utu-text-secondary before:content-['✓'] before:mr-1.5 before:text-violet-500">{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-1 border-t border-violet-200">
+                <p className="text-xs text-violet-400">Last run: {new Date(advice.generated_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                <button onClick={handleAnalyze} disabled={running}
+                  className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                  {running ? 'Refreshing…' : '↺ Refresh'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -603,6 +793,7 @@ export default function LoyaltyAdminPage() {
         ))}
       </div>
 
+      <AILoyaltyAdvisorPanel />
       {tab === 'overview' ? <OverviewTab /> : <RewardsTab />}
     </div>
   );

@@ -2651,6 +2651,221 @@ Tag CEO on any item with a hard deadline within 90 days.
 
 ---
 
+## OPS-022 · Fraud & Risk Operations
+
+**Owner:** Fraud Agent &nbsp;|&nbsp; **→ master-sop.md § FRD-001–003**
+
+### Daily Fraud Briefing Prompt
+
+```
+Daily fraud operations briefing — [DATE].
+
+1. QUEUE: How many pending fraud cases? GET /api/admin/fraud/cases?status=pending
+   Cases with risk_score >= 70: list with booking_ref, amount_sar, flags.
+   Cases awaiting workflow completion (auto-launched for score >= 70): check workflow engine.
+
+2. STATS: GET /api/admin/fraud/stats
+   Confirmed fraud SAR this month. False positive rate (target < 10%).
+   Active watchlist entries. Active detection rules.
+
+3. DECISIONS NEEDED (paste for CEO if any case >= SAR 5,000):
+   Case [ID]: [booking_ref] | [amount_sar] SAR | score [X] | flags: [list]
+   Recommendation: CONFIRM FRAUD / FALSE POSITIVE / ESCALATE
+   Reason: [1-2 sentences]
+
+4. RULE HEALTH: Any rule with hit_count spike > 2x 7-day average?
+   Any rule with zero hits in 7 days (potential blind spot)?
+
+Output: < 10 bullet points. Flag cases requiring CEO approval with [ACTION NEEDED].
+```
+
+### Rule Change Prompt (use when proposing any rule modification)
+
+```
+Fraud rule change proposal — [DATE].
+
+Rule: [name]
+Current condition: [JSON]
+Proposed condition: [JSON]
+Reason: [false positive reduction / new fraud pattern / routine tuning]
+Expected impact: [quantified if possible]
+
+False positive rate last 30 days: [X]% (target < 10%)
+Hit count last 30 days: [X]
+
+Note: All new/modified rules require CEO approval before activation.
+New rules auto-launch approval workflow on POST /api/admin/fraud/rules.
+NEVER delete rules — set active: false to preserve audit history.
+```
+
+### Watchlist Entry Prompt (use on every confirmed fraud decision)
+
+```
+Watchlist entry required — case [CASE_ID] — [DATE].
+
+Evidence summary: [booking refs, amount SAR, flags fired]
+Entries to add (POST /api/admin/fraud/watchlist):
+  - email: [value] severity: [critical/high] expires_at: [24 months from today]
+  - ip: [value] severity: [high] expires_at: [12 months from today]
+  - card_bin: [first 6 digits] severity: [critical] expires_at: null (permanent)
+
+GDPR NOTE: For EU/UK user watchlist entries, human approval required (Art. 22).
+```
+
+---
+
+## OPS-023 · Revenue Management Operations
+
+**Owner:** Revenue Agent &nbsp;|&nbsp; **→ master-sop.md § RVN-001–003**
+
+### Seasonal Rule Setup Prompt (run 8 weeks before each season)
+
+```
+Seasonal pricing review — [SEASON] [YEAR] — setup session.
+
+UPCOMING SEASONS (next 120 days):
+  Check revenue_rules WHERE active=true AND start_date BETWEEN NOW() AND NOW() + INTERVAL '120 days'
+  Are all upcoming seasonal rules already created and active?
+  Any season without a rule? Flag — create via RVN-001 process.
+
+COMPETITOR CHECK:
+  Almosafer / Wego / Booking.com price for Makkah 4-star hotel on [PEAK DATE]?
+  Our current displayed price for same hotel/date?
+  Are we within +/- 10% of market? If gap > 15%, escalate to CEO.
+
+RULE CONFLICTS:
+  Any two active rules with overlapping date ranges and same hotel_id?
+  Higher priority rule (lower number) will win — confirm this is the intended outcome.
+
+DEMAND SIGNALS:
+  Any hotels with < 20% availability showing on Hotelbeds for peak dates? → Consider urgency uplight.
+  Any hotels with > 90% availability 4 weeks out → Consider demand stimulation discount.
+
+Output: seasonal readiness report. Flag any gaps for CEO action.
+```
+
+### Monthly Revenue Check (part of GBL-002 monthly extension)
+
+```
+Monthly revenue performance — [MONTH YEAR].
+
+GET /api/admin/revenue/targets?period=[YYYY-MM]
+  RevPAR: target [X] | actual [Y] | variance [Z]%
+  Occupancy: target [X]% | actual [Y]%
+  ADR: target [X] SAR | actual [Y] SAR
+
+If any metric > 10% below target: which hotels/markets dragged performance?
+  Root cause: pricing too high? Low inventory? Competitor promotion?
+  Recommended action: new demand rule? Direct hotel promotion? GDS rate adjustment?
+
+Forward bookings next 30 days vs. same period last year: up/flat/down?
+Any specific dates with < 40% occupancy? Propose demand stimulation rule.
+Any specific dates with > 85% occupancy? Propose remaining inventory uplift.
+
+Update revenue_targets.actual_revpar for [MONTH YEAR] after review.
+```
+
+### Emergency Override Protocol
+
+```
+URGENT: Emergency price override — [DATE] — [HOTEL] — [REASON].
+
+Situation: [< 30 words describing the trigger]
+Current price SAR [X] → Target price SAR [Y]
+Affected dates: [list]
+
+CRITICAL CHECK before override:
+  Any confirmed bookings at current price for these dates? (If yes: honour them — no retroactive repricing)
+  Any live shopping sessions (Redis: search:results:{hotelId}:*)? Clear cache after override.
+
+POST /api/admin/revenue/overrides for each date with reason [minimum 20 words].
+After override: clear Redis cache, test hotel search to confirm new price, notify CS team.
+CEO approval required if carts already exist at old price.
+```
+
+---
+
+## OPS-024 · Procurement Operations
+
+**Owner:** Procurement Agent &nbsp;|&nbsp; **→ master-sop.md § PRC-001–003**
+
+### Monthly Procurement Briefing
+
+```
+Monthly procurement briefing — [MONTH YEAR].
+
+SLA STATUS: GET /api/admin/procurement/slas
+  Breached SLAs: [list — supplier, metric, current value vs. target]
+    Action: draft breach notification for CEO review. Check contract for remedy clause.
+  At-risk SLAs: [list]
+    Action: contact supplier, request remediation plan.
+  Met SLAs: [count] — no action needed.
+
+RENEWALS PIPELINE (next 90 days):
+  Contracts expiring: [list — supplier, title, end_date, auto_renews, annual value SAR]
+  For each:
+    Renew / renegotiate / terminate? Recommendation + rationale.
+    If auto_renews=true and we want to cancel: serve notice NOW if < 60 days to expiry.
+    If renewing: flag to Legal Agent if value > SAR 100,000.
+
+PENDING POs:
+  POs in 'draft' or 'approved' but not yet 'sent': [list]
+  POs in 'sent' past expected delivery date: [list — follow up with supplier]
+
+SPEND SUMMARY:
+  Active contract total value (SAR): [sum]
+  POs paid this month (SAR): [sum]
+  Budget remaining vs. annual procurement budget: flag if < 20% remaining.
+
+Output: procurement health report (< 1 page).
+Save to: docs/procurement/monthly-reports/[YYYY-MM]-procurement-review.md
+```
+
+### New Supplier Onboarding Prompt
+
+```
+New supplier onboarding — [SUPPLIER NAME] — [DATE].
+
+PRE-CHECKS (required before creating DB record):
+  [ ] Sanctions check: is [supplier name] + [country] on OFAC / UN / EU / UK HMT lists?
+  [ ] GDPR: does supplier access EU/UK user PII? If yes, DPA required before go-live.
+  [ ] Security: SOC 2 Type II or ISO 27001 cert? Request from supplier contact.
+  [ ] SLA: what uptime/response guarantee? Minimum acceptable: 99.5% uptime.
+  [ ] Contract value: > SAR 100,000/year? Legal Agent review required.
+
+Once checks pass:
+  POST /api/admin/procurement/suppliers — status: onboarding
+  POST /api/admin/procurement/contracts — status: draft
+  POST /api/admin/procurement/slas — one entry per contractual SLA metric
+  After contract signed: PATCH supplier status → active
+  Notify Dev Agent: supplier active, provision API credentials via AWS SSM.
+```
+
+### PO Approval Prompt (for requests >= SAR 10,000)
+
+```
+PO approval request — [SUPPLIER] — SAR [AMOUNT] — [DATE].
+
+PO Number: PO-[YYYY]-[NNN]
+Supplier: [name] (confirm exists in procurement_suppliers)
+Description: [specific — not generic]
+Amount: SAR [X]
+Budget line: [Marketing / Dev / Ops / Legal / HR]
+Budget remaining this [month/quarter]: SAR [Y] (after this PO: SAR [Z])
+Business justification: [which project/OKR does this support?]
+Expected delivery: [DATE]
+
+Approval tier:
+  < 10,000: self-approve
+  10,000–49,999: CEO (48h)
+  50,000–249,999: CEO + Finance Agent (72h)
+  >= 250,000: CEO + Board notification (5 business days)
+
+Awaiting [APPROVER] approval. Once approved: POST /api/admin/procurement/purchase_orders status=approved.
+```
+
+---
+
 # APPENDICES
 
 ---
@@ -2686,5 +2901,407 @@ Tag CEO on any item with a hard deadline within 90 days.
 
 ---
 
-*Document version: Phase 12+. Maintained by: Ops Agent.
+---
+
+## OPS-030 · Inventory Health Operations
+
+**Owner:** Ops Agent &nbsp;|&nbsp; **→ master-sop.md § INV-001–002**
+
+### Weekly Inventory Check (part of GBL-002 Monday Report)
+
+```
+Weekly inventory health — [DATE].
+
+GET /api/admin/inventory?type=hotels — total | active | disabled count
+GET /api/admin/inventory?type=flights — active routes
+GET /api/admin/inventory?type=cars — active categories
+
+CRITICAL — MAKKAH/MADINAH COVERAGE:
+  Active hotels in Makkah zone: [n] — minimum 5 per star tier (3★/4★/5★)
+  Active hotels in Madinah zone: [n] — minimum 3 per star tier
+  All Makkah properties is_halal_friendly=true? (mandatory — no exceptions)
+  Any Makkah hotel disabled this week? Reason?
+
+HAJJ READINESS (if within 12 weeks of Hajj):
+  Run INV-002 Hajj checklist — all items must be green before Hajj season
+  CEO notified if any item fails and < 6 weeks to Hajj
+
+AI INVENTORY ADVISOR:
+  Panel at /admin/inventory → run ✦ AI Inventory Advisor
+  inventory_health | priority gaps (critical → action today, high → action this week)
+
+Output: inventory health table. Any critical gap = CEO escalation same day.
+```
+
+---
+
+## OPS-031 · Loyalty Programme Operations
+
+**Owner:** Ops Agent &nbsp;|&nbsp; **→ master-sop.md § LOY-001–002**
+
+### Weekly Loyalty Check (part of GBL-002 Monday Report)
+
+```
+Weekly loyalty programme — [DATE].
+
+GET /api/admin/loyalty/stats
+  Total members | Tier breakdown (Bronze/Silver/Gold/Platinum) | Points outstanding SAR liability
+
+FLAGS:
+  Any tier with > 20% fewer members than last month? → churn signal, brief CS Agent
+  Redemption rate (points redeemed / outstanding) < 10%? → reward catalogue friction, flag to Products
+  Points outstanding SAR liability > 500,000? → alert Finance Agent immediately
+
+AI LOYALTY ADVISOR: /admin/loyalty → ✦ AI Loyalty Programme Advisor
+  programme_health | churn_risk_segments | Gulf reward recommendations
+
+Monthly (1st): run LOY-002 — points expiry, tier upgrades, reward catalogue review, Finance briefing
+```
+
+---
+
+## OPS-032 · Booking Operations
+
+**Owner:** Ops Agent + CS Agent &nbsp;|&nbsp; **→ master-sop.md § BKG-001–002**
+
+### Daily Booking Queue (part of GBL-001 Morning Briefing)
+
+```
+Daily booking operations — [DATE].
+
+GET /api/admin/bookings/stats — pending | confirmed | cancelled | refunded
+GET /api/admin/bookings?status=pending&sort=created_asc
+
+URGENT — PENDING > 2 HOURS:
+  Any pending booking > 2h = customer paid but not confirmed = P1
+  Check: payment captured? Supplier confirmed?
+  If payment OK but supplier failed: manually confirm OR refund within 30 min
+  CS contacts customer within 30 min with status update
+
+AI BOOKING INSIGHTS: /admin/bookings → ✦ AI Booking Insights
+  anomaly type | health | risk flags
+  Any anomaly? Cross-check Fraud Agent (coordinated fake bookings possible)
+
+PATTERN FLAGS:
+  Single user > 3 bookings in 24h → Fraud Agent
+  Booking from watchlisted email/IP → Fraud Agent immediate review
+  Hajj booking > SAR 20,000 > 6 months out → manual CEO confirmation
+
+Cancellation spike > 2x 7-day avg → investigate pricing/competitor issue
+Refund > SAR 10,000 → Finance Agent notified
+```
+
+---
+
+## OPS-033 · Wallet Operations
+
+**Owner:** Finance Agent + Ops Agent &nbsp;|&nbsp; **→ master-sop.md § WAL-001**
+
+### Weekly Wallet Check (part of GBL-002 Monday Report)
+
+```
+Weekly wallet review — [DATE].
+
+GET /api/admin/wallet?view=stats — balances by currency, weekly transaction volume
+
+AML FLAGS (report to Finance + Fraud Agent immediately):
+  Single wallet balance > SAR 50,000
+  Wallet with > 10 transactions in 24h (structuring pattern)
+  Admin-credited round numbers (10K/50K/100K SAR) without documented CEO approval
+
+CREDIT AUTHORITY (for any pending CS credit requests):
+  < SAR 500: CS Agent self-approve
+  SAR 500–4,999: Finance Agent approval
+  SAR 5,000–24,999: CEO approval
+  >= SAR 25,000: CEO + Board notification + full incident report
+
+POST /api/admin/wallet/credit only after approval confirmed.
+All credits: log reason, booking ref, authorised-by in Finance expense claims.
+```
+
+---
+
+## OPS-034 · Promo Code Operations
+
+**Owner:** Marketing Agent + Finance Agent &nbsp;|&nbsp; **→ master-sop.md § PRO-001**
+
+### Code Creation Rule
+
+```
+Promo code creation — [CAMPAIGN] — [DATE].
+
+REQUIRED before creating:
+  Budget signed off by Finance Agent (max redemption value = max_uses × avg_discount)
+  Finance approval: redemption value > SAR 10,000
+  CEO approval: redemption value > SAR 50,000
+
+MANDATORY fields — never skip:
+  max_uses: [n] — NEVER leave NULL (open-ended liability)
+  max_uses_per_user: 1 (standard) or [n] (loyalty only, documented)
+  minimum_order_value: SAR 300 minimum (abuse prevention)
+  valid_until: set always — no open-ended codes
+  applicable_to: scope to hotel/flight/car where possible (not "all" by default)
+
+POST /api/admin/promo-codes after approval confirmed.
+```
+
+### Monthly Code Audit (1st of month)
+
+```
+Promo code audit — [MONTH YEAR].
+
+GET /api/admin/promo-codes — all codes with use rates
+
+Deactivate: codes past valid_until, campaign-ended codes (PATCH active=false)
+Flag: codes used at > 5x expected rate (possible viral leak)
+Flag: codes in fraud_cases (Fraud Agent)
+Flag: single user used > 3 different codes in 30 days (monitoring)
+
+Finance briefing: total promotional spend SAR this month.
+Save: docs/marketing/promo-audits/[YYYY-MM]-promo-audit.md
+```
+
+---
+
+## OPS-025 · Analytics & BI Operations
+
+**Owner:** Analytics Agent &nbsp;|&nbsp; **→ master-sop.md § ANA-001–002**
+
+### Weekly KPI Pulse (runs inside GBL-002 Monday Report)
+
+```
+Weekly KPI health check — [DATE].
+
+GET /api/admin/analytics/stats — on_target | off_target | active_alerts
+GET /api/admin/analytics/kpis — full KPI list with current_value vs. target_value
+
+Traffic light each KPI:
+  🔴 < 90% of target (or > 110% for cost metrics hours/ms)
+  🟡 90–99% (or 100–110% for cost)
+  🟢 >= 100% (or <= 100% for cost)
+
+For each 🔴 metric: owner, gap amount, one recommended action.
+PATCH /api/admin/analytics/kpis/:id current_value for any metric refreshed this week.
+Alert check: GET /api/admin/analytics/alerts — any last_fired_at within 7 days? Notify owner.
+
+Output: KPI table in traffic-light format. 🔴 metrics escalated to CEO.
+```
+
+### Monthly BI Report Prompt (part of GBL-003 Monthly Close)
+
+```
+Monthly BI report — [MONTH YEAR].
+
+Cover: Revenue SAR vs. target | Bookings & conversion funnel | MAU | Ops health (ticket resolution, API errors)
+Scheduled reports not run in 30 days: list — investigate and run.
+Alerts tuning: firing daily (threshold too tight) | never fired in 90 days (too loose) — adjust.
+Save to Notion > Analytics > Monthly Reports > [YYYY-MM].
+```
+
+---
+
+## OPS-026 · Business Development Operations
+
+**Owner:** BizDev Agent &nbsp;|&nbsp; **→ master-sop.md § BIZ-001–003**
+
+### Weekly Pipeline Prompt (runs inside GBL-002 Monday Report)
+
+```
+BizDev pipeline review — week ending [DATE].
+
+GET /api/admin/bizdev/stats — partner counts by status, total agreement value SAR
+GET /api/admin/bizdev/agreements/expiring?days=90 — flag any expiring deals
+
+STALE PIPELINE (action required):
+  Partners in 'prospect' with last_contacted_at > 7 days: list → draft outreach for CEO
+  Partners in 'negotiating' with no activity in > 14 days: flag to CEO — deal at risk
+
+MARKET STATUS: GET /api/admin/bizdev/markets?status=researching,pilot
+  Any market ready to advance status? Update PATCH /api/admin/bizdev/markets/:id
+
+Activity logging rule: every partner interaction logged within 1 hour via
+  POST /api/admin/bizdev/partners/:id/activities — type, summary, owner
+
+Output: pipeline table (partner name, status, last_contacted, deal value) + action items.
+```
+
+### New Market Assessment Trigger
+
+Any new country interest from CEO or inbound partner → run BIZ-002 assessment before any spend. Save to `docs/bizdev/market-assessments/[ISO]-[DATE].md`. CEO sign-off required.
+
+---
+
+## OPS-027 · Advertising Operations
+
+**Owner:** BizDev Agent (advertising) &nbsp;|&nbsp; **→ master-sop.md § ADV-001–002**
+
+### Daily Advertising Queue Check (part of GBL-001 Morning Briefing)
+
+```
+Advertising enquiry check — [DATE].
+
+GET /api/admin/advertising/stats — new | contacted | qualified | won
+GET /api/admin/advertising/enquiries?status=new
+
+For each new enquiry:
+  Genuine advertiser? → PATCH status: contacted, draft response for CEO review
+  Spam/irrelevant? → PATCH status: archived, admin_notes: 'spam'
+
+SLA: no new enquiry sits unactioned > 4 hours during business hours.
+SLA: qualified advertiser receives proposal draft within 48 hours.
+
+Conversion tracking: won / total. Target > 15% enquiry-to-deal rate.
+Flag to CEO if > 5 new enquiries unactioned from prior day.
+```
+
+---
+
+## OPS-028 · Affiliates Operations
+
+**Owner:** BizDev Agent (affiliates) &nbsp;|&nbsp; **→ master-sop.md § AFF-001–002**
+
+### Weekly Application Review (part of GBL-002 Monday Report)
+
+```
+Affiliate application review — [DATE].
+
+GET /api/admin/affiliates/stats — pending applications | active partners | unpaid balance SAR
+GET /api/admin/affiliates/applications?status=pending
+
+For each pending application (SLA: review within 48h):
+  Qualify: travel/Islamic/Gulf content + audience >= 1k + active + brand-safe?
+  Approve: POST /api/admin/affiliates/applications/:id/approve
+    Tier: over_100k → elite (6%) | 10k_100k → pro (5%) | under_10k → starter (3%)
+  Reject: PATCH status: rejected + admin_notes (brief reason)
+
+After approval: draft welcome email for team review (include referral_code + dashboard link).
+Never send welcome email without confirming referral_code is active in DB.
+```
+
+### Monthly Payout Run (1st of month, part of FIN-001 extended)
+
+```
+Affiliate payout run — [MONTH YEAR].
+
+1. Calculate unpaid balance per active partner (total_earned_sar - total_paid_sar)
+2. Partners with balance >= SAR 200: create payout records (POST /api/admin/affiliates/payouts)
+3. Fraud check before any payout: conversion rate > 15% or all bookings same IP? → pause + investigate
+4. Finance Agent approval for total payout batch
+5. Process transfers by partner's preferred method (bank/PayPal/Wise/STC Pay)
+6. PATCH payout status → paid, update partner total_paid_sar
+7. Send payout confirmation emails (CEO/team review first)
+
+Save payout summary: docs/affiliates/payouts/[YYYY-MM]-payout-run.md
+```
+
+---
+
+## OPS-029 · Corporate Travel Operations
+
+**Owner:** Sales Agent &nbsp;|&nbsp; **→ master-sop.md § CORP-001–002**
+
+### Daily Corporate Enquiry Check (part of GBL-001 Morning Briefing)
+
+```
+Corporate travel enquiry check — [DATE].
+
+GET /api/admin/corporate/enquiries?status=new
+SLA: respond within 4 hours of new enquiry during business hours.
+
+For each new enquiry:
+  Traveller count + industry → estimate annual value (travellers * 12 trips * SAR avg)
+  Is company already in corporate_accounts? Search first.
+  Draft response for CEO review — personalise to industry (government, oil_gas, finance prioritised)
+  PATCH status: contacted after CEO approves and email is sent
+  Create account record (status: prospect) if not already in DB
+
+Qualification goal: discovery call booked within 48h of first response.
+```
+
+### Monthly Corporate Account Health (part of GBL-002 Monthly)
+
+```
+Corporate account health — [MONTH YEAR].
+
+GET /api/admin/corporate/accounts?status=active
+For each account:
+  Monthly spend SAR vs. budget run rate — on track / under / over?
+  Last activity date — any account silent > 30 days? → check-in call required
+  Contracts expiring in 90 days → renewal conversation must start NOW
+
+New enquiry conversion rate: [enquiries] → [accounts won] = [X]%
+Enterprise accounts at churn risk: flag to CEO with recommended retention action.
+```
+
+---
+
+## OPS-035 · CRM Deal Pipeline
+
+**Owner:** Sales Agent &nbsp;|&nbsp; **→ master-sop.md § CRM-001–002**
+
+### Daily Deal Review (part of GBL-001)
+
+```
+CRM pipeline check — [DATE].
+
+GET /api/admin/crm/stats — pipeline value, stage distribution, overdue count
+GET /api/admin/crm/overdue — deals with overdue next_action_date
+
+For each overdue deal:
+  Log activity. Update next_action_date. Advance stage if warranted.
+  Deal in proposal/negotiation > 14 days with no activity → CEO review required.
+
+Focus on:
+  - New leads (last 48h): qualify + advance to 'qualified' or log disqualification reason
+  - Investor pipeline: CEO reviews personally before any stage advance
+  - Hotel partner deals in Makkah/Madinah: treat as P1 priority
+```
+
+### Weekly Hotel Partner Review (part of GBL-002)
+
+```
+Hotel partner outreach — [DATE].
+
+GET /api/admin/crm/hotel-partners — filter last_contacted_at < [30 days ago]
+
+Priority 1 (Makkah/Madinah, 5★, distance < 300m): bilingual AR+EN outreach draft for CEO approval.
+Priority 2 (Gulf business destinations): English outreach.
+After CEO approval: log activity, update last_contacted_at.
+
+Target: Makkah 5★ signed >= 5 per star tier. Madinah 5★ signed >= 3.
+Alert CEO: any Priority 1 Makkah hotel still in 'prospect' status by April of Hajj year.
+```
+
+---
+
+## OPS-036 · Ops Department — Incidents & Ticket Queue
+
+**Owner:** Ops Agent + Dev Agent &nbsp;|&nbsp; **→ master-sop.md § OPS-001–002**
+
+### Morning Incident Check (part of GBL-001)
+
+```
+Ops incident review — [DATE].
+
+GET /api/admin/ops/stats — open incidents by severity, SLA-breaching count
+
+Critical or high incidents open:
+  GET /api/admin/ops/incidents?status=open&severity=critical
+  GET /api/admin/ops/incidents?status=open&severity=high
+
+For each:
+  PATCH status → 'investigating'. Notify Dev Agent.
+  Critical open > 1h → escalate to EMG-001 (full outage SOP).
+
+Resolve: GET /api/admin/ops/incidents?status=investigating
+  Confirm fix with Dev Agent → PATCH status → 'resolved' + resolved_at.
+
+Ticket urgent queue: GET /api/admin/ops/tickets?status=open&priority=urgent
+  SLA: 30-min response. PATCH → in_progress, assign agent.
+  Multiple tickets same category in one day → consider creating an incident.
+```
+
+---
+
+*Document version: Phase 12+ (updated 2026-04-12 — added OPS-022–036: Fraud, Revenue, Procurement, Analytics, BizDev, Advertising, Affiliates, Corporate, Inventory, Loyalty, Bookings, Wallet, Promo Codes, CRM, Ops Department). Maintained by: Ops Agent.
 Next review: Phase 13 launch or any new market entry — whichever comes first.*

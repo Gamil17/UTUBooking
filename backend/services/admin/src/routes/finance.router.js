@@ -29,6 +29,7 @@
 const { Router } = require('express');
 const { Pool }   = require('pg');
 const adminAuth  = require('../middleware/adminAuth');
+const wf         = require('../lib/workflow-client');
 
 const router = Router();
 router.use(adminAuth);
@@ -583,7 +584,26 @@ router.post('/invoices', async (req, res) => {
        parseFloat(amount), parseFloat(tax_amount||0), parseFloat(total_amount),
        currency||'SAR', category||'other', description||null, file_url||null, notes||null]
     );
-    return res.status(201).json({ data: rows[0] });
+    const invoice = rows[0];
+
+    // ── Launch P2P invoice approval workflow ───────────────────────────────────
+    wf.launch({
+      triggerEvent:   'invoice_received',
+      triggerRef:     invoice.id,
+      triggerRefType: 'invoice',
+      initiatedBy:    req.user?.email ?? 'system',
+      context: {
+        invoice_id:   invoice.id,
+        invoice_no:   invoice_no.trim(),
+        vendor_name:  vendor_name.trim(),
+        total_amount: parseFloat(total_amount),
+        currency:     currency || 'SAR',
+        due_date:     due_date ?? null,
+        category:     category ?? 'other',
+      },
+    });
+
+    return res.status(201).json({ data: invoice });
   } catch (err) {
     console.error('[finance/invoices POST]', err.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -654,7 +674,7 @@ router.get('/budgets', async (req, res) => {
 
 // ── POST /budgets ─────────────────────────────────────────────────────────────
 router.post('/budgets', async (req, res) => {
-  const { title, period_type, year, quarter, month, notes } = req.body ?? {};
+  const { title, period_type, year, quarter, month, notes, department, requested_by, amount_sar } = req.body ?? {};
   if (!title?.trim()) return res.status(400).json({ error: 'TITLE_REQUIRED' });
   if (!year) return res.status(400).json({ error: 'YEAR_REQUIRED' });
   try {
@@ -664,7 +684,26 @@ router.post('/budgets', async (req, res) => {
        RETURNING *`,
       [title.trim(), period_type||'annual', parseInt(year), quarter||null, month||null, notes||null]
     );
-    return res.status(201).json({ data: rows[0] });
+    const budget = rows[0];
+
+    // ── Launch budget approval workflow ────────────────────────────────────────
+    wf.launch({
+      triggerEvent:   'budget_requested',
+      triggerRef:     budget.id,
+      triggerRefType: 'budget',
+      initiatedBy:    req.user?.email ?? requested_by ?? 'system',
+      context: {
+        budget_id:   budget.id,
+        title:       budget.title,
+        period_type: budget.period_type,
+        year:        budget.year,
+        department:  department ?? null,
+        amount_sar:  amount_sar ?? null,
+        requested_by: req.user?.email ?? requested_by ?? null,
+      },
+    });
+
+    return res.status(201).json({ data: budget });
   } catch (err) {
     console.error('[finance/budgets POST]', err.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -829,7 +868,25 @@ router.post('/expense-claims', async (req, res) => {
       [employee_id||null, employee_name.trim(), claim_date||null,
        category||'other', parseFloat(amount), currency||'SAR', description.trim(), file_url||null]
     );
-    return res.status(201).json({ data: rows[0] });
+    const claim = rows[0];
+
+    // ── Trigger workflow engine (fire-and-forget) ─────────────────────────────
+    wf.launch({
+      triggerEvent:   'expense_submitted',
+      triggerRef:     claim.id,
+      triggerRefType: 'expense_claim',
+      initiatedBy:    req.user?.email ?? employee_name.trim(),
+      context: {
+        amount:       parseFloat(amount),
+        currency:     currency || 'SAR',
+        category:     category || 'other',
+        description:  description.trim(),
+        employee:     employee_name.trim(),
+        claim_date:   claim_date || null,
+      },
+    });
+
+    return res.status(201).json({ data: claim });
   } catch (err) {
     console.error('[finance/expense-claims POST]', err.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });

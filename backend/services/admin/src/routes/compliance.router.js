@@ -18,6 +18,7 @@
 const { Router } = require('express');
 const adminAuth  = require('../middleware/adminAuth');
 const { getShardPool } = require('../../../../shared/shard-router');
+const wf         = require('../lib/workflow-client');
 
 const router = Router();
 router.use(adminAuth);
@@ -261,6 +262,185 @@ router.get('/exports', async (req, res) => {
   } catch (err) {
     console.error('[compliance/exports]', err.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ── POST /dsr — manually log a Data Subject Request + launch workflow ─────────
+// Used by DPO/Compliance team when a DSR arrives via email, phone, or postal mail.
+// Body: { email, request_type, law, reason, country_code }
+router.post('/dsr', async (req, res) => {
+  const { email, request_type, law, reason, country_code } = req.body ?? {};
+
+  if (!email?.trim())        return res.status(400).json({ error: 'EMAIL_REQUIRED' });
+  if (!request_type?.trim()) return res.status(400).json({ error: 'REQUEST_TYPE_REQUIRED' });
+
+  const validTypes = ['access', 'erasure', 'portability', 'rectification', 'objection'];
+  if (!validTypes.includes(request_type)) {
+    return res.status(400).json({
+      error: 'INVALID_REQUEST_TYPE',
+      message: `request_type must be one of: ${validTypes.join(', ')}`,
+    });
+  }
+
+  const validLaws = ['GDPR', 'UK_GDPR', 'CCPA', 'LGPD', 'PIPEDA', 'PDPL'];
+  const resolvedLaw = validLaws.includes(law) ? law : 'GDPR';
+
+  // Write DSR to the correct shard for the user's country
+  const countryCode = (country_code || 'SA').toUpperCase();
+  try {
+    const shardPool = getShardPool(countryCode);
+
+    // Insert into the correct shard's erasure_requests table (reuse existing schema)
+    const { rows } = await shardPool.query(
+      `INSERT INTO erasure_requests
+         (email_snapshot, requested_at, status, law, reason)
+       VALUES ($1, NOW(), 'pending', $2, $3)
+       RETURNING id, email_snapshot, requested_at, status, law`,
+      [email.trim(), resolvedLaw, reason || null]
+    );
+    const dsr = rows[0];
+
+    // ── Launch DSR fulfilment workflow (fire-and-forget) ──────────────────────
+    wf.launch({
+      triggerEvent:   'dsr_received',
+      triggerRef:     dsr.id,
+      triggerRefType: 'dsr',
+      initiatedBy:    req.user?.email ?? 'system',
+      context: {
+        email:        email.trim(),
+        request_type,
+        law:          resolvedLaw,
+        country_code: countryCode,
+        reason:       reason || null,
+        dsr_id:       dsr.id,
+        // GDPR Art.15: 30-day SLA from receipt
+        sla_deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    });
+
+    return res.status(201).json({
+      data: dsr,
+      message: 'DSR logged and fulfilment workflow launched',
+    });
+  } catch (err) {
+    console.error('[compliance/dsr POST]', err.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ── POST /breach — log a data breach incident + launch response workflow ──────
+//
+// Triggers the P0 GDPR Breach Incident Response workflow (72h Art.33 SLA).
+// Records are stored in compliance_breaches (bootstrapped below).
+//
+router.post('/breach', async (req, res) => {
+  const {
+    title,
+    description,
+    affected_data_types,    // string[] e.g. ['email','payment_method','passport']
+    estimated_subjects,     // number — approximate affected data subject count
+    severity = 'high',      // 'low' | 'medium' | 'high' | 'critical'
+    jurisdictions = [],     // string[] e.g. ['SA','EU','US']
+    detected_by,            // name or email of person who detected it
+    detected_at,            // ISO timestamp (defaults to now)
+    source_system,          // e.g. 'payment-service', 'auth-service', 'hotel-adapter'
+  } = req.body ?? {};
+
+  if (!title?.trim()) return res.status(400).json({ error: 'TITLE_REQUIRED' });
+  if (!description?.trim()) return res.status(400).json({ error: 'DESCRIPTION_REQUIRED' });
+
+  // Bootstrap table if needed
+  const pool = getShardPool('SA');
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS compliance_breaches (
+        id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        title               TEXT        NOT NULL,
+        description         TEXT        NOT NULL,
+        severity            TEXT        NOT NULL DEFAULT 'high'
+                                        CHECK (severity IN ('low','medium','high','critical')),
+        affected_data_types TEXT[]      NOT NULL DEFAULT '{}',
+        estimated_subjects  INT,
+        jurisdictions       TEXT[]      NOT NULL DEFAULT '{}',
+        detected_by         TEXT,
+        detected_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        source_system       TEXT,
+        status              TEXT        NOT NULL DEFAULT 'open'
+                                        CHECK (status IN ('open','investigating','contained','closed')),
+        regulator_notified  BOOLEAN     NOT NULL DEFAULT false,
+        closed_at           TIMESTAMPTZ,
+        created_by          TEXT,
+        created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    const { rows } = await pool.query(
+      `INSERT INTO compliance_breaches
+         (title, description, severity, affected_data_types, estimated_subjects,
+          jurisdictions, detected_by, detected_at, source_system, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       RETURNING *`,
+      [
+        title.trim(), description.trim(), severity,
+        affected_data_types ?? [], estimated_subjects ?? null,
+        jurisdictions, detected_by ?? null,
+        detected_at ?? new Date().toISOString(),
+        source_system ?? null,
+        req.user?.email ?? 'system',
+      ]
+    );
+    const breach = rows[0];
+
+    // ── Launch P0 breach response workflow (fire-and-forget) ──────────────────
+    // The 72h GDPR Art.33 clock starts now.
+    wf.launch({
+      triggerEvent:   'breach_detected',
+      triggerRef:     breach.id,
+      triggerRefType: 'breach',
+      initiatedBy:    req.user?.email ?? detected_by ?? 'system',
+      context: {
+        breach_id:           breach.id,
+        title:               breach.title,
+        severity,
+        estimated_subjects:  estimated_subjects ?? null,
+        jurisdictions,
+        source_system:       source_system ?? null,
+        detected_by:         detected_by ?? null,
+        gdpr_deadline:       new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
+        requires_regulator:  jurisdictions.some(j => ['EU','GB','SA'].includes(j)),
+        requires_user_notify: (estimated_subjects ?? 0) > 0,
+      },
+    });
+
+    return res.status(201).json({
+      data: breach,
+      message: 'Breach logged and P0 incident response workflow launched. 72h GDPR clock started.',
+    });
+  } catch (err) {
+    console.error('[compliance/breach POST]', err.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ── GET /breaches — list breach incidents ─────────────────────────────────────
+router.get('/breaches', async (req, res) => {
+  const pool = getShardPool('SA');
+  const { status, severity, limit: lim = '20', offset: off = '0' } = req.query;
+  const conds = []; const vals = [];
+  if (status)   { conds.push(`status = $${vals.length + 1}`);   vals.push(status); }
+  if (severity) { conds.push(`severity = $${vals.length + 1}`); vals.push(severity); }
+  const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS compliance_breaches (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), title TEXT NOT NULL, description TEXT, severity TEXT NOT NULL DEFAULT 'high', affected_data_types TEXT[] DEFAULT '{}', estimated_subjects INT, jurisdictions TEXT[] DEFAULT '{}', detected_by TEXT, detected_at TIMESTAMPTZ DEFAULT NOW(), source_system TEXT, status TEXT NOT NULL DEFAULT 'open', regulator_notified BOOLEAN DEFAULT false, closed_at TIMESTAMPTZ, created_by TEXT, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW())`);
+    const [rows, count] = await Promise.all([
+      pool.query(`SELECT * FROM compliance_breaches ${where} ORDER BY created_at DESC LIMIT $${vals.length+1} OFFSET $${vals.length+2}`, [...vals, parseInt(lim), parseInt(off)]),
+      pool.query(`SELECT COUNT(*) FROM compliance_breaches ${where}`, vals),
+    ]);
+    res.json({ data: rows.rows, total: parseInt(count.rows[0].count), limit: parseInt(lim), offset: parseInt(off) });
+  } catch (err) {
+    console.error('[compliance/breaches GET]', err.message);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
 

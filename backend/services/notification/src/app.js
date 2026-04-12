@@ -1,11 +1,12 @@
 'use strict';
 
-const express        = require('express');
-const adminRouter    = require('./routes/admin.router');
-const internalRouter = require('./routes/internal.router');
+const express          = require('express');
+const adminRouter      = require('./routes/admin.router');
+const internalRouter   = require('./routes/internal.router');
+const workflowRouter   = require('./routes/workflow.router');
 const { processWebhookEvents } = require('./lib/sendgrid');
-const repo           = require('./db/notification.repo');
-const { pool }       = require('./db/pg');
+const repo             = require('./db/notification.repo');
+const { pool }         = require('./db/pg');
 
 const app = express();
 
@@ -121,6 +122,11 @@ app.get('/track/click', async (req, res) => {
 
 // ── Admin routes (/api/admin/notifications/*) ─────────────────────────────────
 app.use('/api/admin/notifications', adminRouter);
+
+// ── Workflow notification route (/api/notifications/send) ────────────────────
+// Called by the workflow engine (port 3014) to send transactional emails.
+// Auth: x-admin-secret header (service-to-service).
+app.use('/api/notifications', workflowRouter);
 
 // ── Internal trigger routes (/internal/*) ────────────────────────────────────
 app.use('/internal', internalRouter);

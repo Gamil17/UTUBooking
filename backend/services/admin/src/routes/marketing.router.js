@@ -14,6 +14,7 @@
 const { Router } = require('express');
 const { Pool }   = require('pg');
 const adminAuth  = require('../middleware/adminAuth');
+const wf         = require('../lib/workflow-client');
 
 const router = Router();
 router.use(adminAuth);
@@ -270,7 +271,29 @@ router.post('/calendar', async (req, res) => {
       [title, keyword ?? null, slug ?? null, language, status, post_type,
        publish_week ?? null, utm_campaign ?? null, file_path ?? null, notes ?? null],
     );
-    res.status(201).json({ data: rows[0] });
+    const entry = rows[0];
+
+    // ── Launch content review workflow when piece is submitted for review ─────
+    if (status === 'review') {
+      wf.launch({
+        triggerEvent:   'blog_post_ready',
+        triggerRef:     entry.id,
+        triggerRefType: 'content_calendar',
+        initiatedBy:    req.user?.email ?? 'admin',
+        context: {
+          title,
+          keyword:      keyword ?? null,
+          slug:         slug ?? null,
+          language,
+          post_type,
+          publish_week: publish_week ?? null,
+          utm_campaign: utm_campaign ?? null,
+          file_path:    file_path ?? null,
+        },
+      });
+    }
+
+    res.status(201).json({ data: entry });
   } catch (err) {
     console.error('[marketing/calendar POST]', err.message);
     res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -468,6 +491,119 @@ router.get('/timeline', async (req, res) => {
     res.json({ data: paged, total, page: parseInt(page, 10), limit: lim });
   } catch (err) {
     console.error('[marketing/timeline GET]', err.message);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Campaign Briefs
+// POST /campaigns  — submit a campaign brief → launches campaign_brief_submitted workflow
+// GET  /campaigns  — list campaign briefs
+// PATCH /campaigns/:id — update status
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function bootstrapCampaigns() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS marketing_campaigns (
+      id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      name            TEXT        NOT NULL,
+      description     TEXT,
+      channel         TEXT        NOT NULL DEFAULT 'multi',
+      target_audience TEXT,
+      objective       TEXT,
+      budget_sar      NUMERIC(12,2),
+      start_date      DATE,
+      end_date        DATE,
+      status          TEXT        NOT NULL DEFAULT 'brief'
+                                  CHECK (status IN ('brief','review','approved','scheduled','live','completed','rejected')),
+      submitted_by    TEXT,
+      notes           TEXT,
+      created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+}
+bootstrapCampaigns().catch(e => console.error('[marketing] campaigns bootstrap error:', e.message));
+
+router.post('/campaigns', async (req, res) => {
+  const {
+    name, description, channel = 'multi', target_audience,
+    objective, budget_sar, start_date, end_date, notes,
+    submitted_by,
+  } = req.body ?? {};
+
+  if (!name?.trim()) return res.status(400).json({ error: 'NAME_REQUIRED' });
+
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO marketing_campaigns
+         (name, description, channel, target_audience, objective, budget_sar, start_date, end_date, status, submitted_by, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'brief',$9,$10)
+       RETURNING *`,
+      [name.trim(), description ?? null, channel, target_audience ?? null,
+       objective ?? null, budget_sar ?? null, start_date ?? null, end_date ?? null,
+       req.user?.email ?? submitted_by ?? null, notes ?? null]
+    );
+    const campaign = rows[0];
+
+    // ── Launch campaign lifecycle approval workflow ────────────────────────────
+    wf.launch({
+      triggerEvent:   'campaign_brief_submitted',
+      triggerRef:     campaign.id,
+      triggerRefType: 'campaign',
+      initiatedBy:    req.user?.email ?? submitted_by ?? 'system',
+      context: {
+        campaign_id:      campaign.id,
+        name:             campaign.name,
+        channel,
+        objective:        objective ?? null,
+        budget_sar:       budget_sar ? parseFloat(budget_sar) : null,
+        start_date:       start_date ?? null,
+        end_date:         end_date ?? null,
+        target_audience:  target_audience ?? null,
+      },
+    });
+
+    res.status(201).json({ data: campaign });
+  } catch (err) {
+    console.error('[marketing/campaigns POST]', err.message);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+router.get('/campaigns', async (req, res) => {
+  const { status, channel, limit: lim = '20', offset: off = '0' } = req.query;
+  const conds = []; const vals = [];
+  if (status)  { conds.push(`status = $${vals.length + 1}`);  vals.push(status); }
+  if (channel) { conds.push(`channel = $${vals.length + 1}`); vals.push(channel); }
+  const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+  try {
+    const [rows, count] = await Promise.all([
+      pool.query(`SELECT * FROM marketing_campaigns ${where} ORDER BY created_at DESC LIMIT $${vals.length+1} OFFSET $${vals.length+2}`, [...vals, parseInt(lim), parseInt(off)]),
+      pool.query(`SELECT COUNT(*) FROM marketing_campaigns ${where}`, vals),
+    ]);
+    res.json({ data: rows.rows, total: parseInt(count.rows[0].count), limit: parseInt(lim), offset: parseInt(off) });
+  } catch (err) {
+    console.error('[marketing/campaigns GET]', err.message);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+router.patch('/campaigns/:id', async (req, res) => {
+  const ALLOWED = ['name','description','channel','target_audience','objective','budget_sar','start_date','end_date','status','notes'];
+  const fields = Object.keys(req.body).filter(k => ALLOWED.includes(k));
+  if (!fields.length) return res.status(400).json({ error: 'NO_UPDATABLE_FIELDS' });
+  const vals = fields.map(k => req.body[k]);
+  const sets = fields.map((k, i) => `${k} = $${i + 1}`).join(', ');
+  try {
+    const { rows } = await pool.query(
+      `UPDATE marketing_campaigns SET ${sets}, updated_at = NOW() WHERE id = $${fields.length + 1} RETURNING *`,
+      [...vals, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'NOT_FOUND' });
+    res.json({ data: rows[0] });
+  } catch (err) {
+    console.error('[marketing/campaigns PATCH]', err.message);
     res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });

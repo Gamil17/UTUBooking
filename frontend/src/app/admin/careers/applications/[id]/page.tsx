@@ -1,13 +1,224 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, use, useEffect } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getAdminApplication,
   updateApplicationStatus,
+  getScreening,
+  screenApplication,
   type ApplicationStatus,
+  type ScreeningResult,
+  type ScreeningRecommendation,
 } from '@/lib/api';
+
+// ── AI Screening Panel ────────────────────────────────────────────────────────
+
+const REC_CONFIG: Record<ScreeningRecommendation, { label: string; color: string; bg: string }> = {
+  strong_yes: { label: 'Strong Yes',  color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+  yes:        { label: 'Yes',         color: 'text-blue-700',    bg: 'bg-blue-50 border-blue-200'       },
+  maybe:      { label: 'Maybe',       color: 'text-amber-700',   bg: 'bg-amber-50 border-amber-200'     },
+  no:         { label: 'No',          color: 'text-red-700',     bg: 'bg-red-50 border-red-200'         },
+};
+
+function scoreColor(score: number) {
+  if (score >= 75) return 'text-emerald-600';
+  if (score >= 55) return 'text-blue-600';
+  if (score >= 35) return 'text-amber-600';
+  return 'text-red-600';
+}
+
+function scoreBg(score: number) {
+  if (score >= 75) return 'border-emerald-300 bg-emerald-50';
+  if (score >= 55) return 'border-blue-300 bg-blue-50';
+  if (score >= 35) return 'border-amber-300 bg-amber-50';
+  return 'border-red-300 bg-red-50';
+}
+
+function AIScreeningPanel({ applicationId }: { applicationId: string }) {
+  const [result,     setResult]     = useState<ScreeningResult | null>(null);
+  const [loading,    setLoading]    = useState(false);
+  const [screening,  setScreening]  = useState(false);
+  const [error,      setError]      = useState<string | null>(null);
+
+  // Auto-load existing screening on mount
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getScreening(applicationId).then(r => {
+      if (!cancelled) { setResult(r); setLoading(false); }
+    }).catch(() => {
+      if (!cancelled) { setLoading(false); }
+    });
+    return () => { cancelled = true; };
+  }, [applicationId]);
+
+  const handleScreen = async () => {
+    setScreening(true);
+    setError(null);
+    try {
+      const res = await screenApplication(applicationId);
+      if (res?.data) {
+        setResult(res.data);
+      } else {
+        setError('Screening failed. Check AI service configuration.');
+      }
+    } catch {
+      setError('Failed to connect to AI service.');
+    } finally {
+      setScreening(false);
+    }
+  };
+
+  const rec    = result ? REC_CONFIG[result.recommendation] : null;
+  const hasResult = !!result;
+
+  return (
+    <div className="rounded-xl border border-utu-border-default bg-utu-bg-card overflow-hidden">
+      {/* Panel header */}
+      <div className="flex items-center justify-between border-b border-utu-border-default bg-gradient-to-r from-blue-50 to-white px-5 py-4">
+        <div className="flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-utu-blue">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+          </svg>
+          <h2 className="text-sm font-semibold text-utu-text-primary">AI Screening Assessment</h2>
+          {hasResult && (
+            <span className="text-[10px] text-utu-text-muted">
+              · Generated {new Date(result!.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={handleScreen}
+          disabled={screening || loading}
+          className="flex items-center gap-1.5 rounded-lg bg-utu-blue px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {screening ? (
+            <>
+              <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              Screening...
+            </>
+          ) : (
+            <>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              </svg>
+              {hasResult ? 'Re-screen' : 'Screen with AI'}
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="p-5">
+        {loading && (
+          <p className="text-sm text-utu-text-muted text-center py-4">Checking for existing screening...</p>
+        )}
+
+        {!loading && !hasResult && !screening && (
+          <div className="py-6 text-center">
+            <p className="text-sm text-utu-text-muted">No AI screening yet.</p>
+            <p className="text-xs text-utu-text-muted mt-1">Click "Screen with AI" to get an instant assessment of this application.</p>
+          </div>
+        )}
+
+        {!loading && screening && (
+          <div className="py-6 text-center">
+            <p className="text-sm text-utu-text-muted">Analysing application with Claude...</p>
+            <p className="text-xs text-utu-text-muted mt-1">This takes 10-20 seconds.</p>
+          </div>
+        )}
+
+        {error && (
+          <p className="text-sm text-red-600 mt-2">{error}</p>
+        )}
+
+        {hasResult && result && rec && (
+          <div className="space-y-5">
+            {/* Score + Recommendation row */}
+            <div className="flex items-center gap-4">
+              {/* Circular score */}
+              <div className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-full border-2 ${scoreBg(result.overall_score)}`}>
+                <span className={`text-xl font-bold leading-none ${scoreColor(result.overall_score)}`}>
+                  {result.overall_score}
+                </span>
+                <span className={`text-[10px] ${scoreColor(result.overall_score)}`}>/100</span>
+              </div>
+              {/* Recommendation badge */}
+              <div className={`rounded-lg border px-4 py-2 ${rec.bg}`}>
+                <p className="text-[10px] font-medium uppercase tracking-wide text-utu-text-muted">Recommendation</p>
+                <p className={`text-lg font-bold ${rec.color}`}>{rec.label}</p>
+              </div>
+              {/* Summary */}
+              <p className="flex-1 text-sm text-utu-text-secondary leading-relaxed">{result.summary}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Strengths */}
+              <div>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">Strengths</h3>
+                <ul className="space-y-1">
+                  {result.strengths.map((s, i) => (
+                    <li key={i} className="flex items-start gap-1.5 text-sm text-utu-text-secondary">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Concerns */}
+              <div>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-700">Concerns</h3>
+                {result.concerns.length === 0 ? (
+                  <p className="text-sm text-utu-text-muted">No significant concerns.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {result.concerns.map((c, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-sm text-utu-text-secondary">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                        {c}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            {/* Culture fit */}
+            {result.culture_fit_notes && (
+              <div className="rounded-lg bg-utu-bg-muted px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-1">Culture Fit Notes</p>
+                <p className="text-sm text-utu-text-secondary">{result.culture_fit_notes}</p>
+              </div>
+            )}
+
+            {/* Interview questions */}
+            <div>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-utu-blue">Suggested Interview Questions</h3>
+              <ol className="space-y-2">
+                {result.interview_questions.map((q, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-utu-text-secondary">
+                    <span className="shrink-0 font-medium text-utu-text-muted w-4">{i + 1}.</span>
+                    {q}
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <p className="text-[10px] text-utu-text-muted border-t border-utu-border-default pt-3">
+              AI-generated assessment — use as one input among others. Not a substitute for human judgment.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const STATUS_OPTIONS: { value: ApplicationStatus; label: string }[] = [
   { value: 'applied',      label: 'Applied'      },
@@ -197,6 +408,9 @@ export default function AdminApplicationDetailPage({ params }: Props) {
           {app.cover_letter || '—'}
         </p>
       </div>
+
+      {/* AI Screening */}
+      <AIScreeningPanel applicationId={id} />
 
       {/* Status Update */}
       <div className="bg-utu-bg-card rounded-xl border border-utu-border-default p-5">

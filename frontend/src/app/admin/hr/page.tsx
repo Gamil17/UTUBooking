@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getHrStats, getHrEmployees, createHrEmployee, updateHrEmployee, deleteHrEmployee,
   getHrDepartments, createHrDepartment, updateHrDepartment, deleteHrDepartment,
   getHrLeave, createHrLeave, updateHrLeave,
   getLeaveBalancesOverview, seedLeaveBalances, getOrgChart, importEmployees,
+  getPerformanceAnalysis, analyzePerformance,
   type HrEmployee, type HrDepartment, type HrLeaveRequest, type HrStats,
   type EmployeeStatus, type EmploymentType, type LeaveType, type LeaveStatus,
   type HrLeaveBalanceOverviewRow, type OrgChartNode, type ImportResult, type ImportEmployeeRow,
+  type PerformanceAnalysis,
 } from '@/lib/api';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -1205,9 +1207,288 @@ function OrgChartTab() {
   );
 }
 
+// ─── AI Performance Modal ─────────────────────────────────────────────────────
+
+const HEALTH_COLORS: Record<string, string> = {
+  excellent: 'bg-green-100 text-green-700 border-green-200',
+  good:      'bg-blue-50  text-blue-700  border-blue-200',
+  fair:      'bg-amber-100 text-amber-700 border-amber-200',
+  poor:      'bg-red-100  text-red-600   border-red-200',
+};
+
+function AIPerformanceModal({
+  dept,
+  onClose,
+}: {
+  dept: HrDepartment;
+  onClose: () => void;
+}) {
+  const [analysis, setAnalysis] = useState<PerformanceAnalysis | null>(null);
+  const [loading,  setLoading]  = useState(false);
+  const [running,  setRunning]  = useState(false);
+  const [error,    setError]    = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getPerformanceAnalysis(dept.id)
+      .then(r => { if (!cancelled) { setAnalysis(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [dept.id]);
+
+  async function handleAnalyze() {
+    setRunning(true);
+    setError('');
+    try {
+      const res = await analyzePerformance(dept.id);
+      if (res.data) setAnalysis(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch {
+      setError('Failed to run analysis. Check your connection.');
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-utu-border-default px-6 py-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-violet-600">✦</span>
+              <h2 className="text-base font-bold text-utu-text-primary">AI Performance Analysis</h2>
+            </div>
+            <p className="mt-0.5 text-xs text-utu-text-muted">{dept.name}</p>
+          </div>
+          <button onClick={onClose} className="text-utu-text-muted hover:text-utu-text-primary text-lg">✕</button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5">
+          {loading && (
+            <p className="text-xs text-utu-text-muted italic py-8 text-center">Loading analysis…</p>
+          )}
+
+          {!loading && !analysis && (
+            <div className="py-8 text-center space-y-3">
+              <p className="text-sm text-utu-text-secondary">
+                No analysis yet. Run AI Performance Analysis to get team health, top performers, development needs, and manager recommendations.
+              </p>
+              <button
+                onClick={handleAnalyze}
+                disabled={running}
+                className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                {running ? 'Analysing…' : '✦ Analyse Department'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {analysis && !loading && (
+            <>
+              {/* Overall health + meta */}
+              <div className="flex flex-wrap items-start gap-3">
+                <div className={`rounded-xl border px-4 py-3 ${HEALTH_COLORS[analysis.overall_health] ?? 'bg-utu-bg-muted border-utu-border-default'}`}>
+                  <p className="text-xs font-semibold uppercase tracking-wide">Team Health</p>
+                  <p className="mt-0.5 text-lg font-bold capitalize">{analysis.overall_health}</p>
+                </div>
+                <div className="rounded-xl border border-utu-border-default bg-utu-bg-card px-4 py-3">
+                  <p className="text-xs text-utu-text-muted">Period</p>
+                  <p className="mt-0.5 text-sm font-semibold text-utu-text-primary">{analysis.review_period}</p>
+                </div>
+                <div className="rounded-xl border border-utu-border-default bg-utu-bg-card px-4 py-3">
+                  <p className="text-xs text-utu-text-muted">Reviewed</p>
+                  <p className="mt-0.5 text-sm font-semibold text-utu-text-primary">{analysis.total_reviewed} employees</p>
+                </div>
+              </div>
+
+              {/* Team summary */}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-1">Summary</h3>
+                <p className="text-sm text-utu-text-secondary leading-relaxed">{analysis.team_summary}</p>
+              </div>
+
+              {/* Top performers */}
+              {analysis.top_performers.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Top Performers</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {analysis.top_performers.map((p, i) => (
+                      <div key={i} className="rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                        <p className="text-xs font-semibold text-green-800">{p.name}</p>
+                        <p className="text-xs text-green-600">{p.role} · Rating {p.rating}/5</p>
+                        <p className="text-xs text-green-700 mt-0.5 italic">{p.highlight}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Development needs */}
+              {analysis.development_needs.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Development Needs</h3>
+                  <div className="space-y-2">
+                    {analysis.development_needs.map((d, i) => (
+                      <div key={i} className={`rounded-lg border px-3 py-2 ${d.pip_recommended ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+                        <div className="flex items-center gap-2">
+                          <p className={`text-xs font-semibold ${d.pip_recommended ? 'text-red-800' : 'text-amber-800'}`}>{d.name}</p>
+                          {d.pip_recommended && (
+                            <span className="rounded bg-red-200 px-1.5 py-0.5 text-xs font-medium text-red-700">PIP Recommended</span>
+                          )}
+                        </div>
+                        <p className={`text-xs mt-0.5 ${d.pip_recommended ? 'text-red-600' : 'text-amber-700'}`}>{d.focus_area}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Team strengths */}
+              {analysis.team_strengths.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Team Strengths</h3>
+                  <ul className="space-y-1">
+                    {analysis.team_strengths.map((s, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary">
+                        <span className="mt-0.5 text-green-500">●</span>{s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Development priorities */}
+              {analysis.development_priorities.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Development Priorities</h3>
+                  <ul className="space-y-1">
+                    {analysis.development_priorities.map((s, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary">
+                        <span className="mt-0.5 text-amber-500">●</span>{s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Manager recommendations */}
+              {analysis.manager_recommendations.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Manager Recommendations</h3>
+                  <ul className="space-y-1">
+                    {analysis.manager_recommendations.map((s, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary">
+                        <span className="mt-0.5 text-violet-400">▸</span>{s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Risk flags */}
+              {analysis.risk_flags.length > 0 && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                  <h3 className="text-xs font-semibold text-red-700 mb-2">Risk Flags</h3>
+                  <ul className="space-y-1">
+                    {analysis.risk_flags.map((f, i) => (
+                      <li key={i} className="text-xs text-red-600">• {f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-utu-border-default">
+                <p className="text-xs text-utu-text-muted">
+                  Generated {new Date(analysis.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+                <button
+                  onClick={handleAnalyze}
+                  disabled={running}
+                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+                >
+                  {running ? 'Re-analysing…' : 'Re-analyse'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Performance Tab ──────────────────────────────────────────────────────────
+
+function PerformanceTab() {
+  const [activeDept, setActiveDept] = useState<HrDepartment | null>(null);
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['hr-departments'],
+    queryFn:  getHrDepartments,
+    staleTime: 60_000,
+  });
+
+  const departments: HrDepartment[] = data?.data ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-utu-text-primary">Performance Reviews</h2>
+          <p className="text-xs text-utu-text-muted mt-0.5">AI-powered performance analysis per department. Select a department to view team health, top performers, and development needs.</p>
+        </div>
+      </div>
+
+      {isLoading && <p className="text-sm text-utu-text-muted py-12 text-center">Loading departments…</p>}
+      {isError   && <p className="text-sm text-red-500 py-12 text-center">Failed to load departments.</p>}
+
+      {!isLoading && !isError && (
+        <div className="overflow-hidden rounded-xl border border-utu-border-default bg-white">
+          <table className="w-full text-sm">
+            <thead className="bg-utu-bg-muted">
+              <tr>
+                {['Department', 'Employees', ''].map(h => (
+                  <th key={h} className="px-5 py-3 text-left text-xs font-medium text-utu-text-muted">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E5E7EB]">
+              {departments.map(d => (
+                <tr key={d.id} className="hover:bg-utu-bg-muted">
+                  <td className="px-5 py-3 font-medium text-utu-text-primary">{d.name}</td>
+                  <td className="px-5 py-3 text-xs text-utu-text-secondary">{d.employee_count}</td>
+                  <td className="px-5 py-3">
+                    <button
+                      onClick={() => setActiveDept(d)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 transition-colors"
+                    >
+                      <span>✦</span> Analyse Department
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {departments.length === 0 && (
+                <tr><td colSpan={3} className="py-12 text-center text-sm text-utu-text-muted">No departments found.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {activeDept && (
+        <AIPerformanceModal dept={activeDept} onClose={() => setActiveDept(null)} />
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const TABS = ['Dashboard', 'Employees', 'Leave Requests', 'Departments', 'Org Chart'] as const;
+const TABS = ['Dashboard', 'Employees', 'Leave Requests', 'Departments', 'Org Chart', 'Performance'] as const;
 type Tab = typeof TABS[number];
 
 export default function HRPage() {
@@ -1240,6 +1521,7 @@ export default function HRPage() {
       {activeTab === 'Leave Requests' && <LeaveTab />}
       {activeTab === 'Departments'    && <DepartmentsTab />}
       {activeTab === 'Org Chart'      && <OrgChartTab />}
+      {activeTab === 'Performance'    && <PerformanceTab />}
     </div>
   );
 }

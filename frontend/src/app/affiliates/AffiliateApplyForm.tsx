@@ -16,6 +16,7 @@ interface Props {
     formPlatformInstagram: string;
     formPlatformTwitter: string;
     formPlatformTelegram: string;
+    formPlatformTiktok: string;
     formPlatformOther: string;
     formAudience: string;
     formAudience1k: string;
@@ -32,6 +33,7 @@ interface Props {
 
 export default function AffiliateApplyForm({ labels: l }: Props) {
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
   const [fields, setFields] = useState({
     name: '',
     email: '',
@@ -48,21 +50,29 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus('submitting');
+    setErrorMsg('');
     try {
-      const res = await fetch('/api/contact', {
+      const res = await fetch('/api/affiliates/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: fields.name,
-          email: fields.email,
-          topic: 'affiliate',
-          ref: fields.website,
-          message: `Platform: ${fields.platform}\nAudience: ${fields.audience}\n\n${fields.message}`,
+          name:          fields.name,
+          email:         fields.email,
+          website:       fields.website  || null,
+          platform:      fields.platform || 'other',
+          audience_size: fields.audience || 'under_1k',
+          message:       fields.message  || null,
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setErrorMsg(body.message || l.formError);
+        setStatus('error');
+        return;
+      }
       setStatus('success');
     } catch {
+      setErrorMsg(l.formError);
       setStatus('error');
     }
   }
@@ -107,13 +117,15 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-utu-text-secondary mb-1">{l.formWebsite} *</label>
+          <label className="block text-sm font-medium text-utu-text-secondary mb-1">
+            {l.formWebsite}
+            <span className="ms-1 text-xs font-normal text-utu-text-muted">(optional)</span>
+          </label>
           <input
             type="url"
-            required
             value={fields.website}
             onChange={(e) => set('website', e.target.value)}
-            placeholder="https://"
+            placeholder="https://yoursite.com or https://instagram.com/yourhandle"
             className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue"
           />
         </div>
@@ -133,6 +145,7 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
               <option value="instagram">{l.formPlatformInstagram}</option>
               <option value="twitter">{l.formPlatformTwitter}</option>
               <option value="telegram">{l.formPlatformTelegram}</option>
+              <option value="tiktok">{l.formPlatformTiktok}</option>
               <option value="other">{l.formPlatformOther}</option>
             </select>
           </div>
@@ -146,10 +159,10 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
               className="w-full rounded-xl border border-utu-border-default px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-utu-blue bg-utu-bg-card"
             >
               <option value="" disabled />
-              <option value="<1k">{l.formAudience1k}</option>
-              <option value="1k-10k">{l.formAudience10k}</option>
-              <option value="10k-100k">{l.formAudience100k}</option>
-              <option value="100k+">{l.formAudience100kplus}</option>
+              <option value="under_1k">{l.formAudience1k}</option>
+              <option value="1k_10k">{l.formAudience10k}</option>
+              <option value="10k_100k">{l.formAudience100k}</option>
+              <option value="over_100k">{l.formAudience100kplus}</option>
             </select>
           </div>
         </div>
@@ -166,7 +179,7 @@ export default function AffiliateApplyForm({ labels: l }: Props) {
 
         {status === 'error' && (
           <p className="text-sm text-red-600">
-            {l.formError}{' '}
+            {errorMsg}{' '}
             <a href={`mailto:${SITE_CONFIG.partnersEmail}`} className="underline">{SITE_CONFIG.partnersEmail}</a>
           </p>
         )}

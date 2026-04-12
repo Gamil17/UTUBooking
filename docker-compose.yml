@@ -381,9 +381,11 @@ services:
       <<: *common-env
       PORT: 3012
       ADMIN_PORT: 3012
+      NODE_PATH: /app/node_modules
     working_dir: /app
     volumes:
       - ./backend/services/admin:/app
+      - ./backend/shared:/shared
     command: sh -c "npm install && node server.js"
     ports:
       - "3012:3012"

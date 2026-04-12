@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import CorporateEnquiryForm from './CorporateEnquiryForm';
 export const metadata: Metadata = {
   title: 'Hotel & Business Partners — UTUBooking',
   description: 'List your hotel on UTUBooking or explore corporate travel solutions for businesses in the Gulf and Muslim World.',
@@ -64,7 +65,7 @@ export default async function PartnersPage() {
             ))}
           </div>
           <Link
-            href="/contact"
+            href="/hotel-partners"
             className="inline-block bg-utu-navy hover:bg-utu-blue text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm"
           >
             {t('listPropertyBtn')}
@@ -88,12 +89,34 @@ export default async function PartnersPage() {
               </div>
             ))}
           </div>
-          <Link
-            href="/contact"
-            className="inline-block bg-utu-navy hover:bg-utu-blue text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm"
-          >
-            {t('requestDemoBtn')}
-          </Link>
+          <div className="mb-6 p-4 rounded-xl border border-utu-border-default bg-utu-bg-page flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-semibold text-utu-text-primary text-sm">Apply for UTUBooking for Business</p>
+              <p className="text-xs text-utu-text-muted mt-0.5">Dedicated portal with policy controls, VAT invoicing, and group bookings.</p>
+            </div>
+            <Link
+              href="/corporate/apply"
+              className="shrink-0 inline-block bg-utu-navy hover:bg-utu-blue text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
+            >
+              Apply Now
+            </Link>
+          </div>
+          <CorporateEnquiryForm labels={{
+            heading:      t('corpFormHeading'),
+            desc:         t('corpFormDesc'),
+            companyName:  t('corpFormCompanyName'),
+            contactName:  t('corpFormContactName'),
+            email:        t('corpFormEmail'),
+            phone:        t('corpFormPhone'),
+            travelers:    t('corpFormTravelers'),
+            destinations: t('corpFormDestinations'),
+            travelDates:  t('corpFormTravelDates'),
+            message:      t('corpFormMessage'),
+            submit:       t('corpFormSubmit'),
+            submitting:   t('corpFormSubmitting'),
+            success:      t('corpFormSuccess'),
+            error:        t('corpFormError'),
+          }} />
         </div>
       </section>
 
@@ -103,7 +126,7 @@ export default async function PartnersPage() {
           <h2 className="text-xl font-bold text-utu-text-primary mb-3">{t('advertiseHeading')}</h2>
           <p className="text-utu-text-muted text-sm mb-6 max-w-lg mx-auto">{t('advertiseDesc')}</p>
           <Link
-            href="/contact"
+            href="/advertise/partner"
             className="inline-block bg-amber-400 hover:bg-amber-300 text-utu-navy font-bold px-8 py-3 rounded-xl transition-colors text-sm"
           >
             {t('contactTeamBtn')}

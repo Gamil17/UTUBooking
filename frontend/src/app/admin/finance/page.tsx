@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Copy, Check } from 'lucide-react';
 import {
   getFinanceSummary, getFinanceDaily, getFinanceRefunds, getFinanceReconciliation,
   getFinanceVendors, createFinanceVendor, updateFinanceVendor, deleteFinanceVendor,
@@ -9,9 +10,13 @@ import {
   getFinanceBudgets, createFinanceBudget, updateFinanceBudget,
   getBudgetLines, createBudgetLine, updateBudgetLine, deleteBudgetLine,
   getExpenseClaims, createExpenseClaim, updateExpenseClaim,
+  getExpenseAnalysis, analyzeExpenseClaim,
+  getVendorDiligence, runVendorDiligence,
   type FinanceSummary, type DailyRevenue, type RefundRecord, type ReconciliationReport,
   type FinanceVendor, type FinanceInvoice, type FinanceBudget, type FinanceBudgetLine, type FinanceExpenseClaim,
   type VendorStatus, type VendorType, type InvoiceStatus, type BudgetStatus, type ClaimStatus, type FinanceCategory,
+  type ExpenseAnalysis, type ExpenseRecommendation,
+  type VendorDiligence,
 } from '@/lib/api';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -509,6 +514,191 @@ function ReconciliationTab() {
   );
 }
 
+// ─── AI Vendor Diligence Modal ────────────────────────────────────────────────
+
+const RISK_BADGE: Record<string, string> = {
+  low:      'bg-green-100 text-green-700 border-green-200',
+  medium:   'bg-amber-100 text-amber-700 border-amber-200',
+  high:     'bg-orange-100 text-orange-700 border-orange-200',
+  critical: 'bg-red-100 text-red-600 border-red-200',
+};
+
+const APPROVE_BADGE: Record<string, string> = {
+  approve:                'bg-green-100 text-green-700',
+  approve_with_conditions:'bg-amber-100 text-amber-700',
+  defer:                  'bg-orange-100 text-orange-700',
+  reject:                 'bg-red-100 text-red-600',
+};
+
+function AIVendorDiligenceModal({
+  vendor,
+  onClose,
+}: {
+  vendor: FinanceVendor;
+  onClose: () => void;
+}) {
+  const [diligence, setDiligence] = useState<VendorDiligence | null>(null);
+  const [loading,   setLoading]   = useState(false);
+  const [running,   setRunning]   = useState(false);
+  const [error,     setError]     = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getVendorDiligence(vendor.id)
+      .then(r => { if (!cancelled) { setDiligence(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [vendor.id]);
+
+  async function handleRun() {
+    setRunning(true);
+    setError('');
+    try {
+      const res = await runVendorDiligence(vendor.id);
+      if (res.data) setDiligence(res.data);
+      else setError('Due diligence failed. Please try again.');
+    } catch {
+      setError('Failed to run analysis. Check your connection.');
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-utu-border-default px-6 py-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-violet-600">✦</span>
+              <h2 className="text-base font-bold text-utu-text-primary">AI Vendor Due Diligence</h2>
+            </div>
+            <p className="mt-0.5 text-xs text-utu-text-muted">{vendor.name}</p>
+          </div>
+          <button onClick={onClose} className="text-utu-text-muted hover:text-utu-text-primary text-lg">✕</button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5">
+          {loading && (
+            <p className="text-xs text-utu-text-muted italic py-8 text-center">Loading diligence report…</p>
+          )}
+
+          {!loading && !diligence && (
+            <div className="py-8 text-center space-y-3">
+              <p className="text-sm text-utu-text-secondary">
+                No diligence report yet. Run AI Due Diligence to get risk score, compliance gaps, financial health, and approval recommendation.
+              </p>
+              <button
+                onClick={handleRun}
+                disabled={running}
+                className="rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                {running ? 'Running…' : '✦ Run Due Diligence'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {diligence && !loading && (
+            <>
+              {/* Score + risk + recommendation */}
+              <div className="flex flex-wrap gap-3">
+                <div className={`rounded-xl border px-4 py-3 ${RISK_BADGE[diligence.risk_level] ?? 'border-utu-border-default bg-utu-bg-muted'}`}>
+                  <p className="text-xs font-semibold uppercase tracking-wide">Risk Level</p>
+                  <p className="mt-0.5 text-lg font-bold capitalize">{diligence.risk_level}</p>
+                </div>
+                <div className="rounded-xl border border-utu-border-default bg-utu-bg-card px-4 py-3">
+                  <p className="text-xs text-utu-text-muted">Overall Score</p>
+                  <p className="mt-0.5 text-lg font-bold text-utu-text-primary">{diligence.overall_score}/100</p>
+                </div>
+                <div className={`rounded-xl border px-4 py-3 ${APPROVE_BADGE[diligence.approve_recommendation] ?? ''}`}>
+                  <p className="text-xs font-semibold uppercase tracking-wide">Recommendation</p>
+                  <p className="mt-0.5 text-sm font-bold capitalize">{diligence.approve_recommendation.replace(/_/g, ' ')}</p>
+                </div>
+              </div>
+
+              {/* Executive summary */}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-1">Executive Summary</h3>
+                <p className="text-sm text-utu-text-secondary leading-relaxed">{diligence.executive_summary}</p>
+              </div>
+
+              {/* Financial + payment + SLA notes */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                  <p className="text-xs font-semibold text-utu-text-muted mb-1">Financial Health</p>
+                  <p className="text-xs text-utu-text-secondary">{diligence.financial_health_note}</p>
+                </div>
+                <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                  <p className="text-xs font-semibold text-utu-text-muted mb-1">Payment History</p>
+                  <p className="text-xs text-utu-text-secondary">{diligence.payment_history_note}</p>
+                </div>
+                <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                  <p className="text-xs font-semibold text-utu-text-muted mb-1">SLA Performance</p>
+                  <p className="text-xs text-utu-text-secondary">{diligence.sla_performance_note}</p>
+                </div>
+              </div>
+
+              {/* Risk flags */}
+              {diligence.risk_flags.length > 0 && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                  <h3 className="text-xs font-semibold text-red-700 mb-2">Risk Flags</h3>
+                  <ul className="space-y-1">
+                    {diligence.risk_flags.map((f, i) => (
+                      <li key={i} className="text-xs text-red-600">• {f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Missing compliance */}
+              {diligence.missing_compliance.length > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                  <h3 className="text-xs font-semibold text-amber-700 mb-2">Missing Compliance</h3>
+                  <ul className="space-y-1">
+                    {diligence.missing_compliance.map((f, i) => (
+                      <li key={i} className="text-xs text-amber-700">• {f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Recommendations */}
+              {diligence.recommendations.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</h3>
+                  <ul className="space-y-1">
+                    {diligence.recommendations.map((r, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary">
+                        <span className="mt-0.5 text-violet-400">▸</span>{r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-utu-border-default">
+                <p className="text-xs text-utu-text-muted">
+                  Generated {new Date(diligence.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+                <button
+                  onClick={handleRun}
+                  disabled={running}
+                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+                >
+                  {running ? 'Re-running…' : 'Re-run'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Tab: Vendors ─────────────────────────────────────────────────────────────
 
 function VendorsTab() {
@@ -518,6 +708,7 @@ function VendorsTab() {
   const [page, setPage] = useState(1);
   const [panel, setPanel] = useState<{ open: boolean; editing: FinanceVendor | null }>({ open: false, editing: null });
   const [form, setForm] = useState<Partial<FinanceVendor>>({});
+  const [diligenceVendor, setDiligenceVendor] = useState<FinanceVendor | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['finance-vendors', filterType, filterStatus, page],
@@ -591,6 +782,10 @@ function VendorsTab() {
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <button onClick={() => openEdit(v)} className="text-xs text-utu-blue hover:underline me-3">Edit</button>
+                    <button
+                      onClick={() => setDiligenceVendor(v)}
+                      className="text-xs text-violet-600 hover:underline me-3"
+                    >✦ Diligence</button>
                     {v.status !== 'blocked' && (
                       <button onClick={() => deleteMut.mutate(v.id)}
                         className="text-xs text-red-500 hover:underline">
@@ -680,6 +875,10 @@ function VendorsTab() {
           {saveMut.isError && <p className="text-xs text-red-500">Save failed. Please try again.</p>}
         </div>
       </SlidePanel>
+
+      {diligenceVendor && (
+        <AIVendorDiligenceModal vendor={diligenceVendor} onClose={() => setDiligenceVendor(null)} />
+      )}
     </div>
   );
 }
@@ -1140,6 +1339,189 @@ function BudgetsTab() {
 
 // ─── Tab: Expense Claims ──────────────────────────────────────────────────────
 
+// ─── AI Expense Analyzer Panel ───────────────────────────────────────────────
+
+const REC_CONFIG: Record<ExpenseRecommendation, { label: string; bg: string; text: string; border: string }> = {
+  approve: { label: 'Approve',            bg: 'bg-green-50',  text: 'text-green-700',  border: 'border-green-200' },
+  query:   { label: 'Query / Clarify',    bg: 'bg-amber-50',  text: 'text-amber-700',  border: 'border-amber-200' },
+  reject:  { label: 'Reject',             bg: 'bg-red-50',    text: 'text-red-700',    border: 'border-red-200' },
+};
+
+function AIExpensePanel({ claimId }: { claimId: string }) {
+  const [analysis, setAnalysis] = useState<ExpenseAnalysis | null>(null);
+  const [loading,  setLoading]  = useState(false);
+  const [running,  setRunning]  = useState(false);
+  const [error,    setError]    = useState('');
+  const [copied,   setCopied]   = useState(false);
+  const [open,     setOpen]     = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getExpenseAnalysis(claimId)
+      .then(r => { if (!cancelled) { setAnalysis(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [claimId, open]);
+
+  async function handleAnalyze() {
+    setRunning(true);
+    setError('');
+    try {
+      const res = await analyzeExpenseClaim(claimId);
+      if (res.data) setAnalysis(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch {
+      setError('Failed to run analysis. Check your connection.');
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  function copyNotes() {
+    if (!analysis?.suggested_notes) return;
+    navigator.clipboard.writeText(analysis.suggested_notes).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  const rec = analysis ? REC_CONFIG[analysis.recommendation] : null;
+
+  return (
+    <div className="mt-2 rounded-xl border border-violet-200 bg-violet-50/40">
+      <button
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
+        onClick={() => setOpen(o => !o)}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Expense Audit</span>
+          {analysis && (
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${rec?.bg} ${rec?.text}`}>
+              {rec?.label}
+            </span>
+          )}
+          {analysis && (
+            <span className="text-xs text-violet-500 font-normal">
+              · {new Date(analysis.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-4 pt-3 space-y-3">
+          {loading && <p className="text-xs text-utu-text-muted italic">Loading audit…</p>}
+
+          {!loading && !analysis && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">
+                No audit yet. Run AI Expense Audit to get a policy compliance check, anomaly detection, and an approve/reject/query recommendation.
+              </p>
+              <button
+                onClick={handleAnalyze}
+                disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                {running ? 'Analysing…' : 'Audit with AI'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {analysis && !loading && (
+            <>
+              {/* Recommendation + confidence */}
+              {rec && (
+                <div className={`flex items-center justify-between rounded-lg border px-3 py-2.5 ${rec.bg} ${rec.border}`}>
+                  <div>
+                    <p className={`text-xs font-bold ${rec.text}`}>{rec.label}</p>
+                    <p className={`text-xs ${rec.text} opacity-75`}>{analysis.confidence}% confidence</p>
+                  </div>
+                  <button
+                    onClick={handleAnalyze}
+                    disabled={running}
+                    className="rounded border border-violet-300 px-2.5 py-1 text-xs text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+                  >
+                    {running ? 'Re-auditing…' : 'Re-audit'}
+                  </button>
+                </div>
+              )}
+
+              {/* Summary */}
+              {analysis.summary && (
+                <p className="text-xs text-utu-text-secondary leading-relaxed">{analysis.summary}</p>
+              )}
+
+              {/* Policy flags */}
+              {analysis.policy_flags.length > 0 && (
+                <div className="rounded-lg border border-red-200 bg-red-50/60 p-3">
+                  <p className="mb-2 text-xs font-semibold text-red-800">Policy Concerns</p>
+                  <ul className="space-y-1">
+                    {analysis.policy_flags.map((f, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" />
+                        <span className="text-xs text-red-800 leading-relaxed">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Anomaly flags */}
+              {analysis.anomaly_flags.length > 0 && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+                  <p className="mb-2 text-xs font-semibold text-amber-800">Anomalies Detected</p>
+                  <ul className="space-y-1">
+                    {analysis.anomaly_flags.map((f, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                        <span className="text-xs text-amber-800 leading-relaxed">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Justification */}
+              {analysis.justification && (
+                <div className="rounded-lg bg-utu-bg-muted px-3 py-2.5">
+                  <p className="text-xs font-semibold text-utu-text-secondary mb-1">Justification</p>
+                  <p className="text-xs text-utu-text-secondary leading-relaxed">{analysis.justification}</p>
+                </div>
+              )}
+
+              {/* Suggested admin notes */}
+              {analysis.suggested_notes && (
+                <div className="rounded-lg border border-violet-200 bg-white p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold text-violet-800">Suggested Admin Notes</p>
+                    <button
+                      onClick={copyNotes}
+                      className="flex items-center gap-1 rounded border border-violet-200 px-2 py-0.5 text-xs text-violet-600 hover:bg-violet-50 transition-colors"
+                    >
+                      {copied ? <Check size={11} /> : <Copy size={11} />}
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-utu-text-secondary leading-relaxed">{analysis.suggested_notes}</p>
+                </div>
+              )}
+
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Expense Claims Tab ───────────────────────────────────────────────────────
+
 function ExpenseClaimsTab() {
   const qc = useQueryClient();
   const [filterStatus, setFilterStatus] = useState('');
@@ -1298,6 +1680,9 @@ function ExpenseClaimsTab() {
             {saveMut.isPending ? 'Saving…' : panel.editing ? 'Save Changes' : 'Submit Claim'}
           </button>
           {saveMut.isError && <p className="text-xs text-red-500">Save failed. Please try again.</p>}
+
+          {/* AI Expense Audit — only for existing claims */}
+          {panel.editing && <AIExpensePanel claimId={panel.editing.id} />}
         </div>
       </SlidePanel>
     </div>

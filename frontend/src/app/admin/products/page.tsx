@@ -6,7 +6,7 @@
  * Tabs: Overview | Roadmap | Feature Flags | Changelog
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Map, Flag, BookOpen, Plus, Pencil, Trash2, X, RefreshCw, ToggleLeft, ToggleRight,
@@ -15,7 +15,9 @@ import {
   getProductsStats, getRoadmap, createRoadmapItem, updateRoadmapItem, deleteRoadmapItem,
   getFeatureFlags, createFeatureFlag, updateFeatureFlag, deleteFeatureFlag,
   getChangelog, createChangelogEntry, updateChangelogEntry, deleteChangelogEntry,
+  getRoadmapAdvice, analyzeRoadmap,
   type ProductsStats, type RoadmapItem, type FeatureFlag, type ChangelogEntry,
+  type RoadmapAdvice,
   type RoadmapStatus, type RoadmapPriority, type ChangelogType,
 } from '@/lib/api';
 
@@ -433,6 +435,185 @@ function OverviewTab({ onGoToRoadmap, onGoToFlags, onGoToChangelog }: { onGoToRo
   );
 }
 
+// ─── AI Roadmap Advisor Panel ─────────────────────────────────────────────────
+
+const RM_HEALTH_COLORS: Record<string, string> = {
+  excellent: 'bg-green-100 text-green-700 border-green-200',
+  good:      'bg-blue-50  text-blue-700  border-blue-200',
+  fair:      'bg-amber-100 text-amber-700 border-amber-200',
+  poor:      'bg-red-100  text-red-600   border-red-200',
+};
+
+const RM_EFFORT_COLORS: Record<string, string> = {
+  low:    'bg-green-100 text-green-700',
+  medium: 'bg-amber-100 text-amber-700',
+};
+
+function AIRoadmapAdvisorPanel() {
+  const [advice,  setAdvice]  = useState<RoadmapAdvice | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error,   setError]   = useState('');
+  const [open,    setOpen]    = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getRoadmapAdvice()
+      .then(r => { if (!cancelled) { setAdvice(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  async function handleAnalyze() {
+    setRunning(true); setError('');
+    try {
+      const res = await analyzeRoadmap();
+      if (res.data) setAdvice(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch { setError('Failed to run analysis.'); }
+    finally { setRunning(false); }
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-violet-50/40 mb-4">
+      <button className="flex w-full items-center justify-between px-4 py-3 text-left" onClick={() => setOpen(o => !o)}>
+        <div className="flex items-center gap-2">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Roadmap Advisor</span>
+          {advice && (
+            <span className={`rounded-md border px-2 py-0.5 text-xs font-medium capitalize ${RM_HEALTH_COLORS[advice.roadmap_health] ?? ''}`}>
+              {advice.roadmap_health}
+            </span>
+          )}
+          {advice && <span className="text-xs text-violet-500">{advice.total_items} items</span>}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-5 pt-4 space-y-5">
+          {loading && <p className="text-xs text-utu-text-muted italic">Loading advice…</p>}
+
+          {!loading && !advice && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">Run AI Roadmap Advisor to get priority adjustments, quick wins, strategic bets, and Gulf market alignment assessment.</p>
+              <button onClick={handleAnalyze} disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                {running ? 'Analysing…' : '✦ Advise Roadmap'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {advice && !loading && (
+            <>
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{advice.executive_summary}</p>
+
+              {advice.next_release_rec && (
+                <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-4 py-3">
+                  <p className="text-xs font-semibold text-utu-text-muted mb-1">Next Release Recommendation</p>
+                  <p className="text-xs text-utu-text-secondary">{advice.next_release_rec}</p>
+                </div>
+              )}
+
+              {advice.market_alignment && (
+                <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
+                  <p className="text-xs font-semibold text-blue-700 mb-1">Gulf Market Alignment</p>
+                  <p className="text-xs text-blue-600">{advice.market_alignment}</p>
+                </div>
+              )}
+
+              {advice.priority_adjustments.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Priority Adjustments</h3>
+                  <div className="space-y-2">
+                    {advice.priority_adjustments.map((a, i) => (
+                      <div key={i} className="rounded-lg border border-utu-border-default bg-white px-3 py-2">
+                        <p className="text-xs font-semibold text-utu-text-primary">{a.title}</p>
+                        <p className="text-xs text-utu-text-muted mt-0.5">
+                          <span className="line-through">{a.current_priority}</span> → <span className="font-medium text-violet-700">{a.suggested_priority}</span>
+                        </p>
+                        <p className="text-xs text-utu-text-secondary mt-0.5 italic">{a.reason}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {advice.quick_wins.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Quick Wins</h3>
+                    <div className="space-y-2">
+                      {advice.quick_wins.map((w, i) => (
+                        <div key={i} className="rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs font-semibold text-green-800 flex-1">{w.title}</p>
+                            <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${RM_EFFORT_COLORS[w.effort] ?? ''}`}>{w.effort}</span>
+                          </div>
+                          <p className="text-xs text-green-600 mt-0.5">{w.why}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {advice.strategic_bets.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Strategic Bets</h3>
+                    <div className="space-y-2">
+                      {advice.strategic_bets.map((b, i) => (
+                        <div key={i} className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2">
+                          <p className="text-xs font-semibold text-violet-800">{b.title}</p>
+                          <p className="text-xs text-violet-600 mt-0.5">{b.market_opportunity}</p>
+                          {b.quarter && <p className="text-xs text-violet-500 mt-0.5">{b.quarter}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {(advice.tech_debt_flags.length > 0 || advice.feature_flag_risks.length > 0) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {advice.tech_debt_flags.length > 0 && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                      <p className="text-xs font-semibold text-amber-700 mb-1">Tech Debt Flags</p>
+                      <ul className="space-y-1">{advice.tech_debt_flags.map((f, i) => <li key={i} className="text-xs text-amber-600">• {f}</li>)}</ul>
+                    </div>
+                  )}
+                  {advice.feature_flag_risks.length > 0 && (
+                    <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2">
+                      <p className="text-xs font-semibold text-orange-700 mb-1">Feature Flag Risks</p>
+                      <ul className="space-y-1">{advice.feature_flag_risks.map((f, i) => <li key={i} className="text-xs text-orange-600">• {f}</li>)}</ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {advice.recommendations.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</h3>
+                  <ul className="space-y-1">{advice.recommendations.map((r, i) => <li key={i} className="flex items-start gap-2 text-xs text-utu-text-secondary"><span className="text-violet-400 mt-0.5">▸</span>{r}</li>)}</ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-violet-200">
+                <p className="text-xs text-utu-text-muted">Generated {new Date(advice.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                <button onClick={handleAnalyze} disabled={running}
+                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors">
+                  {running ? 'Re-analysing…' : 'Re-analyse'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Roadmap Tab ──────────────────────────────────────────────────────────────
 
 function RoadmapTab() {
@@ -756,7 +937,7 @@ export default function ProductsPage() {
       </div>
 
       {activeTab === 'Overview'      && <OverviewTab onGoToRoadmap={() => setActiveTab('Roadmap')} onGoToFlags={() => setActiveTab('Feature Flags')} onGoToChangelog={() => setActiveTab('Changelog')} />}
-      {activeTab === 'Roadmap'       && <RoadmapTab />}
+      {activeTab === 'Roadmap'       && <><AIRoadmapAdvisorPanel /><RoadmapTab /></>}
       {activeTab === 'Feature Flags' && <FeatureFlagsTab />}
       {activeTab === 'Changelog'     && <ChangelogTab />}
     </div>

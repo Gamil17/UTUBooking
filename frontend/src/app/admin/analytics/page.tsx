@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getBiStats, getBiKpiSummary, getBiKpiTargets, createBiKpiTarget, updateBiKpiTarget, deleteBiKpiTarget,
   getBiDashboards, createBiDashboard, updateBiDashboard, deleteBiDashboard,
   getBiReports, createBiReport, updateBiReport, deleteBiReport,
   getBiAlerts, createBiAlert, updateBiAlert, deleteBiAlert,
+  getKpiAnalysis, analyzeKpiAlert,
   type BiStats, type BiKpiTarget, type BiDashboard, type BiReport, type BiAlert,
+  type KpiAnalysis, type KpiRecommendedAction,
 } from '@/lib/api';
 
 const TABS = ['Overview', 'KPI Targets', 'Dashboards', 'Reports', 'Alerts'] as const;
@@ -286,7 +288,7 @@ function DashboardsTab() {
               <div><label className="text-xs text-gray-500">Config (JSON)</label>
                 <textarea
                   value={typeof panel.config === 'object' ? JSON.stringify(panel.config, null, 2) : (panel.config ?? '{}')}
-                  onChange={e => { try { setPanel(p => ({ ...p!, config: JSON.parse(e.target.value) })); } catch { setPanel(p => ({ ...p!, config: e.target.value as any })); }}
+                  onChange={e => { try { setPanel(p => ({ ...p!, config: JSON.parse(e.target.value) })); } catch { setPanel(p => ({ ...p!, config: e.target.value as any })); } }}
                   rows={6}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono"
                 />
@@ -389,7 +391,7 @@ function ReportsTab() {
               <div><label className="text-xs text-gray-500">Filters (JSON)</label>
                 <textarea
                   value={typeof panel.filters === 'object' ? JSON.stringify(panel.filters, null, 2) : (panel.filters ?? '{}')}
-                  onChange={e => { try { setPanel(p => ({ ...p!, filters: JSON.parse(e.target.value) })); } catch { setPanel(p => ({ ...p!, filters: e.target.value as any })); }}
+                  onChange={e => { try { setPanel(p => ({ ...p!, filters: JSON.parse(e.target.value) })); } catch { setPanel(p => ({ ...p!, filters: e.target.value as any })); } }}
                   rows={4}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 font-mono"
                 />
@@ -409,9 +411,133 @@ function ReportsTab() {
 
 // ─── Alerts ───────────────────────────────────────────────────────────────────
 
+// ─── AI KPI Root Cause Panel ──────────────────────────────────────────────────
+
+function AIKpiModal({ alert, onClose }: { alert: BiAlert; onClose: () => void }) {
+  const [analysis, setAnalysis] = useState<KpiAnalysis | null>(null);
+  const [loading, setLoading]   = useState(true);
+  const [running, setRunning]   = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getKpiAnalysis(alert.id).then(r => { if (!cancelled) { setAnalysis(r); setLoading(false); } });
+    return () => { cancelled = true; };
+  }, [alert.id]);
+
+  async function run() {
+    setRunning(true);
+    try {
+      const res = await analyzeKpiAlert(alert.id);
+      setAnalysis(res.data);
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  const CONF_COLORS: Record<string, string> = {
+    high:   'bg-green-100 text-green-700',
+    medium: 'bg-amber-100 text-amber-700',
+    low:    'bg-slate-100 text-slate-600',
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/30" onClick={onClose}>
+      <div className="bg-white w-full max-w-lg h-full overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-utu-navy text-white px-6 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-blue-200 uppercase tracking-wider">✦ AI Root Cause Analyzer</p>
+            <p className="font-semibold text-sm mt-0.5 truncate max-w-[300px]">{alert.name}</p>
+          </div>
+          <button onClick={onClose} className="text-blue-200 hover:text-white text-xl leading-none">&times;</button>
+        </div>
+        <div className="p-6 space-y-5">
+          {loading ? (
+            <p className="text-sm text-gray-400 text-center py-8">Loading existing analysis...</p>
+          ) : analysis ? (
+            <>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${CONF_COLORS[analysis.confidence] ?? 'bg-gray-100 text-gray-600'}`}>
+                  {analysis.confidence} confidence
+                </span>
+                <span className="text-xs text-gray-400">Generated {new Date(analysis.generated_at).toLocaleString()}</span>
+                <button onClick={run} disabled={running} className="ms-auto text-xs text-blue-600 hover:underline disabled:opacity-40">
+                  {running ? 'Analyzing…' : 'Re-analyze'}
+                </button>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Root Cause</p>
+                <p className="text-sm text-gray-800 font-medium">{analysis.root_cause_summary}</p>
+                <span className="mt-1 inline-block text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">Dept: {analysis.root_cause_dept}</span>
+              </div>
+
+              {analysis.contributing_factors.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Contributing Factors</p>
+                  <ul className="space-y-1">
+                    {analysis.contributing_factors.map((f, i) => (
+                      <li key={i} className="text-sm text-gray-700 flex gap-2"><span className="text-amber-500 mt-0.5">&#9670;</span>{f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {analysis.ruling_out.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Ruling Out</p>
+                  <ul className="space-y-0.5">
+                    {analysis.ruling_out.map((r, i) => (
+                      <li key={i} className="text-xs text-gray-400 flex gap-2"><span>&#8722;</span>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {analysis.recommended_actions.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Recommended Actions</p>
+                  <div className="space-y-2">
+                    {analysis.recommended_actions.map((a: KpiRecommendedAction, i) => (
+                      <div key={i} className="rounded-lg border border-gray-200 p-3">
+                        <span className="text-xs font-semibold text-blue-600 uppercase">{a.department}</span>
+                        <p className="text-sm text-gray-700 mt-0.5">{a.action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {analysis.escalate_to.length > 0 && (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+                  <p className="text-xs font-semibold text-red-700 mb-1">Escalate To</p>
+                  <p className="text-sm text-red-600">{analysis.escalate_to.join(', ')}</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-8 space-y-3">
+              <p className="text-sm text-gray-500">No analysis yet for this alert.</p>
+              <button
+                onClick={run}
+                disabled={running}
+                className="bg-utu-navy text-white text-sm px-5 py-2 rounded-lg hover:bg-utu-blue disabled:opacity-50"
+              >
+                {running ? 'Analyzing…' : '✦ Analyse with Claude'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Alerts Tab ───────────────────────────────────────────────────────────────
+
 function AlertsTab() {
   const qc = useQueryClient();
   const [activeFilter, setActiveFilter] = useState('');
+  const [aiAlert, setAiAlert] = useState<BiAlert | null>(null);
   const [panel, setPanel] = useState<Partial<BiAlert> | null>(null);
 
   const { data } = useQuery({
@@ -477,6 +603,7 @@ function AlertsTab() {
                 </td>
                 <td className="px-4 py-3 text-gray-400 text-xs">{r.last_fired_at ? new Date(r.last_fired_at).toLocaleString() : 'Never'}</td>
                 <td className="px-4 py-3 text-right space-x-2">
+                  <button onClick={() => setAiAlert(r)} className="text-purple-600 hover:underline text-xs">✦ Analyse</button>
                   <button onClick={() => setPanel(r)} className="text-blue-600 hover:underline text-xs">Edit</button>
                   <button onClick={() => { if (confirm('Delete alert?')) remove.mutate(r.id); }} className="text-red-500 hover:underline text-xs">Delete</button>
                 </td>
@@ -514,6 +641,8 @@ function AlertsTab() {
           </div>
         </div>
       )}
+
+      {aiAlert && <AIKpiModal alert={aiAlert} onClose={() => setAiAlert(null)} />}
     </div>
   );
 }

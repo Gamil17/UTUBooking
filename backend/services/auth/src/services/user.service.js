@@ -57,6 +57,18 @@ async function createUser({ email, password, name, country }) {
   return rows[0];
 }
 
+async function createCorporateUser({ email, password, name, corporate_account_id }) {
+  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  const displayName  = name?.trim() || email.split('@')[0];
+  const { rows } = await pool.query(
+    `INSERT INTO users (email, password_hash, role, name, status, corporate_account_id)
+          VALUES ($1, $2, 'corporate', $3, 'active', $4)
+     RETURNING id, email, role, status, corporate_account_id`,
+    [email.toLowerCase().trim(), passwordHash, displayName, corporate_account_id]
+  );
+  return rows[0];
+}
+
 // Returns true if plaintext matches the stored bcrypt hash
 async function verifyPassword(plaintext, hash) {
   return bcrypt.compare(plaintext, hash);
@@ -70,4 +82,4 @@ async function updatePassword(userId, newPlaintext) {
   );
 }
 
-module.exports = { findByEmail, findById, emailExists, createUser, verifyPassword, touchLastSeen, updatePassword };
+module.exports = { findByEmail, findById, emailExists, createUser, createCorporateUser, verifyPassword, touchLastSeen, updatePassword };

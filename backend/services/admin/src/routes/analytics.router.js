@@ -2,6 +2,7 @@
 
 const { Router } = require('express');
 const { Pool }   = require('pg');
+const wf         = require('../lib/workflow-client');
 
 const pool   = new Pool({ connectionString: process.env.DATABASE_URL });
 const router = Router();
@@ -367,7 +368,27 @@ router.post('/alerts', async (req, res) => {
       `INSERT INTO bi_alerts (name, kpi_target_id, condition, threshold, notify_email, active) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
       [name, kpi_target_id||null, condition, threshold||null, notify_email||null, active],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const alert = result.rows[0];
+
+    // ── Launch KPI investigation workflow when an alert is raised as active ───
+    // Represents a known threshold breach being flagged for management review.
+    if (Boolean(active)) {
+      wf.launch({
+        triggerEvent:   'kpi_threshold_breached',
+        triggerRef:     alert.id,
+        triggerRefType: 'bi_alert',
+        initiatedBy:    req.user?.email ?? notify_email ?? 'admin',
+        context: {
+          name,
+          condition,
+          threshold:      threshold ?? null,
+          kpi_target_id:  kpi_target_id || null,
+          notify_email:   notify_email || null,
+        },
+      });
+    }
+
+    res.status(201).json({ data: alert });
   } catch (err) {
     console.error('[analytics] POST /alerts error:', err);
     res.status(500).json({ error: 'DB_ERROR' });

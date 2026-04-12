@@ -21,6 +21,10 @@ function generateAccessToken(user) {
     role:  user.role,
     type:  'access',
   };
+  // Include corporate_account_id so portal middleware can gate access
+  if (user.role === 'corporate' && user.corporate_account_id) {
+    payload.corporate_account_id = user.corporate_account_id;
+  }
   return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: ACCESS_TTL,
     algorithm: 'HS256',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getAdminBookingStats,
@@ -8,6 +8,7 @@ import {
   updateAdminBookingStatus,
   type AdminBooking,
   type BookingStats,
+  getBookingInsights, analyzeBookings, type BookingInsights,
 } from '@/lib/api';
 
 const PAGE_SIZE = 50;
@@ -32,6 +33,207 @@ function formatDate(iso: string | null) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
+
+// ─── AI Booking Insights Panel ────────────────────────────────────────────────
+
+const BOOKING_HEALTH_BADGE: Record<string, string> = {
+  excellent: 'border-green-300  bg-green-50  text-green-700',
+  good:      'border-blue-200   bg-blue-50   text-blue-700',
+  fair:      'border-amber-200  bg-amber-50  text-amber-700',
+  poor:      'border-red-200    bg-red-50    text-red-700',
+};
+const SEVERITY_COLORS: Record<string, string> = {
+  high:   'border-red-200    bg-red-50    text-red-700',
+  medium: 'border-amber-200  bg-amber-50  text-amber-700',
+  low:    'border-blue-200   bg-blue-50   text-blue-700',
+};
+const EFFORT_COLORS: Record<string, string> = {
+  low:    'bg-green-100 text-green-700',
+  medium: 'bg-amber-100 text-amber-700',
+  high:   'bg-red-100   text-red-700',
+};
+
+function AIBookingInsightsPanel() {
+  const [insights, setInsights] = useState<BookingInsights | null>(null);
+  const [loading,  setLoading]  = useState(false);
+  const [running,  setRunning]  = useState(false);
+  const [error,    setError]    = useState('');
+  const [open,     setOpen]     = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getBookingInsights()
+      .then(r => { if (!cancelled) { setInsights(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  async function handleAnalyze() {
+    setRunning(true); setError('');
+    try {
+      const res = await analyzeBookings();
+      if (res.data) setInsights(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch { setError('Failed to run analysis.'); }
+    finally { setRunning(false); }
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-violet-50/40 mb-4">
+      <button className="flex w-full items-center justify-between px-4 py-3 text-left" onClick={() => setOpen(o => !o)}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Revenue & Booking Insights</span>
+          {insights && (
+            <span className={`rounded-md border px-2 py-0.5 text-xs font-medium capitalize ${BOOKING_HEALTH_BADGE[insights.booking_health] ?? ''}`}>
+              {insights.booking_health}
+            </span>
+          )}
+          {insights && (
+            <span className="text-xs text-violet-500">
+              {insights.total_bookings.toLocaleString()} bookings · SAR {Number(insights.revenue_sar).toLocaleString(undefined, { maximumFractionDigits: 0 })} · {insights.cancellation_rate_pct}% cancel
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-5 pt-4 space-y-5">
+          {loading && <p className="text-xs text-utu-text-muted italic">Loading insights…</p>}
+
+          {!loading && !insights && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">
+                Run AI Booking Insights to surface booking anomalies, cancellation patterns, product revenue breakdown, and seasonal forecasts.
+              </p>
+              <button onClick={handleAnalyze} disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                {running ? 'Analysing…' : '✦ Run Booking Analysis'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {insights && !loading && (
+            <>
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{insights.executive_summary}</p>
+
+              {insights.anomalies.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Anomalies Detected</h3>
+                  <div className="space-y-2">
+                    {insights.anomalies.map((a, i) => (
+                      <div key={i} className={`rounded-lg border px-3 py-2 ${SEVERITY_COLORS[a.severity] ?? ''}`}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-semibold capitalize">{a.description}</span>
+                          <span className={`rounded-md px-1.5 py-0.5 text-xs capitalize ${
+                            a.type === 'spike' ? 'bg-green-100 text-green-700' :
+                            a.type === 'drop'  ? 'bg-red-100 text-red-700' :
+                                                 'bg-gray-100 text-gray-600'
+                          }`}>{a.type}</span>
+                        </div>
+                        <p className="text-xs mt-0.5 italic opacity-80">Likely cause: {a.likely_cause}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {insights.product_breakdown.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Product Assessment</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {insights.product_breakdown.map((p, i) => (
+                      <div key={i} className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                        <p className="text-xs font-semibold text-utu-text-primary capitalize">{
+                          p.product === 'hotel' ? '🏨' : p.product === 'flight' ? '✈️' : '🚗'
+                        } {p.product}</p>
+                        <p className="text-xs text-utu-text-secondary mt-0.5">{p.assessment}</p>
+                        <p className="text-xs text-violet-600 mt-0.5 italic">{p.opportunity}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {insights.conversion_insights && (
+                  <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                    <p className="text-xs font-semibold text-utu-text-muted mb-1">Conversion Insights</p>
+                    <p className="text-xs text-utu-text-secondary">{insights.conversion_insights}</p>
+                  </div>
+                )}
+                {insights.cancellation_patterns && (
+                  <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                    <p className="text-xs font-semibold text-utu-text-muted mb-1">Cancellation Patterns</p>
+                    <p className="text-xs text-utu-text-secondary">{insights.cancellation_patterns}</p>
+                  </div>
+                )}
+              </div>
+
+              {insights.revenue_opportunities.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Revenue Opportunities</h3>
+                  <div className="space-y-2">
+                    {insights.revenue_opportunities.map((o, i) => (
+                      <div key={i} className="flex items-start justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-green-800">{o.opportunity}</p>
+                          <p className="text-xs text-green-600 mt-0.5">{o.estimated_impact}</p>
+                        </div>
+                        <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium capitalize ${EFFORT_COLORS[o.effort] ?? ''}`}>{o.effort} effort</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {insights.seasonal_forecast && (
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2">
+                  <p className="text-xs font-semibold text-indigo-800 mb-1">Seasonal Forecast</p>
+                  <p className="text-xs text-indigo-700">{insights.seasonal_forecast}</p>
+                </div>
+              )}
+
+              {insights.risk_flags.length > 0 && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                  <p className="text-xs font-semibold text-red-800 mb-1">Risk Flags</p>
+                  <ul className="space-y-0.5">
+                    {insights.risk_flags.map((f, i) => <li key={i} className="text-xs text-red-700">• {f}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {insights.recommendations.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</h3>
+                  <ul className="space-y-1">
+                    {insights.recommendations.map((r, i) => (
+                      <li key={i} className="text-xs text-utu-text-secondary before:content-['✓'] before:mr-1.5 before:text-violet-500">{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-1 border-t border-violet-200">
+                <p className="text-xs text-violet-400">Last run: {new Date(insights.generated_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                <button onClick={handleAnalyze} disabled={running}
+                  className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                  {running ? 'Refreshing…' : '↺ Refresh'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function StatCard({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
   return (
@@ -102,6 +304,9 @@ export default function AdminBookingsPage() {
           All platform bookings — search, filter, and update status.
         </p>
       </div>
+
+      {/* AI Booking Insights */}
+      <AIBookingInsightsPanel />
 
       {/* Stats row */}
       {stats && (

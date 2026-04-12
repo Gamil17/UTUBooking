@@ -2797,6 +2797,350 @@ export const createBizDevMarket = (data: Partial<BizDevMarket>) =>
 export const updateBizDevMarket = (id: string, data: Partial<BizDevMarket>) =>
   adminBff.patch<{ data: BizDevMarket }>(`/bizdev/markets/${id}`, data);
 
+// ── Affiliates ────────────────────────────────────────────────────────────────
+
+export type AffiliatePlatform    = 'blog'|'youtube'|'instagram'|'twitter'|'telegram'|'tiktok'|'other';
+export type AffiliateAudience    = 'under_1k'|'1k_10k'|'10k_100k'|'over_100k';
+export type AffiliateAppStatus   = 'pending'|'reviewing'|'approved'|'rejected';
+export type AffiliatePartnerTier = 'elite'|'pro'|'starter';
+export type AffiliatePartnerStatus = 'active'|'paused'|'terminated';
+export type AffiliatePayoutStatus  = 'pending'|'processing'|'paid'|'cancelled';
+
+export interface AffiliateStats {
+  applications: { total: number; pending: number; reviewing: number; approved: number; rejected: number };
+  partners: {
+    total: number; active: number; paused: number; terminated: number;
+    by_tier: { elite: number; pro: number; starter: number };
+    total_bookings: number; total_earned_sar: number; total_paid_sar: number;
+  };
+  payouts: { pending_count: number; pending_sar: number; paid_sar: number };
+}
+
+export interface AffiliateApplication {
+  id: string; name: string; email: string; website: string|null;
+  platform: AffiliatePlatform; audience_size: AffiliateAudience;
+  message: string|null; status: AffiliateAppStatus;
+  admin_notes: string|null; reviewed_by: string|null;
+  reviewed_at: string|null; created_at: string; updated_at: string;
+}
+
+export interface AffiliatePartner {
+  id: string; application_id: string|null; name: string; email: string;
+  website: string|null; platform: AffiliatePlatform; audience_size: AffiliateAudience;
+  tier: AffiliatePartnerTier; status: AffiliatePartnerStatus;
+  commission_pct: number; referral_code: string|null;
+  payout_method: string; payout_details: string|null;
+  total_clicks: number; total_bookings: number;
+  total_earned_sar: number; total_paid_sar: number;
+  notes: string|null; joined_at: string; created_at: string; updated_at: string;
+}
+
+export interface AffiliatePayout {
+  id: string; partner_id: string; partner_name: string;
+  amount_sar: number; period_start: string; period_end: string;
+  bookings_count: number; status: AffiliatePayoutStatus;
+  payment_ref: string|null; notes: string|null;
+  paid_at: string|null; created_at: string; updated_at: string;
+}
+
+export const getAffiliateStats = () =>
+  adminBff.get<{ data: AffiliateStats }>('/affiliates?view=stats');
+
+export const getAffiliateApplications = (params?: {
+  status?: string; platform?: string; search?: string; page?: number; limit?: number;
+}) => {
+  const qs = new URLSearchParams({ view: 'applications' });
+  if (params?.status)   qs.set('status',   params.status);
+  if (params?.platform) qs.set('platform', params.platform);
+  if (params?.search)   qs.set('search',   params.search);
+  if (params?.page)     qs.set('page',     String(params.page));
+  if (params?.limit)    qs.set('limit',    String(params.limit));
+  return adminBff.get<{ data: AffiliateApplication[]; total: number; page: number; limit: number }>(`/affiliates?${qs}`);
+};
+
+export const updateAffiliateApplication = (id: string, data: Partial<AffiliateApplication>) =>
+  adminBff.patch<{ data: AffiliateApplication }>(`/affiliates/applications/${id}`, data);
+
+export const approveAffiliateApplication = (id: string, data: {
+  tier?: AffiliatePartnerTier; commission_pct?: number; payout_method?: string; notes?: string;
+}) =>
+  adminBff.post<{ data: AffiliatePartner }>(`/affiliates/applications/${id}?action=approve`, data);
+
+export const getAffiliatePartners = (params?: {
+  tier?: string; status?: string; platform?: string; search?: string; page?: number; limit?: number;
+}) => {
+  const qs = new URLSearchParams({ view: 'partners' });
+  if (params?.tier)     qs.set('tier',     params.tier);
+  if (params?.status)   qs.set('status',   params.status);
+  if (params?.platform) qs.set('platform', params.platform);
+  if (params?.search)   qs.set('search',   params.search);
+  if (params?.page)     qs.set('page',     String(params.page));
+  if (params?.limit)    qs.set('limit',    String(params.limit));
+  return adminBff.get<{ data: AffiliatePartner[]; total: number; page: number; limit: number }>(`/affiliates?${qs}`);
+};
+
+export const createAffiliatePartner = (data: Partial<AffiliatePartner>) =>
+  adminBff.post<{ data: AffiliatePartner }>('/affiliates/partners', data);
+
+export const updateAffiliatePartner = (id: string, data: Partial<AffiliatePartner>) =>
+  adminBff.patch<{ data: AffiliatePartner }>(`/affiliates/partners/${id}`, data);
+
+export const terminateAffiliatePartner = (id: string) =>
+  adminBff.delete<{ data: AffiliatePartner }>(`/affiliates/partners/${id}`);
+
+export const getAffiliatePayouts = (params?: {
+  partner_id?: string; status?: string; page?: number; limit?: number;
+}) => {
+  const qs = new URLSearchParams({ view: 'payouts' });
+  if (params?.partner_id) qs.set('partner_id', params.partner_id);
+  if (params?.status)     qs.set('status',     params.status);
+  if (params?.page)       qs.set('page',       String(params.page));
+  if (params?.limit)      qs.set('limit',      String(params.limit));
+  return adminBff.get<{ data: AffiliatePayout[]; total: number; page: number; limit: number }>(`/affiliates?${qs}`);
+};
+
+export const createAffiliatePayout = (data: Partial<AffiliatePayout>) =>
+  adminBff.post<{ data: AffiliatePayout }>('/affiliates/payouts', data);
+
+export const updateAffiliatePayout = (id: string, data: Partial<AffiliatePayout>) =>
+  adminBff.patch<{ data: AffiliatePayout }>(`/affiliates/payouts/${id}`, data);
+
+// ── Corporate / Pro Business Travel ──────────────────────────────────────────
+
+export type CorporateTier     = 'enterprise'|'premium'|'standard';
+export type CorporateStatus   = 'prospect'|'active'|'paused'|'churned';
+export type CorporateIndustry = 'government'|'finance'|'oil_gas'|'tech'|'healthcare'|
+                                'education'|'ngo'|'retail'|'hospitality'|'other';
+export type FlightClass       = 'first'|'business'|'premium_economy'|'economy';
+export type ContactRole       = 'decision_maker'|'travel_manager'|'booker'|'finance'|'other';
+export type EnquiryStatus     = 'new'|'contacted'|'qualified'|'converted'|'lost';
+
+export interface CorporateStats {
+  accounts: {
+    total: number; active: number; prospect: number; paused: number; churned: number;
+    by_tier: { enterprise: number; premium: number; standard: number };
+    total_bookings: number; total_spend_sar: number;
+  };
+  enquiries: { total: number; new: number; contacted: number; qualified: number; converted: number; lost: number };
+  contracts: { expiring_60d: number };
+}
+
+export interface CorporateAccount {
+  id: string; company_name: string; industry: CorporateIndustry; country: string|null;
+  tier: CorporateTier; status: CorporateStatus;
+  annual_travel_budget_sar: number; max_flight_class: FlightClass;
+  max_hotel_stars: number; per_diem_sar: number;
+  preferred_airlines: string[]|null; advance_booking_days: number;
+  owner: string|null; contract_start: string|null; contract_end: string|null;
+  discount_pct: number; total_bookings: number; total_spend_sar: number;
+  notes: string|null; last_activity_at: string|null;
+  portal_user_id: string|null; activated_at: string|null;
+  created_at: string; updated_at: string;
+}
+
+export interface CorporateContact {
+  id: string; account_id: string; account_name: string;
+  name: string; title: string|null; email: string|null; phone: string|null;
+  role: ContactRole; is_primary: boolean; created_at: string; updated_at: string;
+}
+
+export interface CorporateEnquiry {
+  id: string; account_id: string|null; company_name: string;
+  contact_name: string; email: string; phone: string|null;
+  traveler_count: number; destinations: string|null; travel_dates: string|null;
+  message: string|null; status: EnquiryStatus;
+  assigned_to: string|null; admin_notes: string|null; source: string;
+  // Phase 6: enhanced application fields
+  job_title: string|null; company_size: string|null;
+  country: string|null; industry: string|null;
+  estimated_monthly_budget_sar: number|null;
+  hear_about_us: string|null;
+  created_at: string; updated_at: string;
+}
+
+export const getCorporateStats = () =>
+  adminBff.get<{ data: CorporateStats }>('/corporate?view=stats');
+
+export const getCorporateAccounts = (params?: {
+  tier?: string; status?: string; industry?: string; country?: string; search?: string;
+  page?: number; limit?: number;
+}) => {
+  const qs = new URLSearchParams({ view: 'accounts' });
+  if (params?.tier)     qs.set('tier',     params.tier);
+  if (params?.status)   qs.set('status',   params.status);
+  if (params?.industry) qs.set('industry', params.industry);
+  if (params?.country)  qs.set('country',  params.country);
+  if (params?.search)   qs.set('search',   params.search);
+  if (params?.page)     qs.set('page',     String(params.page));
+  if (params?.limit)    qs.set('limit',    String(params.limit));
+  return adminBff.get<{ data: CorporateAccount[]; total: number; page: number; limit: number }>(`/corporate?${qs}`);
+};
+
+export const createCorporateAccount = (data: Partial<CorporateAccount>) =>
+  adminBff.post<{ data: CorporateAccount }>('/corporate/accounts', data);
+
+export const updateCorporateAccount = (id: string, data: Partial<CorporateAccount>) =>
+  adminBff.patch<{ data: CorporateAccount }>(`/corporate/accounts/${id}`, data);
+
+export const deleteCorporateAccount = (id: string) =>
+  adminBff.delete<{ data: CorporateAccount }>(`/corporate/accounts/${id}`);
+
+export const activateCorporateAccount = (
+  id: string,
+  data: { email: string; password: string; name?: string },
+) =>
+  adminBff.post<{ data: CorporateAccount; portal_user: { id: string; email: string; role: string } }>(
+    `/corporate/accounts/${id}/activate`,
+    data,
+  );
+
+export const getCorporateContacts = (accountId: string) =>
+  adminBff.get<{ data: CorporateContact[] }>(`/corporate/accounts/${accountId}/contacts`);
+
+export const createCorporateContact = (accountId: string, data: Partial<CorporateContact>) =>
+  adminBff.post<{ data: CorporateContact }>(`/corporate/accounts/${accountId}/contacts`, data);
+
+export const updateCorporateContact = (accountId: string, cid: string, data: Partial<CorporateContact>) =>
+  adminBff.patch<{ data: CorporateContact }>(`/corporate/accounts/${accountId}/contacts/${cid}`, data);
+
+export const deleteCorporateContact = (accountId: string, cid: string) =>
+  adminBff.delete<{ success: boolean }>(`/corporate/accounts/${accountId}/contacts/${cid}`);
+
+export const getCorporateEnquiries = (params?: {
+  status?: string; account_id?: string; search?: string; page?: number; limit?: number;
+}) => {
+  const qs = new URLSearchParams({ view: 'enquiries' });
+  if (params?.status)     qs.set('status',     params.status);
+  if (params?.account_id) qs.set('account_id', params.account_id);
+  if (params?.search)     qs.set('search',     params.search);
+  if (params?.page)       qs.set('page',       String(params.page));
+  if (params?.limit)      qs.set('limit',      String(params.limit));
+  return adminBff.get<{ data: CorporateEnquiry[]; total: number; page: number; limit: number }>(`/corporate?${qs}`);
+};
+
+export const createCorporateEnquiry = (data: Partial<CorporateEnquiry>) =>
+  adminBff.post<{ data: CorporateEnquiry }>('/corporate/enquiries', data);
+
+export const updateCorporateEnquiry = (id: string, data: Partial<CorporateEnquiry>) =>
+  adminBff.patch<{ data: CorporateEnquiry }>(`/corporate/enquiries/${id}`, data);
+
+export const approveCorporateEnquiry = (id: string, notes?: string) =>
+  adminBff.post<{ data: CorporateEnquiry; account: CorporateAccount; portal_user: { id: string; email: string } }>(
+    `/corporate/enquiries/${id}/approve`, { notes }
+  );
+
+export const rejectCorporateEnquiry = (id: string, reason?: string) =>
+  adminBff.post<{ data: CorporateEnquiry }>(`/corporate/enquiries/${id}/reject`, { reason });
+
+// ── Corporate Bookings (admin view) ──────────────────────────────────────────
+
+export type CorpBookingType   = 'flight' | 'hotel' | 'car' | 'package';
+export type CorpBookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'failed';
+
+export interface CorporateBookingAdmin {
+  id: string; account_id: string; employee_id: string;
+  booked_by_user_id: string; booking_ref: string|null;
+  booking_type: CorpBookingType; status: CorpBookingStatus;
+  origin: string|null; destination: string;
+  depart_date: string; return_date: string|null;
+  flight_class: string|null; hotel_stars: number|null;
+  estimated_cost_sar: number; actual_cost_sar: number|null;
+  currency: string; policy_compliant: boolean;
+  policy_flags: string[]|null; requires_approval: boolean;
+  approved_by: string|null; approved_at: string|null;
+  purpose: string|null; notes: string|null;
+  employee_name: string; employee_email: string;
+  employee_dept: string|null; employee_nationality: string|null;
+  created_at: string; updated_at: string;
+}
+
+export const getAdminCorporateBookings = (params?: {
+  account_id?: string; status?: string; booking_type?: string;
+  pending_approval?: boolean; page?: number; limit?: number;
+}) => {
+  const qs = new URLSearchParams();
+  if (params?.account_id)       qs.set('account_id',       params.account_id);
+  if (params?.status)           qs.set('status',           params.status);
+  if (params?.booking_type)     qs.set('booking_type',     params.booking_type);
+  if (params?.pending_approval) qs.set('pending_approval', 'true');
+  if (params?.page)             qs.set('page',             String(params.page));
+  if (params?.limit)            qs.set('limit',            String(params.limit));
+  const q = qs.toString();
+  return adminBff.get<{ data: CorporateBookingAdmin[]; total: number; page: number; limit: number }>(
+    `/corporate/bookings${q ? `?${q}` : ''}`
+  );
+};
+
+export const confirmCorporateBooking = (id: string, data: { booking_ref?: string; actual_cost_sar?: number }) =>
+  adminBff.post<{ data: CorporateBookingAdmin }>(`/corporate/bookings/${id}?action=confirm`, data);
+
+export const rejectCorporateBooking = (id: string, data: { reason?: string }) =>
+  adminBff.post<{ data: CorporateBookingAdmin }>(`/corporate/bookings/${id}?action=reject`, data);
+
+export const updateCorporateBooking = (id: string, data: Partial<CorporateBookingAdmin>) =>
+  adminBff.patch<{ data: CorporateBookingAdmin }>(`/corporate/bookings/${id}`, data);
+
+// ── Corporate Employees (admin view) ─────────────────────────────────────────
+
+export type EmployeeStatus = 'active' | 'inactive';
+
+export interface CorporateEmployee {
+  id: string; account_id: string; employee_ref: string | null;
+  name: string; email: string | null; phone: string | null;
+  department: string | null; job_title: string | null;
+  nationality: string | null;
+  passport_number: string | null; passport_expiry: string | null;
+  date_of_birth: string | null;
+  is_travel_manager: boolean; status: EmployeeStatus;
+  created_at: string; updated_at: string;
+}
+
+export const getAdminCorporateEmployees = (params?: {
+  account_id?: string; status?: string; department?: string;
+  search?: string; page?: number; limit?: number;
+}) => {
+  const qs = new URLSearchParams();
+  if (params?.account_id)  qs.set('account_id',  params.account_id);
+  if (params?.status)      qs.set('status',       params.status);
+  if (params?.department)  qs.set('department',   params.department);
+  if (params?.search)      qs.set('search',       params.search);
+  if (params?.page)        qs.set('page',         String(params.page));
+  if (params?.limit)       qs.set('limit',        String(params.limit));
+  const q = qs.toString();
+  return adminBff.get<{ data: CorporateEmployee[]; total: number; page: number; limit: number }>(
+    `/corporate/employees${q ? `?${q}` : ''}`
+  );
+};
+
+export const updateAdminCorporateEmployee = (id: string, data: Partial<CorporateEmployee>) =>
+  adminBff.patch<{ data: CorporateEmployee }>('/corporate/employees', { id, ...data });
+
+// ── Corporate Trip Groups (admin view) ───────────────────────────────────────
+
+export type TripGroupStatus = 'draft' | 'confirmed' | 'cancelled';
+
+export interface AdminTripGroup {
+  id: string; account_id: string; name: string;
+  description: string | null; destination: string;
+  origin: string | null; depart_date: string; return_date: string | null;
+  status: TripGroupStatus; purpose: string | null;
+  traveler_count: number; created_at: string; updated_at: string;
+}
+
+export const getAdminTripGroups = (params?: {
+  account_id?: string; status?: string; page?: number; limit?: number;
+}) => {
+  const qs = new URLSearchParams();
+  if (params?.account_id) qs.set('account_id', params.account_id);
+  if (params?.status)     qs.set('status',     params.status);
+  if (params?.page)       qs.set('page',       String(params.page));
+  if (params?.limit)      qs.set('limit',      String(params.limit));
+  const q = qs.toString();
+  return adminBff.get<{ data: AdminTripGroup[]; total: number; page: number; limit: number }>(
+    `/corporate/trip-groups${q ? `?${q}` : ''}`
+  );
+};
+
 // ── Revenue Management ────────────────────────────────────────────────────────
 export type RevenueRuleType      = 'seasonal'|'event'|'demand'|'occupancy'|'manual';
 export type RevenueAdjustment    = 'percent'|'absolute';
@@ -3081,4 +3425,1205 @@ export const deleteBiReport    = (id: string) => adminBff.delete<{ data: { id: s
 export const getBiAlerts       = (p?: Record<string,unknown>) => adminBff.get<{ data: BiAlert[] }>('/analytics?view=alerts', { params: p });
 export const createBiAlert     = (data: Partial<BiAlert>) => adminBff.post<{ data: BiAlert }>('/analytics/alerts', data);
 export const updateBiAlert     = (id: string, data: Partial<BiAlert>) => adminBff.patch<{ data: BiAlert }>(`/analytics/alerts/${id}`, data);
+
+// ─── Workflow Engine (/api/admin/workflow/*) ──────────────────────────────────
+
+export type WfDefinitionStatus = 'draft' | 'active' | 'archived';
+export type WfInstanceStatus   = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'cancelled' | 'overdue';
+export type WfStepStatus       = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'escalated' | 'skipped' | 'overdue';
+export type WfStepType         = 'action' | 'approval' | 'condition' | 'notification' | 'ai_check';
+export type WfDecision         = 'approve' | 'reject' | 'escalate';
+export type WfSlaHealth        = 'on_track' | 'due_soon' | 'overdue' | 'no_sla';
+
+export interface WfStepDef {
+  id:                       string;
+  name:                     string;
+  type:                     WfStepType;
+  assignee_role?:           string;
+  assignee_email?:          string;
+  sla_hours?:               number;
+  escalate_to_role?:        string;
+  on_approve?:              string;   // step id of next step on approval
+  on_reject?:               string;   // step id if rejected (rare — usually closes instance)
+  auto_approve_condition?:  { field: string; op: 'lt'|'lte'|'gt'|'gte'|'eq'; value: number } | null;
+}
+
+export interface WfDefinition {
+  id:              string;
+  name:            string;
+  department:      string;
+  trigger_event:   string;
+  description:     string | null;
+  version:         string;
+  status:          WfDefinitionStatus;
+  steps:           WfStepDef[];
+  approval_chain:  string[];
+  created_by:      string;
+  approved_by:     string | null;
+  approved_at:     string | null;
+  parent_id:       string | null;
+  created_at:      string;
+  updated_at:      string;
+}
+
+export interface WfInstance {
+  id:                  string;
+  definition_id:       string;
+  definition_version:  string;
+  trigger_event:       string;
+  trigger_ref:         string | null;
+  trigger_ref_type:    string | null;
+  status:              WfInstanceStatus;
+  initiated_by:        string;
+  current_step_index:  number;
+  context:             Record<string, unknown>;
+  outcome_note:        string | null;
+  started_at:          string;
+  completed_at:        string | null;
+  created_at:          string;
+  updated_at:          string;
+  // joined
+  workflow_name?:      string;
+  department?:         string;
+  definition_steps?:   WfStepDef[];
+}
+
+export interface WfStepLog {
+  id:               string;
+  instance_id:      string;
+  step_id:          string;
+  step_name:        string;
+  step_type:        WfStepType;
+  assignee_role:    string | null;
+  assignee_id:      string | null;
+  assignee_email:   string | null;
+  status:           WfStepStatus;
+  sla_hours:        number | null;
+  sla_deadline:     string | null;
+  decision:         WfDecision | 'auto_approved' | null;
+  decision_by:      string | null;
+  decision_at:      string | null;
+  comments:         string | null;
+  escalated_to:     string | null;
+  reminder_sent:    boolean;
+  activated_at:     string | null;
+  created_at:       string;
+  updated_at:       string;
+  // computed
+  sla_health?:      WfSlaHealth;
+  sla_minutes_remaining?: number | null;
+}
+
+export interface WfEvent {
+  id:          string;
+  instance_id: string;
+  step_log_id: string | null;
+  event_type:  string;
+  actor:       string;
+  meta:        Record<string, unknown> | null;
+  created_at:  string;
+  step_name?:  string;
+}
+
+export interface WfTaskInboxRow extends WfStepLog {
+  instance_id:       string;
+  trigger_event:     string;
+  trigger_ref:       string | null;
+  trigger_ref_type:  string | null;
+  context:           Record<string, unknown>;
+  initiated_by:      string;
+  instance_status:   WfInstanceStatus;
+  started_at:        string;
+  workflow_name:     string;
+  department:        string;
+}
+
+export interface WfTaskStats {
+  pending:        number;
+  overdue:        number;
+  escalated:      number;
+  completed_week: number;
+}
+
+export interface WfDashboardData {
+  active_by_department: { department: string; count: number }[];
+  instances_by_status:  { status: string; count: number }[];
+  sla_health:           { no_sla: number; on_track: number; due_soon: number; overdue: number };
+  recently_completed:   WfInstance[];
+  generated_at:         string;
+}
+
+// ── Definitions ───────────────────────────────────────────────────────────────
+
+export const getWfDefinitions = (p?: { department?: string; status?: WfDefinitionStatus; trigger_event?: string; limit?: number; offset?: number }) =>
+  adminBff.get<{ total: number; rows: WfDefinition[] }>('/workflow/definitions', { params: p }).then(r => r.data);
+
+export const getWfDefinition = (id: string) =>
+  adminBff.get<{ data: WfDefinition }>(`/workflow/definitions/${id}`).then(r => r.data.data);
+
+export const createWfDefinition = (data: { name: string; department: string; trigger_event: string; description?: string; steps: WfStepDef[]; approval_chain?: string[] }) =>
+  adminBff.post<{ data: WfDefinition }>('/workflow/definitions', data).then(r => r.data.data);
+
+export const updateWfDefinition = (id: string, data: Partial<{ name: string; department: string; trigger_event: string; description: string; steps: WfStepDef[]; approval_chain: string[] }>) =>
+  adminBff.patch<{ data: WfDefinition }>(`/workflow/definitions/${id}`, data).then(r => r.data.data);
+
+export const approveWfDefinition = (id: string) =>
+  adminBff.post<{ data: WfDefinition }>(`/workflow/definitions/${id}/approve`).then(r => r.data.data);
+
+export const archiveWfDefinition = (id: string) =>
+  adminBff.post<{ data: WfDefinition }>(`/workflow/definitions/${id}/archive`).then(r => r.data.data);
+
+export const newWfDefinitionVersion = (id: string) =>
+  adminBff.post<{ data: WfDefinition }>(`/workflow/definitions/${id}/new-version`).then(r => r.data.data);
+
+export const getWfDefinitionVersions = (id: string) =>
+  adminBff.get<{ rows: Pick<WfDefinition,'id'|'version'|'status'|'created_by'|'approved_by'|'approved_at'|'created_at'|'updated_at'>[] }>(`/workflow/definitions/${id}/versions`).then(r => r.data.rows);
+
+// ── Instances ─────────────────────────────────────────────────────────────────
+
+export const getWfInstances = (p?: { status?: WfInstanceStatus; department?: string; trigger_event?: string; initiated_by?: string; limit?: number; offset?: number }) =>
+  adminBff.get<{ total: number; rows: WfInstance[] }>('/workflow/instances', { params: p }).then(r => r.data);
+
+export const getWfInstance = (id: string) =>
+  adminBff.get<{ data: WfInstance & { step_logs: WfStepLog[] } }>(`/workflow/instances/${id}`).then(r => r.data.data);
+
+export const getWfInstanceEvents = (id: string) =>
+  adminBff.get<{ rows: WfEvent[] }>(`/workflow/instances/${id}/events`).then(r => r.data.rows);
+
+export const launchWfInstance = (data: { trigger_event: string; trigger_ref?: string; trigger_ref_type?: string; context?: Record<string, unknown> }) =>
+  adminBff.post<{ data: WfInstance }>('/workflow/instances/launch', data).then(r => r.data.data);
+
+export const cancelWfInstance = (id: string, reason?: string) =>
+  adminBff.post<{ message: string }>(`/workflow/instances/${id}/cancel`, { reason }).then(r => r.data);
+
+// ── Approvals ─────────────────────────────────────────────────────────────────
+
+export const wfDecide = (data: { instance_id: string; step_log_id: string; decision: WfDecision; comments?: string }) =>
+  adminBff.post<{ message: string; result: { status: string } }>('/workflow/approvals/decide', data).then(r => r.data);
+
+export const getMyWfPendingApprovals = (p?: { limit?: number; offset?: number }) =>
+  adminBff.get<{ total: number; rows: (WfStepLog & { instance_id: string; trigger_event: string; context: Record<string,unknown>; workflow_name: string; department: string; sla_health: WfSlaHealth })[] }>('/workflow/approvals/pending', { params: p }).then(r => r.data);
+
+export const getMyWfApprovalHistory = (p?: { limit?: number; offset?: number }) =>
+  adminBff.get<{ total: number; rows: (WfStepLog & { workflow_name: string; department: string; instance_status: WfInstanceStatus })[] }>('/workflow/approvals/history', { params: p }).then(r => r.data);
+
+// ── Tasks ─────────────────────────────────────────────────────────────────────
+
+export const getWfTaskInbox = (p?: { status?: string; limit?: number; offset?: number }) =>
+  adminBff.get<{ total: number; rows: WfTaskInboxRow[]; meta: { user: string; fetched: string } }>('/workflow/tasks/inbox', { params: p }).then(r => r.data);
+
+export const getWfTaskStats = () =>
+  adminBff.get<{ data: WfTaskStats }>('/workflow/tasks/stats').then(r => r.data.data);
+
+export const getWfDashboard = () =>
+  adminBff.get<{ data: WfDashboardData }>('/workflow/tasks/dashboard').then(r => r.data.data);
+
+export const getWfOverdue = (p?: { limit?: number; offset?: number }) =>
+  adminBff.get<{ total: number; rows: (WfStepLog & { workflow_name: string; department: string; hours_overdue: number })[] }>('/workflow/tasks/overdue', { params: p }).then(r => r.data);
+
+// ── AI Recommendation ─────────────────────────────────────────────────────────
+
+export interface WfRecommendation {
+  recommended_decision: 'approve' | 'reject' | 'investigate';
+  confidence:           'high' | 'medium' | 'low';
+  context_summary:      string;
+  rationale:            string;
+  risk_factors:         string[];
+  policy_notes:         string[];
+}
+
+export interface WfRecommendationResponse {
+  step_log_id:   string;
+  workflow_name: string;
+  step_name:     string;
+  department:    string;
+  recommendation: WfRecommendation;
+  generated_at:  string;
+}
+
+export const getWfRecommendation = (stepLogId: string) =>
+  adminBff.get<WfRecommendationResponse>(`/workflow/tasks/${stepLogId}/recommend`).then(r => r.data);
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+
+export interface WfAnalyticsOverview {
+  total_instances:         number;
+  active:                  number;
+  approved:                number;
+  rejected:                number;
+  cancelled:               number;
+  completed_30d:           number;
+  completed_7d:            number;
+  approval_rate_pct:       number | null;
+  avg_completion_hours:    number | null;
+  median_completion_hours: number | null;
+  p90_completion_hours:    number | null;
+  sla_breach_rate_pct:     number;
+  total_steps_with_sla:    number;
+  sla_breached:            number;
+}
+
+export interface WfAnalyticsByDefinition {
+  definition_id:        string;
+  workflow_name:        string;
+  department:           string;
+  trigger_event:        string;
+  total_runs:           number;
+  approved:             number;
+  rejected:             number;
+  cancelled:            number;
+  active:               number;
+  approval_rate_pct:    number | null;
+  avg_completion_hours: number | null;
+  bottleneck_step:      string | null;
+  bottleneck_avg_hours: number | null;
+}
+
+export interface WfAnalyticsByDepartment {
+  department:           string;
+  total_runs:           number;
+  active:               number;
+  approved:             number;
+  rejected:             number;
+  overdue:              number;
+  approval_rate_pct:    number | null;
+  avg_completion_hours: number | null;
+}
+
+export interface WfAnalyticsBottleneck {
+  step_name:        string;
+  workflow_name:    string;
+  department:       string;
+  total_decisions:  number;
+  avg_wait_hours:   number;
+  max_wait_hours:   number;
+  p90_wait_hours:   number;
+  escalation_count: number;
+  approvals:        number;
+  rejections:       number;
+}
+
+export interface WfAnalyticsTrendPoint {
+  month:     string;
+  completed: number;
+  approved:  number;
+  rejected:  number;
+}
+
+export const getWfAnalyticsOverview    = () =>
+  adminBff.get<{ data: WfAnalyticsOverview }>('/workflow/analytics/overview').then(r => r.data.data);
+
+export const getWfAnalyticsByDefinition = (limit = 50) =>
+  adminBff.get<{ data: WfAnalyticsByDefinition[] }>('/workflow/analytics/by-definition', { params: { limit } }).then(r => r.data.data);
+
+export const getWfAnalyticsByDepartment = () =>
+  adminBff.get<{ data: WfAnalyticsByDepartment[] }>('/workflow/analytics/by-department').then(r => r.data.data);
+
+export const getWfAnalyticsBottlenecks = (limit = 10) =>
+  adminBff.get<{ data: WfAnalyticsBottleneck[] }>('/workflow/analytics/bottlenecks', { params: { limit } }).then(r => r.data.data);
+
+export const getWfAnalyticsTrend = () =>
+  adminBff.get<{ data: WfAnalyticsTrendPoint[] }>('/workflow/analytics/trend').then(r => r.data.data);
+
+// ─── Admin AI Assistant ───────────────────────────────────────────────────────
+
+export interface AiChatMessage {
+  role:    'user' | 'assistant';
+  content: string;
+}
+
+export interface AiChatResponse {
+  response:        string;
+  tool_calls_made: string[];
+}
+
+export const adminAiChat = (
+  message: string,
+  history: AiChatMessage[] = [],
+): Promise<AiChatResponse> =>
+  fetch('/api/admin/ai-assistant', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ message, history }),
+  }).then(r => r.json());
+
+// ─── AI Daily Briefings ───────────────────────────────────────────────────────
+
+export interface DailyBriefing {
+  id:            string;
+  briefing_date: string;
+  content_md:    string;
+  tool_calls:    string[];
+  generated_at:  string;
+  /** Only on list view — first 300 chars */
+  preview?:      string;
+  tool_count?:   number;
+}
+
+export interface DailyBriefingListResponse {
+  data:   DailyBriefing[];
+  total:  number;
+  limit:  number;
+  offset: number;
+}
+
+export const listDailyBriefings = (limit = 20, offset = 0): Promise<DailyBriefingListResponse> =>
+  fetch(`/api/admin/briefings?limit=${limit}&offset=${offset}`, { cache: 'no-store' })
+    .then(r => r.json());
+
+export const getDailyBriefing = (id: string): Promise<{ data: DailyBriefing }> =>
+  fetch(`/api/admin/briefings/${id}`, { cache: 'no-store' }).then(r => r.json());
+
+export const generateDailyBriefing = (): Promise<{ data: DailyBriefing; message: string }> =>
+  fetch('/api/admin/briefings/generate', { method: 'POST', cache: 'no-store' }).then(r => r.json());
+
+// ─── AI Document Generator ────────────────────────────────────────────────────
+
+export type AiDocumentType =
+  | 'offer_letter'
+  | 'expense_rejection'
+  | 'deal_proposal_email'
+  | 'supplier_contract_summary'
+  | 'welcome_email'
+  | 'performance_improvement_plan'
+  | 'nda_draft'
+  | 'po_justification';
+
+export interface AiDocument {
+  id:           string;
+  type:         AiDocumentType;
+  title:        string;
+  content_md:   string;
+  context_json: Record<string, string>;
+  created_by:   string;
+  created_at:   string;
+  /** List-view only — first 200 chars */
+  preview?:     string;
+}
+
+export interface AiDocumentListResponse {
+  data:   AiDocument[];
+  total:  number;
+  limit:  number;
+  offset: number;
+}
+
+export const listAiDocuments = (limit = 20, offset = 0, type?: string): Promise<AiDocumentListResponse> => {
+  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  if (type) params.set('type', type);
+  return fetch(`/api/admin/documents?${params}`, { cache: 'no-store' }).then(r => r.json());
+};
+
+export const generateAiDocument = (
+  type: AiDocumentType,
+  fields: Record<string, string>,
+): Promise<{ data: AiDocument }> =>
+  fetch('/api/admin/documents', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ type, fields }),
+  }).then(r => r.json());
+
+// ─── AI Career Application Screening ─────────────────────────────────────────
+
+export type ScreeningRecommendation = 'strong_yes' | 'yes' | 'maybe' | 'no';
+
+export interface ScreeningResult {
+  id:                  string;
+  application_id:      string;
+  applicant_name:      string;
+  position:            string;
+  overall_score:       number;
+  recommendation:      ScreeningRecommendation;
+  summary:             string;
+  strengths:           string[];
+  concerns:            string[];
+  interview_questions: string[];
+  culture_fit_notes:   string | null;
+  generated_at:        string;
+}
+
+/** Returns existing screening or null (404 → null) */
+export const getScreening = (applicationId: string): Promise<ScreeningResult | null> =>
+  fetch(`/api/admin/screening/${applicationId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then(j => j.data ?? null));
+
+/** Run a fresh AI screening for an application */
+export const screenApplication = (applicationId: string): Promise<{ data: ScreeningResult }> =>
+  fetch(`/api/admin/screening/${applicationId}`, {
+    method: 'POST',
+    cache:  'no-store',
+  }).then(r => r.json());
 export const deleteBiAlert     = (id: string) => adminBff.delete<{ data: { id: string } }>(`/analytics/alerts/${id}`);
+
+// ─── AI Deal Intelligence ─────────────────────────────────────────────────────
+
+export type DealRiskLevel = 'low' | 'medium' | 'high' | 'critical';
+
+export interface DealAnalysis {
+  id:                  string;
+  deal_id:             string;
+  deal_title:          string;
+  partner_name:        string;
+  health_score:        number;
+  win_probability:     number;
+  risk_level:          DealRiskLevel;
+  summary:             string;
+  strengths:           string[];
+  key_risks:           string[];
+  stall_factors:       string[];
+  recommended_actions: string[];
+  competitive_notes:   string | null;
+  time_sensitivity:    string | null;
+  generated_at:        string;
+}
+
+/** Returns existing deal analysis or null (404 → null) */
+export const getDealAnalysis = (dealId: string): Promise<DealAnalysis | null> =>
+  fetch(`/api/admin/deal-intelligence/${dealId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: DealAnalysis }) => j.data ?? null));
+
+/** Run a fresh AI analysis for a deal */
+export const analyzeDeal = (dealId: string): Promise<{ data: DealAnalysis }> =>
+  fetch(`/api/admin/deal-intelligence/${dealId}`, {
+    method: 'POST',
+    cache:  'no-store',
+  }).then(r => r.json());
+
+// ─── AI Support Ticket Triage ─────────────────────────────────────────────────
+
+export type TicketSentiment = 'positive' | 'neutral' | 'frustrated' | 'angry';
+
+export interface SupportTriage {
+  id:                  string;
+  ticket_id:           string;
+  ticket_subject:      string;
+  sentiment:           TicketSentiment;
+  urgency_override:    TicketPriority;
+  category_suggestion: TicketCategory;
+  summary:             string;
+  root_cause:          string | null;
+  draft_response:      string;
+  escalation_flag:     boolean;
+  escalation_reason:   string | null;
+  resolution_steps:    string[];
+  pattern_note:        string | null;
+  generated_at:        string;
+}
+
+/** Returns existing triage or null (404 → null) */
+export const getSupportTriage = (ticketId: string): Promise<SupportTriage | null> =>
+  fetch(`/api/admin/support-triage/${ticketId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: SupportTriage }) => j.data ?? null));
+
+/** Run a fresh AI triage for a support ticket */
+export const triageTicket = (ticketId: string): Promise<{ data: SupportTriage }> =>
+  fetch(`/api/admin/support-triage/${ticketId}`, {
+    method: 'POST',
+    cache:  'no-store',
+  }).then(r => r.json());
+
+// ─── AI Expense Claim Analyzer ────────────────────────────────────────────────
+
+export type ExpenseRecommendation = 'approve' | 'reject' | 'query';
+
+export interface ExpenseAnalysis {
+  id:               string;
+  claim_id:         string;
+  employee_name:    string;
+  recommendation:   ExpenseRecommendation;
+  confidence:       number;
+  policy_flags:     string[];
+  anomaly_flags:    string[];
+  summary:          string;
+  justification:    string;
+  suggested_notes:  string | null;
+  generated_at:     string;
+}
+
+/** Returns existing expense analysis or null (404 → null) */
+export const getExpenseAnalysis = (claimId: string): Promise<ExpenseAnalysis | null> =>
+  fetch(`/api/admin/expense-analyzer/${claimId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: ExpenseAnalysis }) => j.data ?? null));
+
+/** Run a fresh AI analysis for an expense claim */
+export const analyzeExpenseClaim = (claimId: string): Promise<{ data: ExpenseAnalysis }> =>
+  fetch(`/api/admin/expense-analyzer/${claimId}`, {
+    method: 'POST',
+    cache:  'no-store',
+  }).then(r => r.json());
+
+// ─── AI Fraud Risk Scorer ─────────────────────────────────────────────────────
+
+export type FraudThreatLevel = 'critical' | 'high' | 'medium' | 'low';
+export type FraudVerdict     = 'block' | 'escalate' | 'review' | 'clear';
+
+export interface FraudScore {
+  id:                   string;
+  case_id:              string;
+  booking_ref:          string | null;
+  threat_level:         FraudThreatLevel;
+  verdict:              FraudVerdict;
+  confidence:           number;
+  evidence_summary:     string;
+  key_indicators:       string[];
+  mitigating_factors:   string[];
+  recommended_action:   string;
+  watchlist_should_add: boolean;
+  watchlist_type:       string | null;
+  watchlist_reason:     string | null;
+  pattern_note:         string | null;
+  generated_at:         string;
+}
+
+/** Returns existing fraud score or null (404 → null) */
+export const getFraudScore = (caseId: string): Promise<FraudScore | null> =>
+  fetch(`/api/admin/fraud-scorer/${caseId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: FraudScore }) => j.data ?? null));
+
+/** Run a fresh AI fraud score for a case */
+export const scoreFraudCase = (caseId: string): Promise<{ data: FraudScore }> =>
+  fetch(`/api/admin/fraud-scorer/${caseId}`, {
+    method: 'POST',
+    cache:  'no-store',
+  }).then(r => r.json());
+
+// ─── AI Contract & Legal Document Reviewer ───────────────────────────────────
+
+export type ContractRiskLevel = 'low' | 'medium' | 'high' | 'critical';
+
+export interface ContractReview {
+  id:               string;
+  doc_id:           string;
+  doc_title:        string | null;
+  doc_type:         string | null;
+  risk_level:       ContractRiskLevel;
+  overall_summary:  string;
+  risk_flags:       string[];
+  missing_clauses:  string[];
+  compliance_notes: string[];
+  expiry_alert:     string | null;
+  recommendations:  string[];
+  generated_at:     string;
+}
+
+/** Returns existing contract review or null (404 → null) */
+export const getContractReview = (docId: string): Promise<ContractReview | null> =>
+  fetch(`/api/admin/contract-review/${docId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: ContractReview }) => j.data ?? null));
+
+/** Run a fresh AI review for a legal document */
+export const reviewContract = (docId: string): Promise<{ data: ContractReview }> =>
+  fetch(`/api/admin/contract-review/${docId}`, {
+    method: 'POST',
+    cache:  'no-store',
+  }).then(r => r.json());
+
+// ─── AI KPI Root Cause Analyzer ──────────────────────────────────────────────
+
+export interface KpiRecommendedAction {
+  department: string;
+  action:     string;
+}
+
+export interface KpiAnalysis {
+  id:                   string;
+  alert_id:             string;
+  kpi_name:             string | null;
+  alert_severity:       string | null;
+  root_cause_dept:      string;
+  root_cause_summary:   string;
+  confidence:           'high' | 'medium' | 'low';
+  contributing_factors: string[];
+  ruling_out:           string[];
+  recommended_actions:  KpiRecommendedAction[];
+  escalate_to:          string[];
+  monitoring_signals:   string[];
+  generated_at:         string;
+}
+
+/** Returns existing KPI analysis or null (404 → null) */
+export const getKpiAnalysis = (alertId: string): Promise<KpiAnalysis | null> =>
+  fetch(`/api/admin/kpi-analyzer/${alertId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: KpiAnalysis }) => j.data ?? null));
+
+/** Run a fresh AI KPI root cause analysis for a BI alert */
+export const analyzeKpiAlert = (alertId: string): Promise<{ data: KpiAnalysis }> =>
+  fetch(`/api/admin/kpi-analyzer/${alertId}`, {
+    method: 'POST',
+    cache:  'no-store',
+  }).then(r => r.json());
+
+// ─── AI DSR Auto-Fulfillment ──────────────────────────────────────────────────
+
+export interface DsrShardSummary {
+  shard:        string;
+  has_data:     boolean;
+  record_count: number;
+  tables_found: string[];
+}
+
+export interface DsrFulfillment {
+  id:                     string;
+  dsr_id:                 string;
+  email_snapshot:         string | null;
+  request_type:           string | null;
+  law:                    string | null;
+  cover_letter_md:        string;
+  data_summary:           string;
+  categories_found:       string[];
+  shard_summary:          DsrShardSummary[];
+  retention_notes:        string[];
+  recommended_redactions: string[];
+  sla_status:             'on_track' | 'at_risk' | 'overdue';
+  response_deadline:      string | null;
+  total_records_found:    number;
+  generated_at:           string;
+}
+
+/** Returns existing DSR fulfillment package or null (404 → null) */
+export const getDsrFulfillment = (dsrId: string): Promise<DsrFulfillment | null> =>
+  fetch(`/api/admin/dsr-fulfillment/${dsrId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: DsrFulfillment }) => j.data ?? null));
+
+/** Compile AI DSR fulfillment package (fans out across 8 shards — may take up to 60s) */
+export const compileDsrFulfillment = (dsrId: string): Promise<{ data: DsrFulfillment }> =>
+  fetch(`/api/admin/dsr-fulfillment/${dsrId}`, {
+    method: 'POST',
+    cache:  'no-store',
+  }).then(r => r.json());
+
+// ─── AI Workflow Builder ──────────────────────────────────────────────────────
+
+export interface WorkflowBuilderDraft {
+  name:           string;
+  department:     string;
+  trigger_event:  string;
+  description:    string;
+  approval_chain: string[];
+  steps:          WfStepDef[];
+  builder_notes:  string[];
+}
+
+/** Generate a draft workflow definition from a plain English description */
+export const generateWorkflowDraft = (payload: {
+  description: string;
+  department?: string;
+  context?:    string;
+}): Promise<{ data: WorkflowBuilderDraft; message: string }> =>
+  fetch('/api/admin/workflow-builder', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+    cache:   'no-store',
+  }).then(r => r.json());
+
+// ─── AI HR Performance Review Analyzer ───────────────────────────────────────
+
+export type PerfHealth = 'strong' | 'healthy' | 'concerning' | 'critical';
+
+export interface PerfTopPerformer   { employee_name: string; rating: number; strength: string }
+export interface PerfDevelopmentNeed { employee_name: string; rating: number; concern: string }
+
+export interface PerformanceAnalysis {
+  id:                     string;
+  department_id:          string;
+  department_name:        string | null;
+  overall_health:         PerfHealth;
+  team_summary:           string;
+  review_period:          string | null;
+  total_reviewed:         number;
+  top_performers:         PerfTopPerformer[];
+  development_needs:      PerfDevelopmentNeed[];
+  team_strengths:         string[];
+  development_priorities: string[];
+  manager_recommendations: string[];
+  risk_flags:             string[];
+  generated_at:           string;
+}
+
+export const getPerformanceAnalysis = (departmentId: string): Promise<PerformanceAnalysis | null> =>
+  fetch(`/api/admin/performance-analyzer/${departmentId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: PerformanceAnalysis }) => j.data ?? null));
+
+export const analyzePerformance = (departmentId: string): Promise<{ data: PerformanceAnalysis }> =>
+  fetch(`/api/admin/performance-analyzer/${departmentId}`, { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Vendor Due Diligence ──────────────────────────────────────────────────
+
+export type VendorRiskLevel       = 'low' | 'medium' | 'high' | 'critical';
+export type VendorApproveRec      = 'approve' | 'approve_with_conditions' | 'defer' | 'reject';
+
+export interface VendorDiligence {
+  id:                     string;
+  vendor_id:              string;
+  vendor_name:            string | null;
+  risk_level:             VendorRiskLevel;
+  overall_score:          number;
+  executive_summary:      string;
+  risk_flags:             string[];
+  missing_compliance:     string[];
+  financial_health_note:  string | null;
+  payment_history_note:   string | null;
+  sla_performance_note:   string | null;
+  recommendations:        string[];
+  approve_recommendation: VendorApproveRec;
+  generated_at:           string;
+}
+
+export const getVendorDiligence = (vendorId: string): Promise<VendorDiligence | null> =>
+  fetch(`/api/admin/vendor-diligence/${vendorId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: VendorDiligence }) => j.data ?? null));
+
+export const runVendorDiligence = (vendorId: string): Promise<{ data: VendorDiligence }> =>
+  fetch(`/api/admin/vendor-diligence/${vendorId}`, { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI CRM Deal Coach ────────────────────────────────────────────────────────
+
+export type DealMomentum      = 'accelerating' | 'steady' | 'stalled' | 'declining';
+export type DealRelationship  = 'strong' | 'warm' | 'cold' | 'at_risk';
+
+export interface DealNextAction { action: string; owner: string; timeline: string }
+
+export interface DealCoaching {
+  id:                    string;
+  deal_id:               string;
+  deal_title:            string | null;
+  partner_name:          string | null;
+  stage:                 string | null;
+  momentum:              DealMomentum;
+  win_probability_pct:   number;
+  stage_assessment:      string;
+  relationship_health:   DealRelationship;
+  risks:                 string[];
+  opportunities:         string[];
+  next_best_actions:     DealNextAction[];
+  competitive_intel_gap: string | null;
+  coaching_summary:      string;
+  red_flags:             string[];
+  generated_at:          string;
+}
+
+export const getDealCoaching = (dealId: string): Promise<DealCoaching | null> =>
+  fetch(`/api/admin/deal-coach/${dealId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: DealCoaching }) => j.data ?? null));
+
+export const coachDeal = (dealId: string): Promise<{ data: DealCoaching }> =>
+  fetch(`/api/admin/deal-coach/${dealId}`, { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Campaign Analyzer ─────────────────────────────────────────────────────
+
+export interface CampaignTopEntry    { name: string; channel: string; status: string; why: string }
+export interface CampaignUnderperformer { name: string; channel: string; issue: string; recommendation: string }
+export interface CampaignChannelInsight { channel: string; assessment: string; opportunity: string }
+
+export interface CampaignAnalysis {
+  id:                string;
+  snapshot_key:      string;
+  total_campaigns:   number;
+  active_campaigns:  number;
+  overall_health:    'excellent' | 'good' | 'fair' | 'poor';
+  executive_summary: string;
+  top_campaigns:     CampaignTopEntry[];
+  underperformers:   CampaignUnderperformer[];
+  channel_insights:  CampaignChannelInsight[];
+  budget_assessment: string | null;
+  content_gaps:      string[];
+  quick_wins:        string[];
+  recommendations:   string[];
+  risk_flags:        string[];
+  generated_at:      string;
+}
+
+export const getCampaignAnalysis = (): Promise<CampaignAnalysis | null> =>
+  fetch('/api/admin/campaign-analyzer', { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: CampaignAnalysis }) => j.data ?? null));
+
+export const analyzeCampaigns = (): Promise<{ data: CampaignAnalysis }> =>
+  fetch('/api/admin/campaign-analyzer', { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Account Health ────────────────────────────────────────────────────────
+
+export interface AccountNextTouchpoint { action: string; type: string; timeline: string; owner: string }
+
+export interface AccountHealth {
+  id:                 string;
+  account_id:         string;
+  account_name:       string | null;
+  churn_risk:         'critical' | 'high' | 'medium' | 'low';
+  health_score:       number;
+  engagement_trend:   'improving' | 'stable' | 'declining' | 'at_risk';
+  executive_summary:  string;
+  strengths:          string[];
+  concerns:           string[];
+  next_touchpoints:   AccountNextTouchpoint[];
+  renewal_alert:      string | null;
+  escalation_summary: string | null;
+  recommendations:    string[];
+  red_flags:          string[];
+  generated_at:       string;
+}
+
+export const getAccountHealth = (accountId: string): Promise<AccountHealth | null> =>
+  fetch(`/api/admin/account-health/${accountId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: AccountHealth }) => j.data ?? null));
+
+export const analyzeAccountHealth = (accountId: string): Promise<{ data: AccountHealth }> =>
+  fetch(`/api/admin/account-health/${accountId}`, { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Procurement Risk ──────────────────────────────────────────────────────
+
+export interface ProcExpiringContract { supplier: string; title: string; end_date: string; days_left: number; action_needed: string }
+export interface ProcSlaBreachRisk    { supplier: string; metric: string; gap: string; impact: string }
+export interface ProcHighRiskSupplier { name: string; risk: string; reason: string }
+
+export interface ProcurementRisk {
+  id:                        string;
+  snapshot_key:              string;
+  total_suppliers:           number;
+  total_contracts:           number;
+  overall_risk:              'low' | 'medium' | 'high' | 'critical';
+  executive_summary:         string;
+  expiring_contracts:        ProcExpiringContract[];
+  sla_breach_risks:          ProcSlaBreachRisk[];
+  high_risk_suppliers:       ProcHighRiskSupplier[];
+  spend_concentration:       string | null;
+  consolidation_opportunities: string[];
+  compliance_gaps:           string[];
+  quick_wins:                string[];
+  recommendations:           string[];
+  generated_at:              string;
+}
+
+export const getProcurementRisk = (): Promise<ProcurementRisk | null> =>
+  fetch('/api/admin/procurement-risk', { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: ProcurementRisk }) => j.data ?? null));
+
+export const analyzeProcurementRisk = (): Promise<{ data: ProcurementRisk }> =>
+  fetch('/api/admin/procurement-risk', { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Roadmap Advisor ───────────────────────────────────────────────────────
+
+export interface RoadmapPriorityAdjustment { title: string; current_priority: string; suggested_priority: string; reason: string }
+export interface RoadmapQuickWin           { title: string; why: string; effort: 'low' | 'medium' }
+export interface RoadmapStrategicBet       { title: string; market_opportunity: string; quarter: string }
+
+export interface RoadmapAdvice {
+  id:                   string;
+  snapshot_key:         string;
+  total_items:          number;
+  roadmap_health:       'excellent' | 'good' | 'fair' | 'poor';
+  executive_summary:    string;
+  priority_adjustments: RoadmapPriorityAdjustment[];
+  quick_wins:           RoadmapQuickWin[];
+  strategic_bets:       RoadmapStrategicBet[];
+  tech_debt_flags:      string[];
+  feature_flag_risks:   string[];
+  next_release_rec:     string | null;
+  market_alignment:     string | null;
+  recommendations:      string[];
+  generated_at:         string;
+}
+
+export const getRoadmapAdvice = (): Promise<RoadmapAdvice | null> =>
+  fetch('/api/admin/roadmap-advisor', { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: RoadmapAdvice }) => j.data ?? null));
+
+export const analyzeRoadmap = (): Promise<{ data: RoadmapAdvice }> =>
+  fetch('/api/admin/roadmap-advisor', { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Sprint Health ─────────────────────────────────────────────────────────
+
+export interface SprintBlocker    { task: string; assignee: string; risk: string; suggested_action: string }
+export interface SprintDailyAction { action: string; owner: string; urgency: 'today' | 'this_week' }
+
+export interface SprintHealth {
+  id:                string;
+  sprint_id:         string;
+  sprint_name:       string | null;
+  health_status:     'on_track' | 'at_risk' | 'behind' | 'critical';
+  velocity_trend:    'accelerating' | 'stable' | 'slowing' | 'blocked';
+  completion_pct:    number;
+  executive_summary: string;
+  blockers:          SprintBlocker[];
+  risks:             string[];
+  achievements:      string[];
+  deployment_health: string | null;
+  scope_creep_flag:  boolean;
+  recommendations:   string[];
+  daily_actions:     SprintDailyAction[];
+  generated_at:      string;
+}
+
+export const getSprintHealth = (sprintId: string): Promise<SprintHealth | null> =>
+  fetch(`/api/admin/sprint-health/${sprintId}`, { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: SprintHealth }) => j.data ?? null));
+
+export const analyzeSprintHealth = (sprintId: string): Promise<{ data: SprintHealth }> =>
+  fetch(`/api/admin/sprint-health/${sprintId}`, { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI BizDev Advisor ────────────────────────────────────────────────────────
+
+export interface BizDevTopPartner      { name: string; type: string; why: string; opportunity: string }
+export interface BizDevAtRiskPartner   { name: string; risk: string; action: string; urgency: 'immediate' | 'this_week' | 'this_month' }
+export interface BizDevExpiringAgreement { partner: string; title: string; days_left: number; renewal_strategy: string }
+export interface BizDevMarketExpansion { country: string; region: string; rationale: string; partner_type_needed: string }
+
+export interface BizDevAdvice {
+  id:                    string;
+  snapshot_key:          string;
+  total_partners:        number;
+  total_agreements:      number;
+  pipeline_health:       'excellent' | 'good' | 'fair' | 'poor';
+  executive_summary:     string;
+  top_partners:          BizDevTopPartner[];
+  at_risk_partners:      BizDevAtRiskPartner[];
+  expiring_agreements:   BizDevExpiringAgreement[];
+  market_expansion_rec:  BizDevMarketExpansion[];
+  pipeline_gaps:         string[];
+  quick_wins:            string[];
+  strategic_priorities:  string[];
+  recommendations:       string[];
+  generated_at:          string;
+}
+
+export const getBizDevAdvice = (): Promise<BizDevAdvice | null> =>
+  fetch('/api/admin/bizdev-advisor', { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: BizDevAdvice }) => j.data ?? null));
+
+export const analyzeBizDev = (): Promise<{ data: BizDevAdvice }> =>
+  fetch('/api/admin/bizdev-advisor', { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Booking Insights ──────────────────────────────────────────────────────
+
+export interface BookingAnomaly        { type: 'spike' | 'drop' | 'pattern'; description: string; severity: 'high' | 'medium' | 'low'; likely_cause: string }
+export interface BookingProductEntry   { product: 'hotel' | 'flight' | 'car'; assessment: string; opportunity: string }
+export interface BookingRevenueOpp     { opportunity: string; estimated_impact: string; effort: 'low' | 'medium' | 'high' }
+
+export interface BookingInsights {
+  id:                    string;
+  snapshot_key:          string;
+  total_bookings:        number;
+  revenue_sar:           number;
+  cancellation_rate_pct: number;
+  booking_health:        'excellent' | 'good' | 'fair' | 'poor';
+  executive_summary:     string;
+  anomalies:             BookingAnomaly[];
+  product_breakdown:     BookingProductEntry[];
+  conversion_insights:   string | null;
+  cancellation_patterns: string | null;
+  revenue_opportunities: BookingRevenueOpp[];
+  seasonal_forecast:     string | null;
+  risk_flags:            string[];
+  recommendations:       string[];
+  generated_at:          string;
+}
+
+export const getBookingInsights = (): Promise<BookingInsights | null> =>
+  fetch('/api/admin/booking-insights', { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: BookingInsights }) => j.data ?? null));
+
+export const analyzeBookings = (): Promise<{ data: BookingInsights }> =>
+  fetch('/api/admin/booking-insights', { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Loyalty Advisor ───────────────────────────────────────────────────────
+
+export interface LoyaltyTierHealth     { tier: string; assessment: string; action: string }
+export interface LoyaltyChurnSegment   { segment: string; size_estimate: string; risk: string; re_engagement_tactic: string }
+export interface LoyaltyRewardRec      { reward: string; rationale: string; gulf_relevance: string }
+
+export interface LoyaltyAdvice {
+  id:                    string;
+  snapshot_key:          string;
+  total_members:         number;
+  points_outstanding:    number;
+  programme_health:      'excellent' | 'good' | 'fair' | 'poor';
+  executive_summary:     string;
+  tier_health:           LoyaltyTierHealth[];
+  churn_risk_segments:   LoyaltyChurnSegment[];
+  redemption_insights:   string | null;
+  liability_assessment:  string | null;
+  engagement_gaps:       string[];
+  quick_wins:            string[];
+  reward_recommendations: LoyaltyRewardRec[];
+  recommendations:       string[];
+  generated_at:          string;
+}
+
+export const getLoyaltyAdvice = (): Promise<LoyaltyAdvice | null> =>
+  fetch('/api/admin/loyalty-advisor', { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: LoyaltyAdvice }) => j.data ?? null));
+
+export const analyzeLoyalty = (): Promise<{ data: LoyaltyAdvice }> =>
+  fetch('/api/admin/loyalty-advisor', { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Inventory Advisor ─────────────────────────────────────────────────────
+
+export interface InventoryInsightItem  { finding: string; priority: 'critical' | 'high' | 'medium' | 'low'; action: string }
+export interface InventoryCoverageGap  { gap: string; location_or_route: string; impact: string; fix: string }
+
+export interface InventoryAdvice {
+  id:                   string;
+  snapshot_key:         string;
+  total_hotels:         number;
+  total_flights:        number;
+  total_cars:           number;
+  inventory_health:     'excellent' | 'good' | 'fair' | 'poor';
+  executive_summary:    string;
+  hotel_insights:       InventoryInsightItem[];
+  flight_insights:      InventoryInsightItem[];
+  car_insights:         InventoryInsightItem[];
+  coverage_gaps:        InventoryCoverageGap[];
+  pricing_flags:        string[];
+  hajj_umrah_readiness: string | null;
+  quick_wins:           string[];
+  recommendations:      string[];
+  generated_at:         string;
+}
+
+export const getInventoryAdvice = (): Promise<InventoryAdvice | null> =>
+  fetch('/api/admin/inventory-advisor', { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: InventoryAdvice }) => j.data ?? null));
+
+export const analyzeInventory = (): Promise<{ data: InventoryAdvice }> =>
+  fetch('/api/admin/inventory-advisor', { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Legal Advisor ─────────────────────────────────────────────────────────
+
+export interface LegalCriticalMatter   { title: string; type: string; jurisdiction: string; risk: string; recommended_action: string; urgency: 'immediate' | 'this_week' | 'this_month' }
+export interface LegalJurisdictionRisk { jurisdiction: string; risk: string; open_matters: number; action: string }
+export interface LegalOverdueTask      { task: string; days_overdue: number; consequence: string; action: string }
+export interface LegalContractAlert    { doc_type: string; count_expiring: number; risk: string; action: string }
+
+export interface LegalAdvice {
+  id:                  string;
+  snapshot_key:        string;
+  total_matters:       number;
+  open_matters:        number;
+  overdue_tasks:       number;
+  legal_health:        'excellent' | 'good' | 'fair' | 'poor';
+  executive_summary:   string;
+  critical_matters:    LegalCriticalMatter[];
+  jurisdiction_risks:  LegalJurisdictionRisk[];
+  overdue_tasks_list:  LegalOverdueTask[];
+  contract_alerts:     LegalContractAlert[];
+  compliance_gaps:     string[];
+  quick_wins:          string[];
+  recommendations:     string[];
+  generated_at:        string;
+}
+
+export const getLegalAdvice = (): Promise<LegalAdvice | null> =>
+  fetch('/api/admin/legal-advisor', { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: LegalAdvice }) => j.data ?? null));
+
+export const analyzeLegal = (): Promise<{ data: LegalAdvice }> =>
+  fetch('/api/admin/legal-advisor', { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Compliance Advisor ────────────────────────────────────────────────────
+
+export interface ComplianceSlaBreachItem  { regulation: string; breach_type: string; count: number; risk: string; action: string }
+export interface ComplianceRegulationRisk { regulation: string; risk_level: 'critical' | 'high' | 'medium' | 'low'; issue: string; remediation: string }
+
+export interface ComplianceAdvice {
+  id:                      string;
+  snapshot_key:            string;
+  total_erasure_requests:  number;
+  overdue_erasures:        number;
+  total_data_exports:      number;
+  compliance_health:       'excellent' | 'good' | 'fair' | 'poor';
+  executive_summary:       string;
+  sla_breaches:            ComplianceSlaBreachItem[];
+  regulation_risks:        ComplianceRegulationRisk[];
+  erasure_backlog:         string | null;
+  export_patterns:         string | null;
+  breach_assessment:       string | null;
+  quick_wins:              string[];
+  recommendations:         string[];
+  generated_at:            string;
+}
+
+export const getComplianceAdvice = (): Promise<ComplianceAdvice | null> =>
+  fetch('/api/admin/compliance-advisor', { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: ComplianceAdvice }) => j.data ?? null));
+
+export const analyzeCompliance = (): Promise<{ data: ComplianceAdvice }> =>
+  fetch('/api/admin/compliance-advisor', { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Ops Advisor ───────────────────────────────────────────────────────────
+
+export interface OpsCriticalIncident { title: string; severity: string; service: string; age_hours: number; risk: string; recommended_action: string }
+export interface OpsSlaRisk          { type: 'incident' | 'ticket'; segment: string; count: number; breach_risk: string; action: string }
+
+export interface OpsAdvice {
+  id:                   string;
+  snapshot_key:         string;
+  total_incidents:      number;
+  open_incidents:       number;
+  open_tickets:         number;
+  ops_health:           'excellent' | 'good' | 'fair' | 'poor';
+  executive_summary:    string;
+  critical_incidents:   OpsCriticalIncident[];
+  sla_risks:            OpsSlaRisk[];
+  ticket_backlog:       string | null;
+  incident_patterns:    string | null;
+  platform_risk_flags:  string[];
+  quick_wins:           string[];
+  recommendations:      string[];
+  generated_at:         string;
+}
+
+export const getOpsAdvice = (): Promise<OpsAdvice | null> =>
+  fetch('/api/admin/ops-advisor', { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: OpsAdvice }) => j.data ?? null));
+
+export const analyzeOps = (): Promise<{ data: OpsAdvice }> =>
+  fetch('/api/admin/ops-advisor', { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());
+
+// ─── AI Fraud Advisor ─────────────────────────────────────────────────────────
+
+export interface FraudThreatVector   { vector: string; severity: 'critical' | 'high' | 'medium' | 'low'; trend: 'increasing' | 'stable' | 'decreasing'; evidence: string; countermeasure: string }
+export interface FraudRuleGap        { gap: string; fraud_type: string; risk: string; rule_to_add: string }
+export interface FraudHighRiskPattern { pattern: string; volume: string; loss_exposure: string; detection_status: 'covered' | 'gap' | 'partial' }
+
+export interface FraudAdvice {
+  id:                      string;
+  snapshot_key:            string;
+  total_cases:             number;
+  confirmed_fraud:         number;
+  pending_review:          number;
+  fraud_health:            'excellent' | 'good' | 'fair' | 'poor';
+  executive_summary:       string;
+  threat_vectors:          FraudThreatVector[];
+  rule_gaps:               FraudRuleGap[];
+  high_risk_patterns:      FraudHighRiskPattern[];
+  watchlist_assessment:    string | null;
+  false_positive_analysis: string | null;
+  platform_risk_flags:     string[];
+  quick_wins:              string[];
+  recommendations:         string[];
+  generated_at:            string;
+}
+
+export const getFraudAdvice = (): Promise<FraudAdvice | null> =>
+  fetch('/api/admin/fraud-advisor', { cache: 'no-store' })
+    .then(r => r.status === 404 ? null : r.json().then((j: { data?: FraudAdvice }) => j.data ?? null));
+
+export const analyzeFraud = (): Promise<{ data: FraudAdvice }> =>
+  fetch('/api/admin/fraud-advisor', { method: 'POST', cache: 'no-store' })
+    .then(r => r.json());

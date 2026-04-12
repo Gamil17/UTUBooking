@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getCrmDeals, createCrmDeal, updateCrmDeal, deleteCrmDeal,
@@ -13,11 +13,15 @@ import {
   getCrmFunnel,
   getContacts,
   getSalesReps, createSalesRep, updateSalesRep, deleteSalesRep, assignRepQuota,
+  getDealAnalysis, analyzeDeal,
+  getDealCoaching, coachDeal,
   type CrmDeal, type CrmContact, type CrmActivity,
   type HotelPartner, type DealStage, type ActivityType, type HotelPartnerStatus,
   type CrmStats, type OverdueDeal, type ProposalContent,
   type HpActivity, type HpActivityType,
   type SalesRep, type CrmContactWithDeal,
+  type DealAnalysis, type DealRiskLevel,
+  type DealCoaching,
 } from '@/lib/api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -338,6 +342,438 @@ function AddDealModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ─── AI Deal Panel ────────────────────────────────────────────────────────────
+
+const RISK_CONFIG: Record<DealRiskLevel, { label: string; bg: string; text: string; dot: string }> = {
+  low:      { label: 'Low Risk',      bg: 'bg-green-50',  text: 'text-green-700',  dot: 'bg-green-500' },
+  medium:   { label: 'Medium Risk',   bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500' },
+  high:     { label: 'High Risk',     bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
+  critical: { label: 'Critical Risk', bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500' },
+};
+
+function scoreColor(score: number) {
+  if (score >= 70) return 'text-green-700';
+  if (score >= 50) return 'text-amber-700';
+  if (score >= 30) return 'text-orange-700';
+  return 'text-red-600';
+}
+
+function scoreBg(score: number) {
+  if (score >= 70) return 'bg-green-100 border-green-200';
+  if (score >= 50) return 'bg-amber-100 border-amber-200';
+  if (score >= 30) return 'bg-orange-100 border-orange-200';
+  return 'bg-red-100 border-red-200';
+}
+
+function AIDealPanel({ dealId }: { dealId: string }) {
+  const [analysis, setAnalysis]   = useState<DealAnalysis | null>(null);
+  const [loading,  setLoading]    = useState(false);
+  const [running,  setRunning]    = useState(false);
+  const [error,    setError]      = useState('');
+  const [open,     setOpen]       = useState(false);
+
+  // Auto-load existing analysis when panel first opens
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getDealAnalysis(dealId)
+      .then(r => { if (!cancelled) { setAnalysis(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [dealId, open]);
+
+  async function handleAnalyze() {
+    setRunning(true);
+    setError('');
+    try {
+      const res = await analyzeDeal(dealId);
+      if (res.data) setAnalysis(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch {
+      setError('Failed to run analysis. Check your connection.');
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  const risk = analysis ? RISK_CONFIG[analysis.risk_level] : null;
+
+  return (
+    <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50/40">
+      {/* Header toggle */}
+      <button
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
+        onClick={() => setOpen(o => !o)}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Deal Intelligence</span>
+          {analysis && (
+            <span className="text-xs text-violet-500 font-normal">
+              · Updated {new Date(analysis.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-4 pt-3 space-y-4">
+          {loading && (
+            <p className="text-xs text-utu-text-muted italic">Loading analysis…</p>
+          )}
+
+          {!loading && !analysis && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">
+                No analysis yet. Run AI Deal Intelligence to get health score, win probability, risk assessment, and recommended actions.
+              </p>
+              <button
+                onClick={handleAnalyze}
+                disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                {running ? 'Analysing deal…' : 'Analyse with AI'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {analysis && !loading && (
+            <>
+              {/* Score row */}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Health score */}
+                <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${scoreBg(analysis.health_score)}`}>
+                  <div className={`text-xl font-bold leading-none ${scoreColor(analysis.health_score)}`}>
+                    {analysis.health_score}
+                  </div>
+                  <div>
+                    <p className={`text-xs font-semibold ${scoreColor(analysis.health_score)}`}>Deal Health</p>
+                    <p className="text-xs text-utu-text-muted">out of 100</p>
+                  </div>
+                </div>
+
+                {/* Win probability */}
+                <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${scoreBg(analysis.win_probability)}`}>
+                  <div className={`text-xl font-bold leading-none ${scoreColor(analysis.win_probability)}`}>
+                    {analysis.win_probability}%
+                  </div>
+                  <div>
+                    <p className={`text-xs font-semibold ${scoreColor(analysis.win_probability)}`}>Win Probability</p>
+                    <p className="text-xs text-utu-text-muted">AI estimate</p>
+                  </div>
+                </div>
+
+                {/* Risk level */}
+                {risk && (
+                  <span className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${risk.bg} ${risk.text}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${risk.dot}`} />
+                    {risk.label}
+                  </span>
+                )}
+
+                <button
+                  onClick={handleAnalyze}
+                  disabled={running}
+                  className="ms-auto rounded-lg border border-violet-300 px-3 py-1.5 text-xs text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+                >
+                  {running ? 'Re-analysing…' : 'Re-analyse'}
+                </button>
+              </div>
+
+              {/* Summary */}
+              {analysis.summary && (
+                <p className="text-xs text-utu-text-secondary leading-relaxed">{analysis.summary}</p>
+              )}
+
+              {/* Strengths + Risks grid */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {analysis.strengths.length > 0 && (
+                  <div className="rounded-lg border border-green-200 bg-green-50/60 p-3">
+                    <p className="mb-2 text-xs font-semibold text-green-800">Strengths</p>
+                    <ul className="space-y-1">
+                      {analysis.strengths.map((s, i) => (
+                        <li key={i} className="flex items-start gap-1.5">
+                          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
+                          <span className="text-xs text-green-800 leading-relaxed">{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {analysis.key_risks.length > 0 && (
+                  <div className="rounded-lg border border-red-200 bg-red-50/60 p-3">
+                    <p className="mb-2 text-xs font-semibold text-red-800">Key Risks</p>
+                    <ul className="space-y-1">
+                      {analysis.key_risks.map((r, i) => (
+                        <li key={i} className="flex items-start gap-1.5">
+                          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" />
+                          <span className="text-xs text-red-800 leading-relaxed">{r}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Stall factors */}
+              {analysis.stall_factors.length > 0 && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+                  <p className="mb-2 text-xs font-semibold text-amber-800">Stall Factors</p>
+                  <ul className="flex flex-wrap gap-2">
+                    {analysis.stall_factors.map((f, i) => (
+                      <li key={i} className="rounded-full bg-amber-100 px-2.5 py-1 text-xs text-amber-800">{f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Recommended actions */}
+              {analysis.recommended_actions.length > 0 && (
+                <div className="rounded-lg border border-violet-200 bg-violet-50/60 p-3">
+                  <p className="mb-2 text-xs font-semibold text-violet-800">Recommended Actions</p>
+                  <ol className="space-y-1.5 list-none">
+                    {analysis.recommended_actions.map((a, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-violet-200 text-[10px] font-bold text-violet-700">
+                          {i + 1}
+                        </span>
+                        <span className="text-xs text-violet-900 leading-relaxed">{a}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* Competitive notes + time sensitivity */}
+              {(analysis.competitive_notes || analysis.time_sensitivity) && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {analysis.competitive_notes && (
+                    <div className="rounded-lg bg-utu-bg-muted px-3 py-2.5">
+                      <p className="mb-1 text-xs font-semibold text-utu-text-secondary">Competitive Context</p>
+                      <p className="text-xs text-utu-text-secondary leading-relaxed">{analysis.competitive_notes}</p>
+                    </div>
+                  )}
+                  {analysis.time_sensitivity && (
+                    <div className="rounded-lg bg-utu-bg-muted px-3 py-2.5">
+                      <p className="mb-1 text-xs font-semibold text-utu-text-secondary">Time Sensitivity</p>
+                      <p className="text-xs text-utu-text-secondary leading-relaxed">{analysis.time_sensitivity}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── AI Deal Coach Panel ──────────────────────────────────────────────────────
+
+const MOMENTUM_COLORS: Record<string, string> = {
+  accelerating: 'bg-green-100 text-green-700 border-green-200',
+  steady:       'bg-blue-50  text-blue-700  border-blue-200',
+  stalled:      'bg-amber-100 text-amber-700 border-amber-200',
+  declining:    'bg-red-100  text-red-600   border-red-200',
+};
+
+const RELATIONSHIP_COLORS: Record<string, string> = {
+  strong:  'bg-green-100 text-green-700',
+  warm:    'bg-amber-50  text-amber-700',
+  cold:    'bg-blue-50   text-blue-600',
+  at_risk: 'bg-red-100   text-red-600',
+};
+
+function AIDealCoachPanel({ dealId }: { dealId: string }) {
+  const [coaching, setCoaching] = useState<DealCoaching | null>(null);
+  const [loading,  setLoading]  = useState(false);
+  const [running,  setRunning]  = useState(false);
+  const [error,    setError]    = useState('');
+  const [open,     setOpen]     = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getDealCoaching(dealId)
+      .then(r => { if (!cancelled) { setCoaching(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [dealId, open]);
+
+  async function handleCoach() {
+    setRunning(true);
+    setError('');
+    try {
+      const res = await coachDeal(dealId);
+      if (res.data) setCoaching(res.data);
+      else setError('Coaching failed. Please try again.');
+    } catch {
+      setError('Failed to run coaching. Check your connection.');
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50/40">
+      {/* Header toggle */}
+      <button
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
+        onClick={() => setOpen(o => !o)}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-emerald-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-emerald-800">AI Deal Coach</span>
+          {coaching && (
+            <span className="text-xs text-emerald-500 font-normal">
+              · Updated {new Date(coaching.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-emerald-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-emerald-200 px-4 pb-4 pt-3 space-y-4">
+          {loading && (
+            <p className="text-xs text-utu-text-muted italic">Loading coaching…</p>
+          )}
+
+          {!loading && !coaching && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">
+                No coaching yet. Run AI Deal Coach to get momentum score, win probability, relationship health, next-best actions, and red flags.
+              </p>
+              <button
+                onClick={handleCoach}
+                disabled={running}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+              >
+                {running ? 'Coaching…' : '✦ Coach this Deal'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {coaching && !loading && (
+            <>
+              {/* Momentum + win prob + relationship */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${MOMENTUM_COLORS[coaching.momentum] ?? ''}`}>
+                  <div>
+                    <p className="text-xs font-semibold capitalize">{coaching.momentum}</p>
+                    <p className="text-xs opacity-70">Momentum</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                  <div>
+                    <p className="text-sm font-bold text-utu-text-primary">{coaching.win_probability_pct}%</p>
+                    <p className="text-xs text-utu-text-muted">Win Probability</p>
+                  </div>
+                </div>
+                <div className={`rounded-lg px-3 py-2 ${RELATIONSHIP_COLORS[coaching.relationship_health] ?? ''}`}>
+                  <p className="text-xs font-semibold capitalize">{coaching.relationship_health.replace(/_/g, ' ')}</p>
+                  <p className="text-xs opacity-70">Relationship</p>
+                </div>
+              </div>
+
+              {/* Stage assessment */}
+              <div>
+                <p className="text-xs font-semibold text-utu-text-muted uppercase tracking-wide mb-1">Stage Assessment</p>
+                <p className="text-xs text-utu-text-secondary leading-relaxed">{coaching.stage_assessment}</p>
+              </div>
+
+              {/* Coaching summary */}
+              <div>
+                <p className="text-xs font-semibold text-utu-text-muted uppercase tracking-wide mb-1">Coaching Summary</p>
+                <p className="text-xs text-utu-text-secondary leading-relaxed">{coaching.coaching_summary}</p>
+              </div>
+
+              {/* Next best actions */}
+              {coaching.next_best_actions.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-utu-text-muted uppercase tracking-wide mb-2">Next Best Actions</p>
+                  <div className="space-y-2">
+                    {coaching.next_best_actions.map((a, i) => (
+                      <div key={i} className="rounded-lg border border-emerald-200 bg-white px-3 py-2">
+                        <p className="text-xs font-semibold text-emerald-800">{a.action}</p>
+                        <p className="text-xs text-utu-text-muted mt-0.5">{a.owner} · {a.timeline}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Risks + opportunities */}
+              <div className="grid grid-cols-2 gap-3">
+                {coaching.risks.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-red-600 mb-1">Risks</p>
+                    <ul className="space-y-1">
+                      {coaching.risks.map((r, i) => (
+                        <li key={i} className="text-xs text-utu-text-secondary">• {r}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {coaching.opportunities.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-green-600 mb-1">Opportunities</p>
+                    <ul className="space-y-1">
+                      {coaching.opportunities.map((o, i) => (
+                        <li key={i} className="text-xs text-utu-text-secondary">• {o}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Red flags */}
+              {coaching.red_flags.length > 0 && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                  <p className="text-xs font-semibold text-red-700 mb-1">Red Flags</p>
+                  <ul className="space-y-1">
+                    {coaching.red_flags.map((f, i) => (
+                      <li key={i} className="text-xs text-red-600">• {f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {coaching.competitive_intel_gap && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                  <p className="text-xs font-semibold text-amber-700 mb-0.5">Competitive Intel Gap</p>
+                  <p className="text-xs text-amber-600">{coaching.competitive_intel_gap}</p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-emerald-200">
+                <p className="text-xs text-utu-text-muted">
+                  Generated {new Date(coaching.generated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+                <button
+                  onClick={handleCoach}
+                  disabled={running}
+                  className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 transition-colors"
+                >
+                  {running ? 'Re-coaching…' : 'Re-coach'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Deal Row (expandable) ────────────────────────────────────────────────────
 
 function DealRow({ deal }: { deal: CrmDeal }) {
@@ -579,6 +1015,10 @@ function DealRow({ deal }: { deal: CrmDeal }) {
                 )}
               </div>
             </div>
+
+            {/* AI Deal Intelligence — full width below the 3-column grid */}
+            <AIDealPanel dealId={deal.id} />
+            <AIDealCoachPanel dealId={deal.id} />
           </td>
         </tr>
       )}

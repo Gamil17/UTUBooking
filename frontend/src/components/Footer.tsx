@@ -74,9 +74,9 @@ export default async function Footer() {
       heading: t('businessPartners'),
       links: [
         { label: t('affiliates'),      href: '/affiliates' },
-        { label: t('advertise'),       href: '/partners' },
-        { label: t('hotelPartners'),   href: '/partners#hotels' },
-        { label: t('utuForBusiness'),  href: '/partners#business' },
+        { label: t('advertise'),       href: '/advertise' },
+        { label: t('hotelPartners'),   href: '/hotel-partners' },
+        { label: t('utuForBusiness'),  href: '/corporate' },
         { label: t('privacyPolicy'),   href: '/privacy' },
         { label: t('terms'),           href: '/terms' },
       ],

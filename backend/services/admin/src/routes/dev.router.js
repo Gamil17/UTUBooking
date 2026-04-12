@@ -26,6 +26,7 @@
 
 const { Router } = require('express');
 const { Pool }   = require('pg');
+const wf         = require('../lib/workflow-client');
 
 const pool   = new Pool({ connectionString: process.env.DATABASE_URL });
 const router = Router();
@@ -408,7 +409,26 @@ router.post('/deployments', async (req, res) => {
       [service, version || null, environment, status, deployed_by,
        notes || null, deployed_at || new Date().toISOString()],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const deployment = result.rows[0];
+
+    // ── Launch deployment approval workflow for production releases ───────────
+    if (environment === 'production') {
+      wf.launch({
+        triggerEvent:   'deploy_requested',
+        triggerRef:     deployment.id,
+        triggerRefType: 'deployment',
+        initiatedBy:    req.user?.email ?? deployed_by,
+        context: {
+          service,
+          version:     version || null,
+          environment,
+          deployed_by,
+          notes:       notes || null,
+        },
+      });
+    }
+
+    res.status(201).json({ data: deployment });
   } catch (err) {
     console.error('[dev] POST /deployments error:', err);
     res.status(500).json({ error: 'DB_ERROR' });

@@ -11,8 +11,10 @@ import KVKKBanner        from '@/components/compliance/KVKKBanner';
 import GDPRConsentBanner from '@/components/compliance/GDPRConsentBanner';
 import DpdpConsentBanner from '@/components/compliance/DpdpConsentBanner';
 import CCPAFooterLink    from '@/components/compliance/CCPAFooterLink';
-import Footer            from '@/components/Footer';
-import ConditionalHeader from '@/components/ConditionalHeader';
+import Footer               from '@/components/Footer';
+import ConditionalHeader    from '@/components/ConditionalHeader';
+import AffiliateRefTracker  from '@/components/AffiliateRefTracker';
+import { Suspense }         from 'react';
 import redis from '@/lib/redis';
 import './globals.css';
 import '@/styles/urdu.css';
@@ -94,6 +96,27 @@ export const metadata: Metadata = {
   other: {
     'mobile-web-app-capable': 'yes',
   },
+  openGraph: {
+    type:        'website',
+    url:         SITE_URL,
+    siteName:    'UTUBooking',
+    title:       'UTUBooking.com — Hotels, Flights & Cars for Hajj & Umrah',
+    description: 'Book verified hotels in Makkah and Madinah, flights, and car rentals for Hajj and Umrah travelers. Real-time availability. SAR pricing. Arabic support.',
+    images: [
+      {
+        url:    `${SITE_URL}/icons/icon-512x512.png`,
+        width:  512,
+        height: 512,
+        alt:    'UTUBooking — Hajj & Umrah Travel Platform',
+      },
+    ],
+  },
+  twitter: {
+    card:        'summary_large_image',
+    title:       'UTUBooking.com — Hotels, Flights & Cars for Hajj & Umrah',
+    description: 'Book verified hotels in Makkah and Madinah, flights, and car rentals for Hajj and Umrah travelers.',
+    images:      [`${SITE_URL}/icons/icon-512x512.png`],
+  },
   alternates: {
     canonical: SITE_URL,
     languages: {
@@ -103,6 +126,51 @@ export const metadata: Metadata = {
       ),
     },
   },
+};
+
+// ── Site-wide structured data ─────────────────────────────────────────────────
+
+const ORGANIZATION_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@graph':   [
+    {
+      '@type':       'Organization',
+      '@id':         'https://utubooking.com/#organization',
+      name:          'UTUBooking',
+      url:           'https://utubooking.com',
+      logo: {
+        '@type': 'ImageObject',
+        url:     'https://utubooking.com/icons/icon-512x512.png',
+      },
+      sameAs: [
+        'https://www.instagram.com/utubooking',
+        'https://www.linkedin.com/company/utubooking',
+      ],
+      contactPoint: {
+        '@type':             'ContactPoint',
+        email:               'support@utubooking.com',
+        contactType:         'customer service',
+        availableLanguage:   ['English', 'Arabic'],
+        areaServed:          'Worldwide',
+      },
+    },
+    {
+      '@type':           'WebSite',
+      '@id':             'https://utubooking.com/#website',
+      url:               'https://utubooking.com',
+      name:              'UTUBooking',
+      description:       'Hotels, Flights & Cars for Hajj & Umrah Travelers',
+      publisher:         { '@id': 'https://utubooking.com/#organization' },
+      potentialAction: {
+        '@type':       'SearchAction',
+        target: {
+          '@type':       'EntryPoint',
+          urlTemplate:   'https://utubooking.com/hotels?q={search_term_string}',
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  ],
 };
 
 export default async function RootLayout({
@@ -130,6 +198,11 @@ export default async function RootLayout({
       <head>
         <meta name="theme-color" content="#1E3A5F" />
         <link rel="apple-touch-icon" href="/icons/icon-180x180.png" />
+        {/* Organization + WebSite structured data — site-wide rich result eligibility */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }}
+        />
         {/* CJK & Thai fonts via Google Fonts CDN.
             NOT loaded via @fontsource CSS imports in globals.css — each CJK
             fontsource package contains ~124 @font-face subsets (~250 file refs
@@ -172,6 +245,10 @@ export default async function RootLayout({
               <ConditionalHeader />
               <Providers>{children}</Providers>
               <Footer />
+              {/* Affiliate referral click tracker — fires once per session when ?ref= is present */}
+              <Suspense fallback={null}>
+                <AffiliateRefTracker />
+              </Suspense>
               {/* Compliance banners — each self-guards by locale/countryCode */}
               <GDPRConsentBanner countryCode={countryCode} />
               <KVKKBanner        countryCode={countryCode} />

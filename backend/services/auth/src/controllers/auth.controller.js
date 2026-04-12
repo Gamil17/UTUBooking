@@ -9,6 +9,7 @@ const {
   logoutSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  changePasswordSchema,
   validate,
 } = require('../validators/auth.validator');
 
@@ -287,4 +288,48 @@ async function resetPassword(req, res, next) {
   }
 }
 
-module.exports = { register, login, refresh, logout, forgotPassword, resetPassword };
+// ─── POST /api/auth/change-password ──────────────────────────────────────────
+// Authenticated endpoint — requires valid Bearer access token.
+// Verifies the current password before updating to the new one.
+
+async function changePassword(req, res, next) {
+  try {
+    // Extract and verify the access token
+    const authHeader = req.headers.authorization ?? '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Missing or invalid Authorization header.' });
+    }
+    let claims;
+    try {
+      claims = tokenService.verifyAccessToken(authHeader.slice(7).trim());
+    } catch {
+      return res.status(401).json({ error: 'INVALID_TOKEN', message: 'Access token is invalid or has expired.' });
+    }
+
+    const { error, value } = validate(changePasswordSchema, req.body);
+    if (error) return validationError(res, error.details);
+
+    const user = await userService.findById(claims.sub);
+    if (!user) {
+      return res.status(404).json({ error: 'USER_NOT_FOUND', message: 'Account not found.' });
+    }
+
+    // Verify the current password
+    const valid = await userService.verifyPassword(value.current_password, user.password_hash);
+    if (!valid) {
+      return res.status(400).json({ error: 'WRONG_CURRENT_PASSWORD', message: 'Current password is incorrect.' });
+    }
+
+    if (value.current_password === value.new_password) {
+      return res.status(400).json({ error: 'SAME_PASSWORD', message: 'New password must be different from your current password.' });
+    }
+
+    await userService.updatePassword(user.id, value.new_password);
+
+    return res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { register, login, refresh, logout, forgotPassword, resetPassword, changePassword };

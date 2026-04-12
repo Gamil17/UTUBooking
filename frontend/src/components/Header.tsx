@@ -54,7 +54,8 @@ export default function Header() {
     { label: tNav('flights'),    href: '/?tab=flights' },
     { label: tNav('hotels'),     href: '/?tab=hotels'  },
     { label: tNav('carRentals'), href: '/?tab=cars'    },
-    { label: tNav('promoCodes'), href: '/promo-codes'   },
+    { label: tNav('promoCodes'), href: '/promo-codes'  },
+    { label: tNav('earn'),       href: '/affiliates',  earn: true },
   ];
 
   return (
@@ -74,13 +75,13 @@ export default function Header() {
 
           {/* UTUBooking Pro */}
           <Link
-            href="/partners#business"
+            href="/corporate"
             className="hidden md:flex items-center gap-1.5 text-white/80 hover:text-white transition-colors text-sm font-medium shrink-0"
           >
             <svg className="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-10-2h4v2h-4V5zm10 15H4V9h16v11z"/>
             </svg>
-            UTUBooking Pro
+            For Business
           </Link>
 
           {/* Desktop Nav */}
@@ -89,6 +90,21 @@ export default function Header() {
               const active =
                 link.href === pathname ||
                 (link.href.startsWith('/?tab=') && pathname === '/');
+              if ((link as any).earn) {
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`ms-1 px-3 py-1 text-xs font-bold rounded-full transition-colors border ${
+                      active
+                        ? 'bg-amber-400 text-utu-navy border-amber-400'
+                        : 'border-amber-400/60 text-amber-300 hover:bg-amber-400 hover:text-utu-navy hover:border-amber-400'
+                    }`}
+                  >
+                    {link.label} ✦
+                  </Link>
+                );
+              }
               return (
                 <Link
                   key={link.href}
@@ -222,15 +238,29 @@ export default function Header() {
           {/* Drawer */}
           <div className="md:hidden fixed top-14 left-0 right-0 z-40 bg-utu-navy border-t border-white/10 shadow-xl">
             <nav className="px-4 py-3 space-y-1">
-              {NAV.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="flex items-center px-3 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {NAV.map((link) => {
+                if ((link as any).earn) {
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="flex items-center gap-2 px-3 py-3 text-sm font-bold text-amber-300 hover:text-amber-200 hover:bg-utu-bg-card/10 rounded-xl transition-colors"
+                    >
+                      <span>{link.label} ✦</span>
+                      <span className="text-xs font-normal text-amber-400/70">Earn up to 8% commission</span>
+                    </Link>
+                  );
+                }
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="flex items-center px-3 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-utu-bg-card/10 rounded-xl transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
             </nav>
 
             <div className="h-px bg-utu-bg-card/10 mx-4" />

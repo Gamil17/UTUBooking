@@ -2,6 +2,7 @@
 
 const { Router } = require('express');
 const { Pool }   = require('pg');
+const wf         = require('../lib/workflow-client');
 
 const pool   = new Pool({ connectionString: process.env.DATABASE_URL });
 const router = Router();
@@ -191,7 +192,27 @@ router.post('/rules', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [name, type, applies_to, hotel_id || null, adjustment, value, start_date || null, end_date || null, priority, active, created_by, notes || null],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const rule = result.rows[0];
+
+    // ── Launch pricing rule approval workflow ─────────────────────────────────
+    wf.launch({
+      triggerEvent:   'pricing_rule_proposed',
+      triggerRef:     rule.id,
+      triggerRefType: 'revenue_rule',
+      initiatedBy:    req.user?.email ?? created_by,
+      context: {
+        name,
+        type,
+        applies_to,
+        adjustment,
+        value:       parseFloat(value),
+        hotel_id:    hotel_id || null,
+        start_date:  start_date || null,
+        end_date:    end_date || null,
+      },
+    });
+
+    res.status(201).json({ data: rule });
   } catch (err) {
     console.error('[revenue] POST /rules error:', err);
     res.status(500).json({ error: 'DB_ERROR' });
@@ -246,7 +267,7 @@ router.get('/blackouts', async (req, res) => {
 });
 
 router.post('/blackouts', async (req, res) => {
-  const { name, hotel_id, start_date, end_date, reason, created_by = 'admin' } = req.body;
+  const { name, hotel_id, start_date, end_date, reason, created_by = 'admin', estimated_revenue_impact_sar } = req.body;
   if (!name || !start_date || !end_date) return res.status(400).json({ error: 'name, start_date and end_date are required' });
   try {
     const result = await pool.query(
@@ -254,7 +275,26 @@ router.post('/blackouts', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
       [name, hotel_id || null, start_date, end_date, reason || null, created_by],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const blackout = result.rows[0];
+
+    // ── Launch blackout approval workflow ──────────────────────────────────────
+    wf.launch({
+      triggerEvent:   'blackout_requested',
+      triggerRef:     blackout.id,
+      triggerRefType: 'blackout',
+      initiatedBy:    req.user?.email ?? created_by,
+      context: {
+        blackout_id:                   blackout.id,
+        name,
+        hotel_id:                      hotel_id ?? null,
+        start_date,
+        end_date,
+        reason:                        reason ?? null,
+        estimated_revenue_impact_sar:  estimated_revenue_impact_sar ?? null,
+      },
+    });
+
+    res.status(201).json({ data: blackout });
   } catch (err) {
     console.error('[revenue] POST /blackouts error:', err);
     res.status(500).json({ error: 'DB_ERROR' });

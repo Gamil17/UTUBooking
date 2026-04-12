@@ -2,6 +2,7 @@
 
 const { Router } = require('express');
 const { Pool }   = require('pg');
+const wf         = require('../lib/workflow-client');
 
 const pool   = new Pool({ connectionString: process.env.DATABASE_URL });
 const router = Router();
@@ -286,7 +287,26 @@ router.post('/escalations', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
       [account_id||null, account_name, subject, priority, status, owner||null],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const escalation = result.rows[0];
+
+    // ── Launch escalation resolution workflow for critical/high priority ──────
+    if (priority === 'critical' || priority === 'high') {
+      wf.launch({
+        triggerEvent:   'escalation_raised',
+        triggerRef:     escalation.id,
+        triggerRefType: 'cs_escalation',
+        initiatedBy:    req.user?.email ?? 'admin',
+        context: {
+          account_name,
+          subject,
+          priority,
+          account_id: account_id || null,
+          owner:      owner || null,
+        },
+      });
+    }
+
+    res.status(201).json({ data: escalation });
   } catch (err) {
     console.error('[customer-success] POST /escalations error:', err);
     res.status(500).json({ error: 'DB_ERROR' });

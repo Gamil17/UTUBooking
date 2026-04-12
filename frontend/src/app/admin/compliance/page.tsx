@@ -1,18 +1,207 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getComplianceStats,
   getErasureRequests,
   updateErasureRequest,
   getDataExports,
+  getDsrFulfillment,
+  compileDsrFulfillment,
   type ComplianceStats,
   type ErasureRequest,
   type DataExportRequest,
   type ErasureStatus,
   type ComplianceLaw,
+  type DsrFulfillment,
+  type DsrShardSummary,
+  getComplianceAdvice, analyzeCompliance, type ComplianceAdvice,
 } from '@/lib/api';
+
+// ─── AI Compliance Advisor Panel ─────────────────────────────────────────────
+
+const COMP_HEALTH_BADGE: Record<string, string> = {
+  excellent: 'border-green-300  bg-green-50  text-green-700',
+  good:      'border-blue-200   bg-blue-50   text-blue-700',
+  fair:      'border-amber-200  bg-amber-50  text-amber-700',
+  poor:      'border-red-200    bg-red-50    text-red-700',
+};
+const COMP_RISK_COLORS: Record<string, string> = {
+  critical: 'border-red-200    bg-red-50',
+  high:     'border-amber-200  bg-amber-50',
+  medium:   'border-blue-200   bg-blue-50',
+  low:      'border-gray-200   bg-gray-50',
+};
+
+function AIComplianceAdvisorPanel() {
+  const [advice,  setAdvice]  = useState<ComplianceAdvice | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error,   setError]   = useState('');
+  const [open,    setOpen]    = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getComplianceAdvice()
+      .then(r => { if (!cancelled) { setAdvice(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  async function handleAnalyze() {
+    setRunning(true); setError('');
+    try {
+      const res = await analyzeCompliance();
+      if (res.data) setAdvice(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch { setError('Failed to run analysis.'); }
+    finally { setRunning(false); }
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-violet-50/40 mb-4">
+      <button className="flex w-full items-center justify-between px-4 py-3 text-left" onClick={() => setOpen(o => !o)}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Privacy Compliance Advisor</span>
+          {advice && (
+            <span className={`rounded-md border px-2 py-0.5 text-xs font-medium capitalize ${COMP_HEALTH_BADGE[advice.compliance_health] ?? ''}`}>
+              {advice.compliance_health}
+            </span>
+          )}
+          {advice && (
+            <span className="text-xs text-violet-500">
+              {advice.overdue_erasures} overdue erasures · {advice.total_erasure_requests} total requests
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-5 pt-4 space-y-5">
+          {loading && <p className="text-xs text-utu-text-muted italic">Loading compliance analysis…</p>}
+
+          {!loading && !advice && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">
+                Run AI Privacy Compliance Advisor to assess GDPR/PDPL/LGPD/CCPA SLA health, overdue erasure risk, regulation-specific gaps, and enforcement exposure.
+              </p>
+              <button onClick={handleAnalyze} disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                {running ? 'Analysing…' : '✦ Run Compliance Analysis'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {advice && !loading && (
+            <>
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{advice.executive_summary}</p>
+
+              {advice.sla_breaches.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">SLA Breaches</h3>
+                  <div className="space-y-2">
+                    {advice.sla_breaches.map((b, i) => (
+                      <div key={i} className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs font-semibold text-red-800">{b.regulation}</p>
+                          <span className="text-xs text-red-600 capitalize">{b.breach_type.replace('_', ' ')}</span>
+                          <span className="text-xs font-medium text-red-700">{b.count} affected</span>
+                        </div>
+                        <p className="text-xs text-red-600 mt-0.5">{b.risk}</p>
+                        <p className="text-xs text-red-500 mt-0.5 italic">{b.action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {advice.regulation_risks.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Regulation Risk Assessment</h3>
+                  <div className="space-y-2">
+                    {advice.regulation_risks.map((r, i) => (
+                      <div key={i} className={`rounded-lg border px-3 py-2 ${COMP_RISK_COLORS[r.risk_level] ?? ''}`}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs font-semibold">{r.regulation}</p>
+                          <span className={`rounded-md px-1.5 py-0.5 text-xs font-medium capitalize ${
+                            r.risk_level === 'critical' ? 'bg-red-100 text-red-700' :
+                            r.risk_level === 'high' ? 'bg-amber-100 text-amber-700' :
+                            r.risk_level === 'medium' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                          }`}>{r.risk_level}</span>
+                        </div>
+                        <p className="text-xs mt-0.5 opacity-80">{r.issue}</p>
+                        <p className="text-xs mt-0.5 italic opacity-70">{r.remediation}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {advice.erasure_backlog && (
+                  <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                    <p className="text-xs font-semibold text-utu-text-muted mb-1">Erasure Backlog</p>
+                    <p className="text-xs text-utu-text-secondary">{advice.erasure_backlog}</p>
+                  </div>
+                )}
+                {advice.export_patterns && (
+                  <div className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                    <p className="text-xs font-semibold text-utu-text-muted mb-1">DSR Patterns</p>
+                    <p className="text-xs text-utu-text-secondary">{advice.export_patterns}</p>
+                  </div>
+                )}
+              </div>
+
+              {advice.breach_assessment && (
+                <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2">
+                  <p className="text-xs font-semibold text-orange-800 mb-1">Breach Assessment</p>
+                  <p className="text-xs text-orange-700">{advice.breach_assessment}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {advice.quick_wins.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Quick Wins</h3>
+                    <ul className="space-y-1">
+                      {advice.quick_wins.map((w, i) => (
+                        <li key={i} className="text-xs text-utu-text-secondary before:content-['→'] before:mr-1.5 before:text-green-500">{w}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {advice.recommendations.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</h3>
+                    <ul className="space-y-1">
+                      {advice.recommendations.map((r, i) => (
+                        <li key={i} className="text-xs text-utu-text-secondary before:content-['✓'] before:mr-1.5 before:text-violet-500">{r}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-violet-200">
+                <p className="text-xs text-violet-400">Last run: {new Date(advice.generated_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                <button onClick={handleAnalyze} disabled={running}
+                  className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                  {running ? 'Refreshing…' : '↺ Refresh'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared helpers
@@ -143,6 +332,162 @@ function DashboardTab() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// AI DSR Auto-Fulfillment Panel
+// ─────────────────────────────────────────────────────────────────────────────
+
+function AIDsrPanel({ dsr, onClose }: { dsr: ErasureRequest; onClose: () => void }) {
+  const [fulfillment, setFulfillment] = useState<DsrFulfillment | null>(null);
+  const [loading, setLoading]         = useState(true);
+  const [running, setRunning]         = useState(false);
+  const [copied,  setCopied]          = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getDsrFulfillment(dsr.id).then(r => { if (!cancelled) { setFulfillment(r); setLoading(false); } });
+    return () => { cancelled = true; };
+  }, [dsr.id]);
+
+  async function compile() {
+    setRunning(true);
+    try {
+      const res = await compileDsrFulfillment(dsr.id);
+      setFulfillment(res.data);
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  function copyLetter() {
+    if (!fulfillment?.cover_letter_md) return;
+    navigator.clipboard.writeText(fulfillment.cover_letter_md);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  const SLA_COLORS: Record<string, string> = {
+    on_track: 'bg-green-100 text-green-700',
+    at_risk:  'bg-amber-100 text-amber-700',
+    overdue:  'bg-red-100 text-red-700',
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/30" onClick={onClose}>
+      <div className="bg-white w-full max-w-2xl h-full overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-utu-navy text-white px-6 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-blue-200 uppercase tracking-wider">✦ AI DSR Fulfillment Assistant</p>
+            <p className="font-semibold text-sm mt-0.5 truncate max-w-[400px]">{dsr.email_snapshot}</p>
+            <p className="text-xs text-blue-300">{dsr.law} &middot; {dsr.status}</p>
+          </div>
+          <button onClick={onClose} className="text-blue-200 hover:text-white text-xl leading-none">&times;</button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {loading ? (
+            <p className="text-sm text-gray-400 text-center py-8">Checking for existing fulfillment package...</p>
+          ) : fulfillment ? (
+            <>
+              {/* Header row */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SLA_COLORS[fulfillment.sla_status] ?? 'bg-gray-100 text-gray-600'}`}>
+                  SLA: {fulfillment.sla_status.replace('_', ' ')}
+                </span>
+                {fulfillment.response_deadline && (
+                  <span className="text-xs text-gray-500">Deadline: {fulfillment.response_deadline}</span>
+                )}
+                <span className="text-xs text-gray-400 ms-auto">Generated {new Date(fulfillment.generated_at).toLocaleString()}</span>
+                <button onClick={compile} disabled={running} className="text-xs text-blue-600 hover:underline disabled:opacity-40">
+                  {running ? 'Compiling…' : 'Re-compile'}
+                </button>
+              </div>
+
+              {/* Data summary */}
+              <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+                <p className="text-xs font-semibold text-blue-700 mb-1">Data Summary ({fulfillment.total_records_found} records found)</p>
+                <p className="text-sm text-blue-800">{fulfillment.data_summary}</p>
+              </div>
+
+              {/* Shard breakdown */}
+              {fulfillment.shard_summary.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Shard Breakdown</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {fulfillment.shard_summary.map((s: DsrShardSummary) => (
+                      <div key={s.shard} className={`rounded-lg border p-2 text-center ${s.has_data ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'}`}>
+                        <p className="text-xs font-bold text-gray-700">{s.shard}</p>
+                        <p className="text-xs text-gray-500">{s.record_count} records</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Retention notes */}
+              {fulfillment.retention_notes.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Data Retained (Legal Basis)</p>
+                  <ul className="space-y-1">
+                    {fulfillment.retention_notes.map((n, i) => (
+                      <li key={i} className="text-sm text-gray-700 flex gap-2"><span className="text-amber-500">&#9632;</span>{n}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Recommended redactions */}
+              {fulfillment.recommended_redactions.length > 0 && (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+                  <p className="text-xs font-semibold text-amber-700 mb-1">Recommended Redactions Before Sending</p>
+                  <ul className="space-y-0.5">
+                    {fulfillment.recommended_redactions.map((r, i) => (
+                      <li key={i} className="text-xs text-amber-800">&bull; {r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Cover letter */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cover Letter Draft</p>
+                  <button onClick={copyLetter} className="ms-auto text-xs text-blue-600 hover:underline">
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 max-h-64 overflow-y-auto">
+                  <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+                    {fulfillment.cover_letter_md}
+                  </pre>
+                </div>
+                <p className="text-xs text-gray-400 mt-2 text-center">
+                  DPO review required before sending — this package is not automatically sent.
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-8 space-y-3">
+              <p className="text-sm text-gray-500">
+                No fulfillment package compiled yet for this DSR.
+              </p>
+              <p className="text-xs text-gray-400">
+                Compilation queries all 8 regional shards and generates a personalised cover letter. This may take up to 60 seconds.
+              </p>
+              <button
+                onClick={compile}
+                disabled={running}
+                className="bg-utu-navy text-white text-sm px-5 py-2 rounded-lg hover:bg-utu-blue disabled:opacity-50"
+              >
+                {running ? 'Compiling across shards…' : '✦ Compile Fulfillment Package'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tab 2: Erasure Requests
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -152,6 +497,7 @@ function ErasureTab() {
   const [lawFilter,    setLawFilter]    = useState('');
   const [page,         setPage]         = useState(1);
   const [notesEditing, setNotesEditing] = useState<Record<string, string>>({});
+  const [dsrPanel,     setDsrPanel]     = useState<ErasureRequest | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['compliance-erasures', statusFilter, lawFilter, page],
@@ -285,6 +631,12 @@ function ErasureTab() {
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex gap-1.5 flex-wrap">
+                        <button
+                          onClick={() => setDsrPanel(row)}
+                          className="rounded bg-purple-600 px-2 py-1 text-xs text-white hover:bg-purple-700"
+                        >
+                          ✦ Fulfill
+                        </button>
                         {isPending && (
                           <button
                             onClick={() => mutation.mutate({ id: row.id, updates: { status: 'in_progress', _shard: row._shard } })}
@@ -342,6 +694,8 @@ function ErasureTab() {
           </button>
         </div>
       )}
+
+      {dsrPanel && <AIDsrPanel dsr={dsrPanel} onClose={() => setDsrPanel(null)} />}
     </div>
   );
 }
@@ -520,7 +874,7 @@ export default function CompliancePage() {
 
       {/* Tab content */}
       <div>
-        {activeTab === 'Dashboard'        && <DashboardTab />}
+        {activeTab === 'Dashboard'        && <><AIComplianceAdvisorPanel /><DashboardTab /></>}
         {activeTab === 'Erasure Requests' && <ErasureTab />}
         {activeTab === 'Data Exports'     && <ExportsTab />}
       </div>

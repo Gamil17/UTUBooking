@@ -1,14 +1,220 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Copy, Check } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getLegalStats, getLegalMatters, createLegalMatter, updateLegalMatter, deleteLegalMatter,
   getLegalTasks, createLegalTask, updateLegalTask, deleteLegalTask,
   getLegalDocuments, createLegalDocument, updateLegalDocument, deleteLegalDocument,
+  getContractReview, reviewContract,
   type LegalStats, type LegalMatter, type LegalTask, type LegalDocument,
   type MatterStatus, type MatterUrgency, type TaskStatus,
+  type ContractRiskLevel, type ContractReview,
+  getLegalAdvice, analyzeLegal, type LegalAdvice,
 } from '@/lib/api';
+
+// ─── AI Legal Advisor Panel ───────────────────────────────────────────────────
+
+const LEGAL_HEALTH_BADGE: Record<string, string> = {
+  excellent: 'border-green-300  bg-green-50  text-green-700',
+  good:      'border-blue-200   bg-blue-50   text-blue-700',
+  fair:      'border-amber-200  bg-amber-50  text-amber-700',
+  poor:      'border-red-200    bg-red-50    text-red-700',
+};
+const LEGAL_URGENCY_COLORS: Record<string, string> = {
+  immediate:   'bg-red-100 text-red-700',
+  this_week:   'bg-amber-100 text-amber-700',
+  this_month:  'bg-blue-100 text-blue-700',
+};
+const RISK_LEVEL_COLORS: Record<string, string> = {
+  critical: 'border-red-200    bg-red-50    text-red-700',
+  high:     'border-amber-200  bg-amber-50  text-amber-700',
+  medium:   'border-blue-200   bg-blue-50   text-blue-700',
+  low:      'border-gray-200   bg-gray-50   text-gray-600',
+};
+
+function AILegalAdvisorPanel() {
+  const [advice,  setAdvice]  = useState<LegalAdvice | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error,   setError]   = useState('');
+  const [open,    setOpen]    = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getLegalAdvice()
+      .then(r => { if (!cancelled) { setAdvice(r); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  async function handleAnalyze() {
+    setRunning(true); setError('');
+    try {
+      const res = await analyzeLegal();
+      if (res.data) setAdvice(res.data);
+      else setError('Analysis failed. Please try again.');
+    } catch { setError('Failed to run analysis.'); }
+    finally { setRunning(false); }
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 bg-violet-50/40 mb-4">
+      <button className="flex w-full items-center justify-between px-4 py-3 text-left" onClick={() => setOpen(o => !o)}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-violet-600 text-base">✦</span>
+          <span className="text-xs font-semibold text-violet-800">AI Legal Advisor</span>
+          {advice && (
+            <span className={`rounded-md border px-2 py-0.5 text-xs font-medium capitalize ${LEGAL_HEALTH_BADGE[advice.legal_health] ?? ''}`}>
+              {advice.legal_health}
+            </span>
+          )}
+          {advice && (
+            <span className="text-xs text-violet-500">
+              {advice.open_matters} open matters · {advice.overdue_tasks} overdue tasks
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-violet-500">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-violet-200 px-4 pb-5 pt-4 space-y-5">
+          {loading && <p className="text-xs text-utu-text-muted italic">Loading legal analysis…</p>}
+
+          {!loading && !advice && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-utu-text-secondary">
+                Run AI Legal Advisor to surface critical matter risks, jurisdiction exposure, overdue compliance tasks, and expiring contract alerts across Saudi, UAE, and EU frameworks.
+              </p>
+              <button onClick={handleAnalyze} disabled={running}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                {running ? 'Analysing…' : '✦ Run Legal Analysis'}
+              </button>
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          )}
+
+          {advice && !loading && (
+            <>
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{advice.executive_summary}</p>
+
+              {advice.critical_matters.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Critical Matters</h3>
+                  <div className="space-y-2">
+                    {advice.critical_matters.map((m, i) => (
+                      <div key={i} className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <p className="text-xs font-semibold text-red-800">{m.title}</p>
+                          <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${LEGAL_URGENCY_COLORS[m.urgency] ?? ''}`}>{m.urgency.replace('_', ' ')}</span>
+                        </div>
+                        <p className="text-xs text-red-600 mt-0.5">{m.jurisdiction} · {m.type}</p>
+                        <p className="text-xs text-red-500 mt-0.5">{m.risk}</p>
+                        <p className="text-xs text-red-400 mt-0.5 italic">{m.recommended_action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {advice.jurisdiction_risks.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Jurisdiction Risks</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {advice.jurisdiction_risks.map((j, i) => (
+                      <div key={i} className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                        <p className="text-xs font-semibold text-amber-800">{j.jurisdiction} <span className="font-normal text-amber-600">({j.open_matters} open)</span></p>
+                        <p className="text-xs text-amber-700 mt-0.5">{j.risk}</p>
+                        <p className="text-xs text-amber-600 mt-0.5 italic">{j.action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {advice.overdue_tasks_list.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Overdue Compliance Tasks</h3>
+                  <div className="space-y-2">
+                    {advice.overdue_tasks_list.map((t, i) => (
+                      <div key={i} className="flex items-start justify-between gap-3 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-orange-800">{t.task}</p>
+                          <p className="text-xs text-orange-600 mt-0.5">{t.consequence}</p>
+                          <p className="text-xs text-orange-500 mt-0.5 italic">{t.action}</p>
+                        </div>
+                        <span className="shrink-0 rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{t.days_overdue}d overdue</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {advice.contract_alerts.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Contract Expiry Alerts</h3>
+                  <div className="space-y-2">
+                    {advice.contract_alerts.map((a, i) => (
+                      <div key={i} className="rounded-lg border border-utu-border-default bg-utu-bg-card px-3 py-2">
+                        <p className="text-xs font-semibold text-utu-text-primary">{a.doc_type} <span className="text-amber-600 font-normal">({a.count_expiring} expiring)</span></p>
+                        <p className="text-xs text-utu-text-secondary mt-0.5">{a.risk}</p>
+                        <p className="text-xs text-violet-600 mt-0.5 italic">{a.action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {advice.compliance_gaps.length > 0 && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                    <p className="text-xs font-semibold text-red-800 mb-1">Compliance Gaps</p>
+                    <ul className="space-y-0.5">
+                      {advice.compliance_gaps.map((g, i) => <li key={i} className="text-xs text-red-700">• {g}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {advice.quick_wins.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Quick Wins</h3>
+                    <ul className="space-y-1">
+                      {advice.quick_wins.map((w, i) => (
+                        <li key={i} className="text-xs text-utu-text-secondary before:content-['→'] before:mr-1.5 before:text-green-500">{w}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {advice.recommendations.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-utu-text-muted mb-2">Recommendations</h3>
+                  <ul className="space-y-1">
+                    {advice.recommendations.map((r, i) => (
+                      <li key={i} className="text-xs text-utu-text-secondary before:content-['✓'] before:mr-1.5 before:text-violet-500">{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-1 border-t border-violet-200">
+                <p className="text-xs text-violet-400">Last run: {new Date(advice.generated_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                <button onClick={handleAnalyze} disabled={running}
+                  className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors">
+                  {running ? 'Refreshing…' : '↺ Refresh'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared helpers
@@ -554,6 +760,200 @@ function TasksTab() {
 // Tab 4: Documents
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─── AI Contract Reviewer panel ───────────────────────────────────────────────
+
+const RISK_CONFIG: Record<ContractRiskLevel, { label: string; badge: string; bar: string }> = {
+  low:      { label: 'Low Risk',      badge: 'bg-green-100 text-green-700',  bar: 'bg-green-400' },
+  medium:   { label: 'Medium Risk',   badge: 'bg-blue-100 text-blue-700',    bar: 'bg-blue-400'  },
+  high:     { label: 'High Risk',     badge: 'bg-amber-100 text-amber-700',  bar: 'bg-amber-400' },
+  critical: { label: 'Critical Risk', badge: 'bg-red-100 text-red-700',      bar: 'bg-red-500'   },
+};
+
+function AIContractPanel({ docId }: { docId: string }) {
+  const [open,    setOpen]    = useState(false);
+  const [review,  setReview]  = useState<ContractReview | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copied,  setCopied]  = useState(false);
+
+  // Auto-load existing review when panel first opens
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const existing = await getContractReview(docId).catch(() => null);
+      if (!cancelled) { setReview(existing); setLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [docId, open]);
+
+  async function runReview() {
+    setLoading(true);
+    try {
+      const res = await reviewContract(docId);
+      setReview(res.data ?? null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function copyRecs() {
+    if (!review) return;
+    const text = review.recommendations.map((r, i) => `${i + 1}. ${r}`).join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  const cfg = review ? RISK_CONFIG[review.risk_level] ?? RISK_CONFIG.medium : null;
+
+  return (
+    <div className="mt-5 rounded-utu-card border border-utu-border-default bg-utu-bg-card overflow-hidden">
+      {/* Header toggle */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-utu-text-primary hover:bg-utu-bg-muted transition-colors"
+      >
+        <span className="flex items-center gap-2">
+          <span className="text-utu-blue">✦</span>
+          AI Contract Review
+          {review && cfg && !open && (
+            <span className={`ms-2 rounded px-2 py-0.5 text-xs font-medium ${cfg.badge}`}>{cfg.label}</span>
+          )}
+        </span>
+        <span className="text-utu-text-muted text-xs">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-utu-border-default px-4 py-4 space-y-4">
+          {loading && (
+            <p className="text-sm text-utu-text-muted animate-pulse">
+              {review ? 'Re-running review…' : 'Loading review…'}
+            </p>
+          )}
+
+          {!loading && !review && (
+            <div className="text-center py-2">
+              <p className="text-sm text-utu-text-muted mb-3">No AI review yet for this document.</p>
+              <button
+                onClick={runReview}
+                className="rounded bg-utu-blue px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Run AI Review
+              </button>
+            </div>
+          )}
+
+          {!loading && review && cfg && (
+            <>
+              {/* Risk level + summary */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <p className="text-xs text-utu-text-muted mb-1">Risk Assessment</p>
+                  <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${cfg.badge}`}>
+                    {cfg.label}
+                  </span>
+                </div>
+                <button
+                  onClick={runReview}
+                  className="shrink-0 rounded border border-utu-border-default px-2 py-1 text-xs text-utu-text-muted hover:bg-utu-bg-muted"
+                >
+                  Re-analyse
+                </button>
+              </div>
+
+              <p className="text-sm text-utu-text-secondary leading-relaxed">{review.overall_summary}</p>
+
+              {/* Expiry alert */}
+              {review.expiry_alert && (
+                <div className="rounded bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                  {review.expiry_alert}
+                </div>
+              )}
+
+              {/* Risk flags + Missing clauses */}
+              {(review.risk_flags.length > 0 || review.missing_clauses.length > 0) && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {review.risk_flags.length > 0 && (
+                    <div>
+                      <p className="mb-1.5 text-xs font-semibold text-red-600 uppercase tracking-wide">Risk Flags</p>
+                      <ul className="space-y-1">
+                        {review.risk_flags.map((f, i) => (
+                          <li key={i} className="flex gap-1.5 text-xs text-utu-text-secondary">
+                            <span className="mt-0.5 shrink-0 text-red-500">&#9679;</span>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {review.missing_clauses.length > 0 && (
+                    <div>
+                      <p className="mb-1.5 text-xs font-semibold text-amber-600 uppercase tracking-wide">Missing Clauses</p>
+                      <ul className="space-y-1">
+                        {review.missing_clauses.map((c, i) => (
+                          <li key={i} className="flex gap-1.5 text-xs text-utu-text-secondary">
+                            <span className="mt-0.5 shrink-0 text-amber-500">&#9679;</span>
+                            {c}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Compliance notes */}
+              {review.compliance_notes.length > 0 && (
+                <div>
+                  <p className="mb-1.5 text-xs font-semibold text-blue-600 uppercase tracking-wide">Compliance Notes</p>
+                  <ul className="space-y-1">
+                    {review.compliance_notes.map((n, i) => (
+                      <li key={i} className="flex gap-1.5 text-xs text-utu-text-secondary">
+                        <span className="mt-0.5 shrink-0 text-blue-400">&#9679;</span>
+                        {n}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Recommendations */}
+              {review.recommendations.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-semibold text-utu-text-primary uppercase tracking-wide">Recommendations</p>
+                    <button
+                      onClick={copyRecs}
+                      className="flex items-center gap-1 rounded border border-utu-border-default px-2 py-0.5 text-xs text-utu-text-muted hover:bg-utu-bg-muted"
+                    >
+                      {copied ? <Check size={11} /> : <Copy size={11} />}
+                      {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                  <ol className="space-y-1.5">
+                    {review.recommendations.map((r, i) => (
+                      <li key={i} className="flex gap-2 text-xs text-utu-text-secondary">
+                        <span className="shrink-0 font-semibold text-utu-text-primary">{i + 1}.</span>
+                        {r}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              <p className="text-right text-xs text-utu-text-muted">
+                Reviewed {new Date(review.generated_at).toLocaleString()}
+              </p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DocumentPanel({ doc, onClose }: { doc: LegalDocument | null; onClose: () => void }) {
   const qc = useQueryClient();
   const isEdit = !!doc;
@@ -624,6 +1024,8 @@ function DocumentPanel({ doc, onClose }: { doc: LegalDocument | null; onClose: (
         >
           {mutation.isPending ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Document'}
         </button>
+
+        {isEdit && <AIContractPanel docId={doc!.id} />}
       </div>
     </SlidePanel>
   );
@@ -776,7 +1178,7 @@ export default function LegalPage() {
       </div>
 
       <div>
-        {activeTab === 'Dashboard'         && <DashboardTab />}
+        {activeTab === 'Dashboard'         && <><AILegalAdvisorPanel /><DashboardTab /></>}
         {activeTab === 'Matters'           && <MattersTab />}
         {activeTab === 'Compliance Tasks'  && <TasksTab />}
         {activeTab === 'Documents'         && <DocumentsTab />}

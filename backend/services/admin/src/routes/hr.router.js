@@ -34,6 +34,7 @@
 const { Router } = require('express');
 const { Pool }   = require('pg');
 const adminAuth  = require('../middleware/adminAuth');
+const wf         = require('../lib/workflow-client');
 
 const router = Router();
 router.use(adminAuth);
@@ -229,7 +230,26 @@ router.post('/employees', async (req, res) => {
       status ?? 'active', employment_type ?? 'full_time',
       salary_sar ?? null,
     ]);
-    res.status(201).json({ data: rows[0] });
+    const employee = rows[0];
+
+    // ── Trigger onboarding workflow (fire-and-forget) ─────────────────────────
+    wf.launch({
+      triggerEvent:   'hire_approved',
+      triggerRef:     employee.id,
+      triggerRefType: 'employee',
+      initiatedBy:    req.user?.email ?? 'system',
+      context: {
+        employee_id:      employee.id,
+        employee_name:    full_name,
+        employee_email:   email,
+        role,
+        hire_date,
+        employment_type:  employment_type ?? 'full_time',
+        department_id:    department_id ?? null,
+      },
+    });
+
+    res.status(201).json({ data: employee });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'EMAIL_EXISTS' });
     console.error('[hr/employees POST]', err.message);
@@ -277,9 +297,27 @@ router.delete('/employees/:id', async (req, res) => {
     const { rows } = await pool.query(`
       UPDATE hr_employees SET status = 'terminated', updated_at = NOW()
       WHERE id = $1
-      RETURNING id
+      RETURNING id, full_name, email, role, department_id
     `, [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'NOT_FOUND' });
+    const employee = rows[0];
+
+    // ── Launch employee offboarding workflow ───────────────────────────────────
+    wf.launch({
+      triggerEvent:   'employee_offboarding',
+      triggerRef:     employee.id,
+      triggerRefType: 'employee',
+      initiatedBy:    req.user?.email ?? 'system',
+      context: {
+        employee_id:   employee.id,
+        employee_name: employee.full_name,
+        employee_email: employee.email,
+        role:           employee.role,
+        department_id:  employee.department_id,
+        last_day:       new Date().toISOString().slice(0, 10),
+      },
+    });
+
     res.json({ success: true });
   } catch (err) {
     console.error('[hr/employees DELETE]', err.message);
@@ -440,7 +478,33 @@ router.post('/leave', async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `, [employee_id, leave_type, start_date, end_date, days, reason ?? null]);
-    res.status(201).json({ data: rows[0] });
+    const leave = rows[0];
+
+    // Resolve employee email for actor tracking
+    const empRes = await pool.query(
+      `SELECT email, full_name FROM hr_employees WHERE id = $1 LIMIT 1`,
+      [employee_id]
+    ).catch(() => ({ rows: [] }));
+    const emp = empRes.rows[0];
+
+    // ── Trigger workflow engine (fire-and-forget) ─────────────────────────────
+    wf.launch({
+      triggerEvent:   'leave_requested',
+      triggerRef:     leave.id,
+      triggerRefType: 'leave_request',
+      initiatedBy:    req.user?.email ?? emp?.email ?? 'system',
+      context: {
+        employee_id,
+        employee:   emp?.full_name ?? employee_id,
+        leave_type,
+        start_date,
+        end_date,
+        days,
+        reason:     reason ?? null,
+      },
+    });
+
+    res.status(201).json({ data: leave });
   } catch (err) {
     console.error('[hr/leave POST]', err.message);
     res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -758,6 +822,142 @@ router.post('/employees/import', async (req, res) => {
   }
 
   res.status(201).json({ success: successCount, failed: errors.length, errors });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Performance Reviews
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── POST /performance-reviews — submit self-review + launch approval workflow ─
+router.post('/performance-reviews', async (req, res) => {
+  const {
+    employee_id,
+    quarter,        // e.g. 'Q1-2026'
+    self_assessment, // free text
+    goals_met,      // 1-5
+    goals_details,
+    skills_rating,  // 1-5
+    skills_details,
+    initiatives,
+  } = req.body ?? {};
+
+  if (!employee_id) return res.status(400).json({ error: 'EMPLOYEE_ID_REQUIRED' });
+  if (!quarter)     return res.status(400).json({ error: 'QUARTER_REQUIRED' });
+
+  try {
+    // Bootstrap table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS hr_performance_reviews (
+        id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        employee_id     UUID        NOT NULL REFERENCES hr_employees(id) ON DELETE CASCADE,
+        quarter         TEXT        NOT NULL,
+        self_assessment TEXT,
+        goals_met       INT         CHECK (goals_met BETWEEN 1 AND 5),
+        goals_details   TEXT,
+        skills_rating   INT         CHECK (skills_rating BETWEEN 1 AND 5),
+        skills_details  TEXT,
+        initiatives     TEXT,
+        manager_rating  INT,
+        manager_notes   TEXT,
+        final_rating    INT,
+        status          TEXT        NOT NULL DEFAULT 'submitted'
+                                    CHECK (status IN ('submitted','manager_review','calibration','completed')),
+        submitted_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        completed_at    TIMESTAMPTZ,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (employee_id, quarter)
+      )
+    `);
+
+    const { rows } = await pool.query(
+      `INSERT INTO hr_performance_reviews
+         (employee_id, quarter, self_assessment, goals_met, goals_details, skills_rating, skills_details, initiatives)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       ON CONFLICT (employee_id, quarter) DO UPDATE SET
+         self_assessment = EXCLUDED.self_assessment,
+         goals_met       = EXCLUDED.goals_met,
+         goals_details   = EXCLUDED.goals_details,
+         skills_rating   = EXCLUDED.skills_rating,
+         skills_details  = EXCLUDED.skills_details,
+         initiatives     = EXCLUDED.initiatives,
+         status          = 'submitted'
+       RETURNING *`,
+      [employee_id, quarter, self_assessment||null, goals_met||null, goals_details||null,
+       skills_rating||null, skills_details||null, initiatives||null]
+    );
+    const review = rows[0];
+
+    // Resolve employee name for workflow context
+    const empRes = await pool.query(
+      `SELECT full_name, email, role, department_id FROM hr_employees WHERE id = $1 LIMIT 1`,
+      [employee_id]
+    ).catch(() => ({ rows: [] }));
+    const emp = empRes.rows[0];
+
+    // ── Launch performance review workflow ─────────────────────────────────────
+    wf.launch({
+      triggerEvent:   'performance_review_submitted',
+      triggerRef:     review.id,
+      triggerRefType: 'performance_review',
+      initiatedBy:    req.user?.email ?? emp?.email ?? 'system',
+      context: {
+        review_id:    review.id,
+        employee_id,
+        employee:     emp?.full_name ?? employee_id,
+        role:         emp?.role ?? null,
+        department_id: emp?.department_id ?? null,
+        quarter,
+        goals_met:    goals_met ?? null,
+        skills_rating: skills_rating ?? null,
+      },
+    });
+
+    res.status(201).json({ data: review });
+  } catch (err) {
+    console.error('[hr/performance-reviews POST]', err.message);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ── GET /performance-reviews — list reviews ───────────────────────────────────
+router.get('/performance-reviews', async (req, res) => {
+  const { employee_id, quarter, status, limit: lim = '20', offset: off = '0' } = req.query;
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS hr_performance_reviews (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), employee_id UUID, quarter TEXT, status TEXT NOT NULL DEFAULT 'submitted', submitted_at TIMESTAMPTZ DEFAULT NOW(), created_at TIMESTAMPTZ DEFAULT NOW())`);
+    const conds = []; const vals = [];
+    if (employee_id) { conds.push(`r.employee_id = $${vals.length+1}`); vals.push(employee_id); }
+    if (quarter)     { conds.push(`r.quarter = $${vals.length+1}`);      vals.push(quarter); }
+    if (status)      { conds.push(`r.status = $${vals.length+1}`);       vals.push(status); }
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const [rows, count] = await Promise.all([
+      pool.query(`SELECT r.*, e.full_name, e.role FROM hr_performance_reviews r LEFT JOIN hr_employees e ON e.id = r.employee_id ${where} ORDER BY r.submitted_at DESC LIMIT $${vals.length+1} OFFSET $${vals.length+2}`, [...vals, parseInt(lim), parseInt(off)]),
+      pool.query(`SELECT COUNT(*) FROM hr_performance_reviews r ${where}`, vals),
+    ]);
+    res.json({ data: rows.rows, total: parseInt(count.rows[0].count) });
+  } catch (err) {
+    console.error('[hr/performance-reviews GET]', err.message);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ── PATCH /performance-reviews/:id — manager review or HR calibration ─────────
+router.patch('/performance-reviews/:id', async (req, res) => {
+  const ALLOWED = ['manager_rating','manager_notes','final_rating','status','completed_at'];
+  const fields = Object.keys(req.body).filter(k => ALLOWED.includes(k));
+  if (!fields.length) return res.status(400).json({ error: 'NO_UPDATABLE_FIELDS' });
+  const vals = fields.map(k => req.body[k]);
+  const sets = fields.map((k, i) => `${k} = $${i + 1}`).join(', ');
+  try {
+    const { rows } = await pool.query(
+      `UPDATE hr_performance_reviews SET ${sets}, created_at = created_at WHERE id = $${fields.length + 1} RETURNING *`,
+      [...vals, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'NOT_FOUND' });
+    res.json({ data: rows[0] });
+  } catch (err) {
+    console.error('[hr/performance-reviews PATCH]', err.message);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
 });
 
 module.exports = router;

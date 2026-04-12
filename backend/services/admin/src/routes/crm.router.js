@@ -1,5 +1,7 @@
 'use strict';
 
+const wf = require('../lib/workflow-client');
+
 /**
  * CRM — Admin Routes
  *
@@ -433,7 +435,28 @@ router.post('/deals', async (req, res) => {
        value_amount ?? null, value_currency, deal_owner ?? null, ceo_review_required,
        proposal_file_path ?? null, notes ?? null, next_action ?? null, next_action_date ?? null],
     );
-    res.status(201).json({ data: rows[0] });
+    const deal = rows[0];
+
+    // ── Launch deal approval workflow when CEO review is flagged ──────────────
+    if (ceo_review_required) {
+      wf.launch({
+        triggerEvent:   'deal_stage_changed',
+        triggerRef:     deal.id,
+        triggerRefType: 'crm_deal',
+        initiatedBy:    req.user?.email ?? deal_owner ?? 'admin',
+        context: {
+          title,
+          partner_name,
+          deal_type,
+          stage,
+          value_amount:    value_amount ?? null,
+          value_currency,
+          ceo_review_required: true,
+        },
+      });
+    }
+
+    res.status(201).json({ data: deal });
   } catch (err) {
     console.error('[crm/deals POST]', err.message);
     res.status(500).json({ error: 'INTERNAL_ERROR' });

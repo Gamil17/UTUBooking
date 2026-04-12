@@ -15,6 +15,7 @@
 const { Router }           = require('express');
 const { timingSafeEqual }  = require('crypto');
 const { pool }             = require('../db/pg');
+const userService          = require('../services/user.service');
 
 const router = Router();
 
@@ -162,6 +163,30 @@ router.post('/users/:id/unsuspend', async (req, res, next) => {
     }
 
     return res.json({ data: result.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── POST /corporate-users ─────────────────────────────────────────────────────
+// Called only by the admin service when activating a corporate account.
+// Creates a user with role='corporate' and links them to their company.
+
+router.post('/corporate-users', async (req, res, next) => {
+  const { email, password, name, corporate_account_id } = req.body ?? {};
+
+  if (!email?.trim())          return res.status(400).json({ error: 'EMAIL_REQUIRED', message: 'Email is required.' });
+  if (!password)               return res.status(400).json({ error: 'PASSWORD_REQUIRED', message: 'A temporary password is required.' });
+  if (!corporate_account_id)   return res.status(400).json({ error: 'CORPORATE_ACCOUNT_ID_REQUIRED', message: 'corporate_account_id is required.' });
+
+  try {
+    const exists = await userService.emailExists(email);
+    if (exists) {
+      return res.status(409).json({ error: 'EMAIL_EXISTS', message: 'An account with this email already exists.' });
+    }
+
+    const user = await userService.createCorporateUser({ email, password, name, corporate_account_id });
+    return res.status(201).json({ data: user });
   } catch (err) {
     next(err);
   }

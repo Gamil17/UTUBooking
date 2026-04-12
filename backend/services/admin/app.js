@@ -604,6 +604,14 @@ app.use('/api/admin/products', productsRouter);
 const bizdevRouter = require('./src/routes/bizdev.router');
 app.use('/api/admin/bizdev', bizdevRouter);
 
+// ── Affiliates routes ─────────────────────────────────────────────────────────
+const affiliatesRouter = require('./src/routes/affiliates.router');
+app.use('/api/admin/affiliates', affiliatesRouter);
+
+// ── Corporate / Pro Business Travel routes ────────────────────────────────────
+const corporateRouter = require('./src/routes/corporate.router');
+app.use('/api/admin/corporate', corporateRouter);
+
 // ── Revenue Management routes ─────────────────────────────────────────────────
 const revenueRouter = require('./src/routes/revenue.router');
 app.use('/api/admin/revenue', revenueRouter);
@@ -623,6 +631,158 @@ app.use('/api/admin/fraud', fraudRouter);
 // ── Analytics / BI routes ─────────────────────────────────────────────────────
 const analyticsRouter = require('./src/routes/analytics.router');
 app.use('/api/admin/analytics', analyticsRouter);
+
+// ── Advertising Department routes ─────────────────────────────────────────────
+const advertisingRouter = require('./src/routes/advertising.router');
+app.use('/api/admin/advertising', advertisingRouter);
+
+// ── AI Assistant ─────────────────────────────────────────────────────────────
+// Claude claude-sonnet-4-6-powered chat for admin management queries (natural language → live data)
+const aiAssistantRouter = require('./src/routes/ai-assistant.router');
+app.use('/api/admin/ai-assistant', requireAdmin, aiAssistantRouter);
+
+const aiBriefingRouter = require('./src/routes/ai-briefing.router');
+app.use('/api/admin/briefings', requireAdmin, aiBriefingRouter);
+
+const aiDocumentsRouter = require('./src/routes/ai-documents.router');
+app.use('/api/admin/documents', requireAdmin, aiDocumentsRouter);
+
+const aiScreeningRouter = require('./src/routes/ai-screening.router');
+app.use('/api/admin/screening', requireAdmin, aiScreeningRouter);
+
+const aiDealIntelligenceRouter = require('./src/routes/ai-deal-intelligence.router');
+app.use('/api/admin/deal-intelligence', requireAdmin, aiDealIntelligenceRouter);
+
+const aiSupportTriageRouter = require('./src/routes/ai-support-triage.router');
+app.use('/api/admin/support-triage', requireAdmin, aiSupportTriageRouter);
+
+const aiExpenseAnalyzerRouter = require('./src/routes/ai-expense-analyzer.router');
+app.use('/api/admin/expense-analyzer', requireAdmin, aiExpenseAnalyzerRouter);
+
+const aiFraudScorerRouter = require('./src/routes/ai-fraud-scorer.router');
+app.use('/api/admin/fraud-scorer', requireAdmin, aiFraudScorerRouter);
+
+const aiContractReviewerRouter = require('./src/routes/ai-contract-reviewer.router');
+app.use('/api/admin/contract-review', requireAdmin, aiContractReviewerRouter);
+
+const aiKpiAnalyzerRouter = require('./src/routes/ai-kpi-analyzer.router');
+app.use('/api/admin/kpi-analyzer', requireAdmin, aiKpiAnalyzerRouter);
+
+const aiDsrFulfillmentRouter = require('./src/routes/ai-dsr-fulfillment.router');
+app.use('/api/admin/dsr-fulfillment', requireAdmin, aiDsrFulfillmentRouter);
+
+const aiWorkflowBuilderRouter = require('./src/routes/ai-workflow-builder.router');
+app.use('/api/admin/workflow-builder', requireAdmin, aiWorkflowBuilderRouter);
+
+const aiPerformanceAnalyzerRouter = require('./src/routes/ai-performance-analyzer.router');
+app.use('/api/admin/performance-analyzer', requireAdmin, aiPerformanceAnalyzerRouter);
+
+const aiVendorDiligenceRouter = require('./src/routes/ai-vendor-diligence.router');
+app.use('/api/admin/vendor-diligence', requireAdmin, aiVendorDiligenceRouter);
+
+const aiDealCoachRouter = require('./src/routes/ai-deal-coach.router');
+app.use('/api/admin/deal-coach', requireAdmin, aiDealCoachRouter);
+
+const aiCampaignAnalyzerRouter = require('./src/routes/ai-campaign-analyzer.router');
+app.use('/api/admin/campaign-analyzer', requireAdmin, aiCampaignAnalyzerRouter);
+
+const aiAccountHealthRouter = require('./src/routes/ai-account-health.router');
+app.use('/api/admin/account-health', requireAdmin, aiAccountHealthRouter);
+
+const aiProcurementRiskRouter = require('./src/routes/ai-procurement-risk.router');
+app.use('/api/admin/procurement-risk', requireAdmin, aiProcurementRiskRouter);
+
+const aiRoadmapAdvisorRouter = require('./src/routes/ai-roadmap-advisor.router');
+app.use('/api/admin/roadmap-advisor', requireAdmin, aiRoadmapAdvisorRouter);
+
+const aiSprintHealthRouter = require('./src/routes/ai-sprint-health.router');
+app.use('/api/admin/sprint-health', requireAdmin, aiSprintHealthRouter);
+
+const aiBizDevAdvisorRouter = require('./src/routes/ai-bizdev-advisor.router');
+app.use('/api/admin/bizdev-advisor', requireAdmin, aiBizDevAdvisorRouter);
+
+const aiBookingInsightsRouter = require('./src/routes/ai-booking-insights.router');
+app.use('/api/admin/booking-insights', requireAdmin, aiBookingInsightsRouter);
+
+const aiLoyaltyAdvisorRouter = require('./src/routes/ai-loyalty-advisor.router');
+app.use('/api/admin/loyalty-advisor', requireAdmin, aiLoyaltyAdvisorRouter);
+
+const aiInventoryAdvisorRouter = require('./src/routes/ai-inventory-advisor.router');
+app.use('/api/admin/inventory-advisor', requireAdmin, aiInventoryAdvisorRouter);
+
+const aiLegalAdvisorRouter = require('./src/routes/ai-legal-advisor.router');
+app.use('/api/admin/legal-advisor', requireAdmin, aiLegalAdvisorRouter);
+
+const aiComplianceAdvisorRouter = require('./src/routes/ai-compliance-advisor.router');
+app.use('/api/admin/compliance-advisor', requireAdmin, aiComplianceAdvisorRouter);
+
+const aiOpsAdvisorRouter = require('./src/routes/ai-ops-advisor.router');
+app.use('/api/admin/ops-advisor', requireAdmin, aiOpsAdvisorRouter);
+
+const aiFraudAdvisorRouter = require('./src/routes/ai-fraud-advisor.router');
+app.use('/api/admin/fraud-advisor', requireAdmin, aiFraudAdvisorRouter);
+
+// ── AI Daily Briefing cron ────────────────────────────────────────────────────
+require('./src/jobs/daily-briefing.job').start();
+
+// ── Contract expiry + CS health score cron ────────────────────────────────────
+require('./src/jobs/contract-expiry.job').start();
+
+// ── Workflow completion callbacks ─────────────────────────────────────────────
+// Receives POST /internal/workflow/callback from the workflow engine (port 3014)
+// and updates the source record status so business tables stay in sync.
+const workflowCallbacksRouter = require('./src/routes/workflow-callbacks.router');
+app.use('/internal/workflow', workflowCallbacksRouter);
+
+// ── Workflow Engine proxy ─────────────────────────────────────────────────────
+// Forwards /api/admin/workflow/* → workflow-service (port 3014)
+// Preserves Authorization header so JWT auth passes through.
+const WORKFLOW_HOST = process.env.WORKFLOW_SERVICE_HOST || 'workflow-service';
+const WORKFLOW_PORT = parseInt(process.env.WORKFLOW_SERVICE_PORT || '3014', 10);
+
+app.use('/api/admin/workflow', requireAdmin, (req, res) => {
+  const targetPath = '/api/workflow' + req.url;
+  const payload    = req.method !== 'GET' && req.method !== 'HEAD'
+    ? JSON.stringify(req.body)
+    : null;
+
+  const options = {
+    hostname: WORKFLOW_HOST,
+    port:     WORKFLOW_PORT,
+    path:     targetPath,
+    method:   req.method,
+    headers: {
+      'Content-Type':   'application/json',
+      'Authorization':  req.headers.authorization || '',
+      'x-admin-secret': process.env.ADMIN_SECRET || '',
+    },
+  };
+  if (payload) {
+    options.headers['Content-Length'] = Buffer.byteLength(payload);
+  }
+
+  const proxyReq = http.request(options, (proxyRes) => {
+    let data = '';
+    proxyRes.on('data', chunk => { data += chunk; });
+    proxyRes.on('end', () => {
+      res.status(proxyRes.statusCode).json(
+        data ? JSON.parse(data) : {},
+      );
+    });
+  });
+
+  proxyReq.on('error', (err) => {
+    console.error('[admin → workflow proxy]', err.message);
+    res.status(502).json({ error: 'WORKFLOW_SERVICE_UNAVAILABLE' });
+  });
+
+  proxyReq.setTimeout(15000, () => {
+    proxyReq.destroy(new Error('Workflow service timeout'));
+  });
+
+  if (payload) proxyReq.write(payload);
+  proxyReq.end();
+});
 
 // ── 404 / Error ───────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ error: 'NOT_FOUND' }));

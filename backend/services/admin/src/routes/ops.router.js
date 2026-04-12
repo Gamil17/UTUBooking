@@ -21,6 +21,7 @@
 
 const { Router } = require('express');
 const { Pool }   = require('pg');
+const wf         = require('../lib/workflow-client');
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const router = Router();
@@ -176,7 +177,26 @@ router.post('/incidents', async (req, res) => {
       [title, severity, status, service || null, description || null, impact || null,
        started_at || new Date().toISOString(), created_by],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const incident = result.rows[0];
+
+    // ── Launch incident response workflow for critical/high severity ──────────
+    if (severity === 'critical' || severity === 'high') {
+      wf.launch({
+        triggerEvent:   'incident_opened',
+        triggerRef:     incident.id,
+        triggerRefType: 'incident',
+        initiatedBy:    req.user?.email ?? created_by,
+        context: {
+          title,
+          severity,
+          service:     service || null,
+          description: description || null,
+          impact:      impact || null,
+        },
+      });
+    }
+
+    res.status(201).json({ data: incident });
   } catch (err) {
     console.error('[ops] POST /incidents error:', err);
     res.status(500).json({ error: 'DB_ERROR' });
@@ -269,7 +289,25 @@ router.post('/tickets', async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [user_email || null, booking_ref || null, category, priority, subject, description || null, assignee || null],
     );
-    res.status(201).json({ data: result.rows[0] });
+    const ticket = result.rows[0];
+
+    // ── Launch support ticket SLA workflow (all tickets, all priorities) ──────
+    wf.launch({
+      triggerEvent:   'ticket_raised',
+      triggerRef:     ticket.id,
+      triggerRefType: 'support_ticket',
+      initiatedBy:    req.user?.email ?? user_email ?? 'customer',
+      context: {
+        ticket_id:   ticket.id,
+        user_email:  user_email ?? null,
+        booking_ref: booking_ref ?? null,
+        category,
+        priority,
+        subject,
+      },
+    });
+
+    res.status(201).json({ data: ticket });
   } catch (err) {
     console.error('[ops] POST /tickets error:', err);
     res.status(500).json({ error: 'DB_ERROR' });
